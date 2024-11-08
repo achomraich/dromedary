@@ -20,6 +20,14 @@ def dashboard(request):
     return render(request, 'dashboard.html', {'user': current_user})
 
 
+@login_required
+def lesson_requests(request):
+    """Display the lesson requests to the current user."""
+
+    current_user = request.user
+    return render(request, 'requests.html', {'user': current_user})
+
+
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""
@@ -151,3 +159,4 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+    

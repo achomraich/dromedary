@@ -18,7 +18,6 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=50, blank=False)
     email = models.EmailField(unique=True, blank=False)
 
-
     class Meta:
         """Model options."""
 
@@ -38,7 +37,7 @@ class User(AbstractUser):
 
     def mini_gravatar(self):
         """Return a URL to a miniature version of the user's gravatar."""
-        
+
         return self.gravatar(size=60)
 
 
@@ -46,13 +45,12 @@ class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
 
 
-class Student(User):
+class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
 
-class Admin(User):
+class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
-
 
 
 class TutorAvailability(models.Model):
@@ -60,6 +58,7 @@ class TutorAvailability(models.Model):
         ('a', 'Available'),
         ('b', 'Booked'),
     ]
+    id = models.BigAutoField(primary_key=True)
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
     day_of_week = models.CharField(max_length=10)
     start_time = models.TimeField()
@@ -69,7 +68,7 @@ class TutorAvailability(models.Model):
 
 
 class Subject(models.Model):
-    #SUBJECT = ["Python", "C++", "JS", "TypeScript", "Scala", "Ruby"]
+    # SUBJECT = ["Python", "C++", "JS", "TypeScript", "Scala", "Ruby"]
     SUBJECT_CHOICES = [
         ('Python', 'Course description'),
         ('C++', 'Course description'),
@@ -110,7 +109,7 @@ class Lesson(models.Model):
     frequency = models.CharField(max_length=5, choices=LESSON_FREQUENCY, default="W")
     duration = models.DurationField()
     start_date = models.DateField()
-
+    price_per_lesson = models.IntegerField()
 
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
@@ -123,7 +122,7 @@ class LessonStatus(models.Model):
     # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
 
     status_id = models.BigAutoField(primary_key=True)
-    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE, default=0)
     date = models.DateField()
     time = models.TimeField()
     status = models.CharField(
@@ -131,14 +130,13 @@ class LessonStatus(models.Model):
         choices=Status.choices,
         default=Status.PENDING)
     feedback = models.CharField(max_length=255)
-
+    invoiced = models.BooleanField(default=False)
 
 '''class Booking(models.Model):
     booking_id = models.BigAutoField(primary_key=True)
     lesson_id = models.ForeignKey(Lesson.lesson_id, on_delete=models.CASCADE)
     admin_id = models.ForeignKey(PlatformAdmin.admin_id, on_delete=models.CASCADE)
     booking_date = models.DateField()'''
-
 
 class Invoices(models.Model):
     PAYMENT_CHOICES = [
@@ -147,6 +145,8 @@ class Invoices(models.Model):
         ("O", "Overdue")
     ]
     invoice_id = models.BigAutoField(primary_key=True)
+    lesson_count = models.IntegerField(default=0)
+    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
     issue_date = models.DateField()
     due_date = models.DateField()
@@ -159,14 +159,12 @@ class Requests(models.Model):
     request_id = models.BigAutoField(primary_key=True)
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
         default=Status.PENDING)
 
-    # We can suppose that we have a few admins. Maybe we can implement a functionality in views so that the admin for
-    # each request will be located randomly
-    admin_id = models.ForeignKey(Admin, on_delete=models.CASCADE)
 
 
 class TutorReviews(models.Model):
@@ -184,4 +182,3 @@ class TutorReviews(models.Model):
     text = models.CharField(max_length=255)
     date = models.DateField()
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
-    '''lesson_id(?)'''

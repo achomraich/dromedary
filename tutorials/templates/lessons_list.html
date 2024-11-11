@@ -8,6 +8,7 @@
 <body>
     <div class="container">
         <h1>Lessons list:</h1>
+        {% load lesson_filters %}
 
         <table class="table table-striped">
             <thead>
@@ -27,8 +28,8 @@
                         <td>{{ lesson.tutor.user.username }}</td>
                         <td>{{ lesson.subject_id.name }}</td>
                         <td>{{ lesson.term_id.start_date }}</td>
-                        <td>{{ lesson.duration }}</td>
-                        <td>{{ lesson.frequency }}</td>
+                        <td>{{ lesson.duration|format_duration }}</td>
+                        <td>{{ lesson.frequency|format_frequency }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

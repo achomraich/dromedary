@@ -4,6 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
+from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
@@ -11,6 +12,7 @@ from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tutorials.helpers import login_prohibited
 
+from tutorials.models import Lesson, LessonStatus
 
 @login_required
 def dashboard(request):
@@ -151,3 +153,32 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+
+
+class AdminDashboard(View):
+
+    def get(self, request, lesson_id=None):
+        if 'terms' in request.path:
+            return self.terms_list(request)
+        elif lesson_id:
+            return self.lesson_detail(request, lesson_id)
+        else:
+            return self.lessons_list(request)
+
+    def lessons_list(self, request):
+        """Display lessons for admin"""
+        print("problem")
+        list_of_lessons = Lesson.objects.all()
+        print(list_of_lessons)
+        return render(request, 'lessons_list.html', {"list_of_lessons": list_of_lessons})
+
+    def lesson_detail(self, request, lesson_id):
+        """Display each lesson status for admin"""
+        try:
+            lessonStatus = LessonStatus.objects.filter(lesson_id=lesson_id)
+        except Exception as e:
+            raise Http404(f"Could not find lesson with primary key {lesson_id}")
+        else:
+            context = {"lessons": lessonStatus}
+            return render(request, 'lessons_details.html', context)
+

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lessons List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Lessons list:</h1>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>Term Start Date</th>
+                    <th>Duration</th>
+                    <th>Frequency</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in list_of_lessons %}
+                    <tr onclick="window.location.href='{% url 'lesson_detail' lesson.lesson_id %}'" style="cursor: pointer;">
+                        <td>{{ lesson.student.user.username }}</td>
+                        <td>{{ lesson.tutor.user.username }}</td>
+                        <td>{{ lesson.subject_id.name }}</td>
+                        <td>{{ lesson.term_id.start_date }}</td>
+                        <td>{{ lesson.duration }}</td>
+                        <td>{{ lesson.frequency }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

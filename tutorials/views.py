@@ -17,6 +17,9 @@ from tutorials.models import Lesson, LessonStatus
 @login_required
 def dashboard(request):
     """Display the current user's dashboard."""
+    current_user = request.user
+    if hasattr(request.user, 'admin_profile'):
+        return render(request, 'adminDashboard.html', {'user': current_user})
 
     current_user = request.user
     return render(request, 'dashboard.html', {'user': current_user})

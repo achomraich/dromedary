@@ -4,13 +4,14 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tutorials.helpers import login_prohibited
 
+from tutorials.models import Student
 
 @login_required
 def dashboard(request):
@@ -151,3 +152,57 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+    
+class StudentsView(View):
+
+
+    def get(self, request, student_id=None):
+        if student_id:
+            return self.student_details(request, student_id)
+        else:
+            return self.get_students_list(request)
+        
+    def post(self, request, student_id=None):
+        if student_id:
+            student = get_object_or_404(Student, user__id=student_id)
+
+            if 'edit' in request.POST:
+                return self.edit_student(request, student)
+            elif 'delete' in request.POST:
+                return self.delete_student(request, student)
+
+        return redirect('students_list')
+
+    def get_students_list(self, request):
+        students_list = Student.objects.all()
+        return render(request, 'students_list.html', {'students': students_list})
+
+    def student_details(self, request, student_id):
+        student = get_object_or_404(Student, user__id=student_id)
+
+        if request.path.endswith('edit/'):
+            return self.edit_form(request, student)
+        else:
+            return render(request, 'student_details.html', {'student' : student})
+        
+    def edit_form(self, request, student):
+        form = UserForm(instance=student.user)
+        return render(request, 'edit_student.html', {'form' : form})
+    
+    def edit_student(self, request, student):
+        form = UserForm(request.POST, instance=student.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Student details updated successfully.")
+            return redirect('student_details', student_id=student.user.id)
+        else:
+            return self.edit_form(request, student)
+    
+    def delete_student(self, request, student):
+        student.delete()
+        messages.success(request, "Student deleted successfully.")
+        return redirect('students_list')
+
+
+

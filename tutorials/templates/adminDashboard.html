@@ -4,7 +4,8 @@
   <div class="row">
     <div class="col-12">
       <h1>Welcome to your dashboard {{ user.username }}</h1>
-        <a href='{% url 'lessons_list' %}'>All lessons</a>
+        <p><a href="{% url 'tutors_list' %}">All tutors</a></p>
+        <p><a href='{% url 'lessons_list' %}'>All lessons</a></p>
     </div>
   </div>
 </div>

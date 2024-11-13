@@ -10,6 +10,7 @@ from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tutorials.helpers import login_prohibited
+from django.core.paginator import Paginator
 
 from tutorials.models import Student
 
@@ -152,7 +153,9 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
-    
+
+
+
 class StudentsView(View):
 
 
@@ -175,7 +178,11 @@ class StudentsView(View):
 
     def get_students_list(self, request):
         students_list = Student.objects.all()
-        return render(request, 'students_list.html', {'students': students_list})
+        paginator = Paginator(students_list, 20)
+
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        return render(request, 'students_list.html', {'page_obj': page_obj})
 
     def student_details(self, request, student_id):
         student = get_object_or_404(Student, user__id=student_id)
@@ -194,6 +201,7 @@ class StudentsView(View):
 
         if form.is_valid():
             form.save()
+            print("updated")
             messages.success(request, "Student details updated successfully.")
             return redirect('student_details', student_id=student.user.id)
         else:
@@ -201,8 +209,6 @@ class StudentsView(View):
     
     def delete_student(self, request, student):
         student.delete()
+        print("deleted")
         messages.success(request, "Student deleted successfully.")
         return redirect('students_list')
-
-
-

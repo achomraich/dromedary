@@ -1,0 +1,66 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Invoice Management</h1>
+
+    <!-- Section for creating a new invoice -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2>Create New Invoice</h2>
+            <form method="post" action="{% url 'create_invoice' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="student" class="form-label">Student Name</label>
+                    <input type="text" name="student" id="student" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" step="0.01" name="amount" id="amount" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="due_date" class="form-label">Due Date</label>
+                    <input type="date" name="due_date" id="due_date" class="form-control" required>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" name="is_paid" id="is_paid" class="form-check-input">
+                    <label for="is_paid" class="form-check-label">Mark as Paid</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Invoice</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section for listing existing invoices -->
+    <h2>Existing Invoices</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Amount</th>
+                <th>Due Date</th>
+                <th>Paid Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- This block will loop through invoices provided by the view -->
+            {% for invoice in invoices %}
+            <tr>
+                <td>{{ invoice.student }}</td>
+                <td>{{ invoice.amount }}</td>
+                <td>{{ invoice.due_date }}</td>
+                <td>{{ invoice.is_paid|yesno:"Paid,Unpaid" }}</td>
+                <td>
+                    <a href="{% url 'update_invoice' invoice.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No invoices available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

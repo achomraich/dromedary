@@ -1,8 +1,9 @@
 """Forms for the tutorials app."""
 from django import forms
 from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User
+from .models import User, Tutor, Student
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -90,21 +91,42 @@ class PasswordForm(NewPasswordMixin):
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
     """Form enabling unregistered users to sign up."""
 
+    role = forms.ChoiceField(choices=[('Tutor', 'Tutor'), ('Student', 'Student')])
+
     class Meta:
         """Form options."""
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email is already in use.")
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("This username is already in use.")
+        return username
+
     def save(self):
         """Create a new user."""
 
-        super().save(commit=False)
-        user = User.objects.create_user(
-            self.cleaned_data.get('username'),
-            first_name=self.cleaned_data.get('first_name'),
-            last_name=self.cleaned_data.get('last_name'),
-            email=self.cleaned_data.get('email'),
-            password=self.cleaned_data.get('new_password'),
+        user = User(
+            username=self.cleaned_data['username'],
+            email=self.cleaned_data['email'],
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name']
         )
+        user.set_password(self.cleaned_data['new_password'])
+        user.save()
+
+        role = self.cleaned_data.get('role')
+        if role == 'Tutor':
+            Tutor.objects.create(user=user)
+        elif role == 'Student':
+            Student.objects.create(user=user)
+
         return user

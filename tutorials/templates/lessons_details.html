@@ -1,0 +1,30 @@
+{% extends 'base_content.html' %}
+{% block content %}
+    <div class="container">
+    <a href="{% url 'lessons_list' %}" class="btn btn-secondary mb-3">Back</a>
+
+        <h1>Lessons list:</h1>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Feedback</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in lessons %}
+                    <tr>
+                        <td>{{ lesson.date }}</td>
+                        <td>{{ lesson.time }}</td>
+                        <td>{{ lesson.status }}</td>
+                        <td>{{ lesson.feedback }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

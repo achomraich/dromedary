@@ -21,6 +21,8 @@ term_dates = [
 
 subjects = [
     {'name': 'C++'},
+    {'name': 'Java'},
+    {'name': 'Python'}
     {'name': 'JS'},
     {'name': 'Python'},
     {'name': 'TypeScript'},
@@ -49,6 +51,7 @@ class Command(BaseCommand):
         self.create_other_models()
 
     def create_other_models(self):
+        create_other_defaults()
         # create_other_defaults()
 
         self.create_terms()
@@ -57,6 +60,10 @@ class Command(BaseCommand):
         self.create_subjects()
         self.subjects = Subject.objects.all()
 
+        self.create_lessons()
+        self.lessons = Lesson.objects.all()
+
+        self.create_lesson_status()
         self.generate_random_lessons()
         self.lessons = Lesson.objects.all()
 
@@ -127,6 +134,38 @@ class Command(BaseCommand):
             except:
                 pass
 
+    def create_lessons(self):
+        for data in lessons:
+            try:
+                Lesson.objects.create(
+                    tutor=data["tutor"],
+                    student=data["student"],
+                    subject_id=data["subject_id"],
+                    term_id=data["term_id"],
+                    frequency=data["frequency"],
+                    duration=data["duration"],
+                    start_date=data["start_date"],
+                    price_per_lesson=data["price_per_lesson"]
+                )
+                print("lesson added.")
+            except:
+                pass
+
+    def create_lesson_status(self):
+        for data in lesson_status:
+            try:
+                LessonStatus.objects.create(
+                    lesson_id=data['lesson_id'],
+                    date=data['date'],
+                    time=data['time'],
+                    status=data['status'],
+                    feedback=data['feedback'],
+                    invoiced=False
+                )
+                print("one lesson_status added.")
+            except:
+                pass
+              
     def generate_random_lessons(self):
         lesson_count = Lesson.objects.count()
         while lesson_count < self.LESSON_COUNT:
@@ -209,7 +248,36 @@ def create_email(first_name, last_name):
     return first_name + '.' + last_name + '@example.org'
 
 def create_other_defaults():
+
+    global lessons, lesson_status
+    tutors = Tutor.objects.all()
+    students = Student.objects.all()
+    lessons = [
+        {
+            'tutor': choice(tutors),
+            'student': choice(students),
+            'subject_id': Subject.objects.get(subject_id='2'),
+            'term_id': Term.objects.get(term_id='1'),
+            'frequency': 'W',
+            'duration': timedelta(hours=2, minutes=30),
+            'start_date': "2024-09-01",
+            'price_per_lesson': 20
+        },
+        {
+            'tutor': choice(tutors),
+            'student': choice(students),
+            'subject_id': Subject.objects.get(subject_id='2'),
+            'term_id': Term.objects.get(term_id='2'),
+            'frequency': 'M',
+            'duration': timedelta(hours=2, minutes=30),
+            'start_date': "2025-02-01",
+            'price_per_lesson': 30
+        }
+    ]
+    print("lessons added.")
+    
     global lesson_status
+    
     all_lessons = Lesson.objects.all()
     lesson_status = [
         {'lesson_id': choice(all_lessons),

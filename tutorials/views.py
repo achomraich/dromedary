@@ -19,10 +19,6 @@ from tutorials.models import Lesson, LessonStatus, Tutor
 def dashboard(request):
     """Display the current user's dashboard."""
     current_user = request.user
-    if hasattr(request.user, 'admin_profile'):
-        return render(request, 'adminDashboard.html', {'user': current_user})
-
-    current_user = request.user
     return render(request, 'dashboard.html', {'user': current_user})
 
 
@@ -159,17 +155,27 @@ class SignUpView(LoginProhibitedMixin, FormView):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
 
-class AdminDashboard(View):
+class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
-        if 'terms' in request.path:
-            return self.terms_list(request)
-        elif lesson_id:
+        current_user = request.user
+        if lesson_id:
             return self.lesson_detail(request, lesson_id)
+        if hasattr(current_user, 'admin_profile'):
+            return self.admin_lessons_list(request)
         else:
-            return self.lessons_list(request)
+            return self.lessons_list(request, request.user.id)
 
-    def lessons_list(self, request):
+    def lessons_list(self, request, user_id):
+        """Display lessons for admin"""
+        if hasattr(request.user, 'student_profile'):
+            self.list_of_lessons = Lesson.objects.filter(student=user_id)
+        else:
+            self.list_of_lessons = Lesson.objects.filter(tutor=user_id)
+
+        return render(request, 'lessons_list.html', {"list_of_lessons": self.list_of_lessons})
+
+    def admin_lessons_list(self, request):
         """Display lessons for admin"""
         #print("problem")
         list_of_lessons = Lesson.objects.all()

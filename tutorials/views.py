@@ -12,7 +12,8 @@ from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tutorials.helpers import login_prohibited
 
-from tutorials.models import Lesson, LessonStatus
+from tutorials.models import Lesson, LessonStatus, Tutor
+
 
 @login_required
 def dashboard(request):
@@ -176,7 +177,9 @@ class ViewLessons(View):
 
     def admin_lessons_list(self, request):
         """Display lessons for admin"""
+        #print("problem")
         list_of_lessons = Lesson.objects.all()
+        #print(list_of_lessons)
         return render(request, 'lessons_list.html', {"list_of_lessons": list_of_lessons})
 
     def lesson_detail(self, request, lesson_id):
@@ -188,3 +191,15 @@ class ViewLessons(View):
         else:
             context = {"lessons": lessonStatus}
             return render(request, 'lessons_details.html', context)
+
+
+
+class AdminTutors(View):
+    def get(self, request):
+        return self.tutors_list(request)
+
+    def tutors_list(self, request):
+        """Display tutors for admin"""
+        list_of_tutors = Tutor.objects.all()
+        context = {"tutors": list_of_tutors}
+        return render(request, 'tutors_list.html', context)

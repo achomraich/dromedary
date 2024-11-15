@@ -182,3 +182,24 @@ class TutorReviews(models.Model):
     text = models.CharField(max_length=255)
     date = models.DateField()
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
+    
+class LessonRequest(models.model):
+    lesson_id = models.AutoField(primary_key=True)
+    SUBJECTS = {
+        'Python',
+        'C++',
+        'Java',
+    }
+    subject = models.CharField(max_length=10, choices=SUBJECTS)
+    lesson_time = models.TimeField()
+    DAYS = {
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+    }
+    lesson_day = models.Charfield(max_length=9, choices=DAYS)
+    lesson_length = models.IntegerField()

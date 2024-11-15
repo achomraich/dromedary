@@ -39,5 +39,6 @@ urlpatterns = [
     path('dashboard/lessons/', views.AdminDashboard.as_view(), name='lessons_list'),
     path('dashboard/tutors/', views.AdminTutors.as_view(), name='tutors_list'),
     path('dashboard/lessons/<int:lesson_id>/', views.AdminDashboard.as_view(), name='lesson_detail'),
+    path('requests/', views.lesson_requests, name='requests'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

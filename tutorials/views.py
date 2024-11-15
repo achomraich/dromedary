@@ -34,6 +34,14 @@ def student_dashboard(request):
     current_user = request.user
     return render(request, 'student/student_dashboard.html', {'user': current_user})
 
+@login_required
+def lesson_requests(request):
+    """Display the lesson requests to the current user."""
+
+    current_user = request.user
+    return render(request, 'requests.html', {'user': current_user})
+
+
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""

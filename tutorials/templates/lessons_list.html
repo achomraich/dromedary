@@ -1,9 +1,9 @@
 {% extends 'base_content.html' %}
 {% block content %}
     <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
+    <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary mb-3">Back</a>
 
-        <h1>Lessons list:</h1>
+        <h1>Lessons</h1>
         {% load lesson_filters %}
         <table class="table table-striped">
             <thead>

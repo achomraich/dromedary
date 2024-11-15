@@ -4,7 +4,8 @@
   <div class="row">
     <div class="col-12">
       <h1>Lesson Requests</h1>
-      <table>
+      <table class="table table-striped">
+      <thead>
         <tr>
           <th>Lesson ID</th>
           <th>Subject</th>
@@ -12,14 +13,18 @@
           <th>Day</th>
           <th>Length</th>
         </tr>
+      </thead>
+      <tbody>
         {% for request in requests %}
-        <tr>
-          <td>{{ request.lesson_id}}</td>
-          <td>{{ request.subject }}</td>
-          <td>{{ request.lesson_time }}</td>
-          <td>{{ request.lesson_day }}</td>
-          <td>{{ request.lesson_length }}</td>
-        </tr>
+            <tr>
+              <td>{{ request.lesson_id}}</td>
+              <td>{{ request.subject }}</td>
+              <td>{{ request.lesson_time }}</td>
+              <td>{{ request.lesson_day }}</td>
+              <td>{{ request.lesson_length }}</td>
+            </tr>
+          {% endfor %}
+      </tbody>
       </table>
     </div>
   </div>

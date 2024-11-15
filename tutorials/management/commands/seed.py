@@ -22,7 +22,7 @@ term_dates = [
 subjects = [
     {'name': 'C++'},
     {'name': 'Java'},
-    {'name': 'Python'}
+    {'name': 'Python'},
     {'name': 'JS'},
     {'name': 'Python'},
     {'name': 'TypeScript'},

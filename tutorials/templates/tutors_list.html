@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Tutors</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
+{% extends 'base_content.html' %}
+{% block content %}
     <div class="container">
+    <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary mb-3">Back</a>
         <h1>Tutors</h1>
         <table class="table table-striped">
             <thead>
@@ -27,5 +22,4 @@
             </tbody>
         </table>
     </div>
-</body>
-</html>
+{% endblock %}

@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Lessons List</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
+{% extends 'base_content.html' %}
+{% block content %}
     <div class="container">
+    <a href="{% url 'lessons_list' %}" class="btn btn-secondary mb-3">Back</a>
+
         <h1>Lessons list:</h1>
 
         <table class="table table-striped">
@@ -30,5 +26,5 @@
             </tbody>
         </table>
     </div>
-</body>
-</html>
+
+{% endblock %}

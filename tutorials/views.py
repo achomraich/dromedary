@@ -12,7 +12,10 @@ from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
-
+from .models import Invoice
+from django.views.decorators.http import require_POST
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
 from tutorials.models import Student, Admin, Tutor
 from tutorials.models import Lesson, LessonStatus, Tutor
 
@@ -179,6 +182,49 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+
+def invoice_management(request):
+        if request.method == 'POST':
+            # Process the form to create a new invoice
+            student_name = request.POST.get('student')
+            amount = request.POST.get('amount')
+            due_date = request.POST.get('due_date')
+            is_paid = request.POST.get('is_paid') == 'on'
+
+            # Create a new Invoice
+            Invoice.objects.create(
+                student=student_name,
+                amount=amount,
+                due_date=due_date,
+                is_paid=is_paid
+            )
+            return redirect('invoice_management')  # Redirect to avoid form resubmission
+
+        # Fetch existing invoices to display
+        invoices = Invoice.objects.all()
+        return render(request, 'invoice_management.html', {'invoices': invoices})
+
+@require_POST
+def create_invoice(request):
+    # Extract form data
+    student_username = request.POST.get('student')
+    amount = request.POST.get('amount')
+    due_date = request.POST.get('due_date')
+    is_paid = request.POST.get('is_paid') == 'on'
+
+    # Get the User instance based on the provided student username
+    student = get_object_or_404(User, username=student_username)
+
+    # Create a new Invoice record
+    Invoice.objects.create(
+        student=student,  # Use the User instance here
+        amount=amount,
+        due_date=due_date,
+        is_paid=is_paid
+    )
+
+    # Redirect back to the invoice management page
+    return redirect('invoice_management')
 
 class StudentsView(View):
 

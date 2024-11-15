@@ -3,6 +3,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
 
+from django.conf import settings
+from django.utils import timezone
+from django.core.validators import MinValueValidator
+
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
     id = models.BigAutoField(primary_key=True)
@@ -37,9 +41,33 @@ class User(AbstractUser):
 
     def mini_gravatar(self):
         """Return a URL to a miniature version of the user's gravatar."""
-
+        
         return self.gravatar(size=60)
 
+class Invoice(models.Model):
+        # Reference to the student (user) who is receiving the invoice
+        student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='invoices')
+
+        # Invoice amount with a minimum value validator to ensure it is positive number
+        amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+
+        # Due date for the payment
+        due_date = models.DateField()
+
+        # Payment status, marking whether the invoice has been paid
+        is_paid = models.BooleanField(default=False)
+
+        # Timestamp for when the invoice was created and last updated
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+
+        def __str__(self):
+            # Representation of the invoice in admin or shell views
+            return f"Invoice for {self.student.username} - Amount: {self.amount}"
+
+        def is_overdue(self):
+            # Helper method to check if the invoice is overdue
+            return not self.is_paid and self.due_date < timezone.now().date()
 
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')

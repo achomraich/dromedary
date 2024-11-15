@@ -23,6 +23,11 @@ subjects = [
     {'name': 'C++'},
     {'name': 'Java'},
     {'name': 'Python'}
+    {'name': 'JS'},
+    {'name': 'Python'},
+    {'name': 'TypeScript'},
+    {'name': 'Scala'},
+    {'name': 'Ruby'}
 ]
 
 lessons = []
@@ -33,6 +38,7 @@ class Command(BaseCommand):
     """Build automation command to seed the database."""
 
     USER_COUNT = 300
+    LESSON_COUNT = 100
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -46,6 +52,7 @@ class Command(BaseCommand):
 
     def create_other_models(self):
         create_other_defaults()
+        # create_other_defaults()
 
         self.create_terms()
         self.terms = Term.objects.all()
@@ -57,6 +64,10 @@ class Command(BaseCommand):
         self.lessons = Lesson.objects.all()
 
         self.create_lesson_status()
+        self.generate_random_lessons()
+        self.lessons = Lesson.objects.all()
+
+        self.generate_random_lesson_status()
         self.lesson_status = LessonStatus.objects.all()
 
     def create_users(self):
@@ -154,6 +165,81 @@ class Command(BaseCommand):
                 print("one lesson_status added.")
             except:
                 pass
+              
+    def generate_random_lessons(self):
+        lesson_count = Lesson.objects.count()
+        while lesson_count < self.LESSON_COUNT:
+            print(f"Seeding lesson {lesson_count}/{self.LESSON_COUNT}", end='\r')
+            self.generate_lesson()
+            lesson_count = Lesson.objects.count()
+        print("Lesson seeding complete.      ")
+
+    def generate_lesson(self):
+        tutors = Tutor.objects.all()
+        students = Student.objects.all()
+        all_subjects = Subject.objects.all()
+        terms = Term.objects.all()
+        selectedTerm = choice(terms)
+
+        tutor = choice(tutors)
+        student = choice(students)
+        subject_id = choice(all_subjects)
+        term_id = selectedTerm
+        frequency = choice(['W', 'M'])
+        duration = timedelta(hours=choice([1,2]), minutes=choice([00,15,30,45]))
+        start_date = selectedTerm.start_date
+        price_per_lesson = choice([20, 30, 40, 50])
+        self.create_lesson({'tutor': tutor, 'student': student, 'subject_id': subject_id, 'term_id': term_id, 'frequency': frequency, 'duration': duration, 'start_date': start_date, 'price_per_lesson': price_per_lesson})
+
+    def create_lesson(self, data):
+        try:
+            Lesson.objects.create(
+                tutor=data["tutor"],
+                student=data["student"],
+                subject_id=data["subject_id"],
+                term_id=data["term_id"],
+                frequency=data["frequency"],
+                duration=data["duration"],
+                start_date=data["start_date"],
+                price_per_lesson=data["price_per_lesson"]
+            )
+        except:
+            pass
+
+    def generate_random_lesson_status(self):
+        lesson_count = Lesson.objects.count()
+        all_lessons = Lesson.objects.all()
+        lessons_with_status_count = 0
+        while lessons_with_status_count < lesson_count:
+            print(f"Seeding lesson status {lessons_with_status_count}/{lesson_count}", end='\r')
+            self.generate_lesson_status({'lesson_id': all_lessons[lessons_with_status_count]})
+            lessons_with_status_count += 1
+        print("Lesson status seeding complete.      ")
+
+    def generate_lesson_status(self, data):
+        lesson_id = data["lesson_id"]
+
+        term = lesson_id.term_id
+        # Time and date not implemented randomization
+        date = term.start_date
+        time = "15:30:00"
+
+        status = choice(['Scheduled', 'Completed', 'Cancelled'])
+        feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
+        self.create_lesson_status({'lesson_id': lesson_id, 'date': date, 'time': time, 'status': status, 'feedback': feedback})
+
+    def create_lesson_status(self, data):
+        try:
+            LessonStatus.objects.create(
+                lesson_id=data['lesson_id'],
+                date=data['date'],
+                time=data['time'],
+                status=data['status'],
+                feedback=data['feedback'],
+                invoiced=False
+            )
+        except:
+            pass
 
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
@@ -162,6 +248,7 @@ def create_email(first_name, last_name):
     return first_name + '.' + last_name + '@example.org'
 
 def create_other_defaults():
+
     global lessons, lesson_status
     tutors = Tutor.objects.all()
     students = Student.objects.all()
@@ -188,6 +275,9 @@ def create_other_defaults():
         }
     ]
     print("lessons added.")
+    
+    global lesson_status
+    
     all_lessons = Lesson.objects.all()
     lesson_status = [
         {'lesson_id': choice(all_lessons),

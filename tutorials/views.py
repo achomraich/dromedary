@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect, render, get_object_or_404
+from django.http import Http404, HttpResponseForbidden
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
@@ -13,11 +14,11 @@ from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 
 from tutorials.models import Student, Admin, Tutor
+from tutorials.models import Lesson, LessonStatus, Tutor
 
 @login_required
 def dashboard(request):
     """Display the current user's dashboard."""
-
     current_user = request.user
     return render(request, 'dashboard.html', {'user': current_user})
 
@@ -171,8 +172,6 @@ class SignUpView(LoginProhibitedMixin, FormView):
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
-
-
 class StudentsView(View):
 
     def get(self, request, student_id=None):
@@ -228,3 +227,52 @@ class StudentsView(View):
         print("deleted")
         messages.success(request, "Student deleted successfully.")
         return redirect('students_list')
+
+class ViewLessons(View):
+
+    def get(self, request, lesson_id=None):
+        current_user = request.user
+        if lesson_id:
+            return self.lesson_detail(request, lesson_id)
+        if hasattr(current_user, 'admin_profile'):
+            return self.admin_lessons_list(request)
+        else:
+            return self.lessons_list(request, request.user.id)
+
+    def lessons_list(self, request, user_id):
+        """Display lessons for admin"""
+        if hasattr(request.user, 'student_profile'):
+            self.list_of_lessons = Lesson.objects.filter(student=user_id)
+        else:
+            self.list_of_lessons = Lesson.objects.filter(tutor=user_id)
+
+        return render(request, 'lessons_list.html', {"list_of_lessons": self.list_of_lessons})
+
+    def admin_lessons_list(self, request):
+        """Display lessons for admin"""
+        #print("problem")
+        list_of_lessons = Lesson.objects.all()
+        #print(list_of_lessons)
+        return render(request, 'lessons_list.html', {"list_of_lessons": list_of_lessons})
+
+    def lesson_detail(self, request, lesson_id):
+        """Display each lesson status for admin"""
+        try:
+            lessonStatus = LessonStatus.objects.filter(lesson_id=lesson_id)
+        except Exception as e:
+            raise Http404(f"Could not find lesson with primary key {lesson_id}")
+        else:
+            context = {"lessons": lessonStatus}
+            return render(request, 'lessons_details.html', context)
+
+
+
+class AdminTutors(View):
+    def get(self, request):
+        return self.tutors_list(request)
+
+    def tutors_list(self, request):
+        """Display tutors for admin"""
+        list_of_tutors = Tutor.objects.all()
+        context = {"tutors": list_of_tutors}
+        return render(request, 'tutors_list.html', context)

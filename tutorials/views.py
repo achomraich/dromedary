@@ -321,12 +321,59 @@ class ViewLessons(View):
 
 
 
-class AdminTutors(View):
-    def get(self, request):
-        return self.tutors_list(request)
+class TutorsView(View):
+    def get(self, request, tutor_id=None):
+        if tutor_id:
+            return self.tutor_details(request, tutor_id)
+        else:
+            return self.get_tutors_list(request)
 
-    def tutors_list(self, request):
-        """Display tutors for admin"""
-        list_of_tutors = Tutor.objects.all()
-        context = {"tutors": list_of_tutors}
-        return render(request, 'tutors_list.html', context)
+    def post(self, request, tutor_id=None):
+        if tutor_id:
+            tutor = get_object_or_404(Tutor, user__id=tutor_id)
+
+            if 'edit' in request.POST:
+                return self.edit_tutor(request, tutor)
+            elif 'delete' in request.POST:
+                return self.delete_tutor(request, tutor)
+
+        return redirect('tutors_list')
+
+    def get_tutors_list(self, request):
+        tutors_list = Tutor.objects.all()
+        pagination = Paginator(tutors_list, 20)
+
+        page_number = request.GET.get('page')
+        page_obj = pagination.get_page(page_number)
+        return render(request, 'admin/tutors/tutors_list.html', {'page_obj': page_obj})
+
+    def tutor_details(self, request, tutor_id):
+        tutor = get_object_or_404(Tutor, user__id=tutor_id)
+
+        if request.path.endswith('edit/'):
+            return self.edit_form(request, tutor)
+        else:
+            return render(request, 'admin/tutors/tutor_details.html', {'tutor' : tutor})
+
+    def edit_form(self, request, tutor):
+        form = UserForm(instance=tutor.user)
+        return render(request, 'admin/tutors/edit_tutor.html', {'form' : form})
+
+    def edit_tutor(self, request, tutor):
+        form = UserForm(request.POST, instance=tutor.user)
+
+        if form.is_valid():
+            form.save()
+            print("updated")
+            messages.success(request, "Tutor details updated successfully.")
+            return redirect('tutor_details', tutor_id=tutor.user.id)
+        else:
+            return self.edit_form(request, tutor)
+
+    def delete_tutor(self, request, tutor):
+        tutor.delete()
+        print("deleted")
+        messages.success(request, "Tutor deleted successfully.")
+        return redirect('tutors_list')
+
+

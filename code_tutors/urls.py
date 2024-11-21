@@ -38,8 +38,11 @@ urlpatterns = [
     path('dashboard/students/<int:student_id>/', views.StudentsView.as_view(), name='student_details'),
     path('dashboard/students/<int:student_id>/edit/', views.StudentsView.as_view(), name='student_edit'),
     path('dashboard/students/<int:student_id>/delete/', views.StudentsView.as_view(), name='student_delete'),
+    path('dashboard/tutors/', views.TutorsView.as_view(), name='tutors_list'),
+    path('dashboard/tutors/<int:tutor_id>/', views.TutorsView.as_view(), name='tutor_details'),
+    path('dashboard/tutors/<int:tutor_id>/edit/', views.TutorsView.as_view(), name='tutor_edit'),
+    path('dashboard/tutors/<int:tutor_id>/delete/', views.TutorsView.as_view(), name='tutor_delete'),
     path('dashboard/lessons/', views.ViewLessons.as_view(), name='lessons_list'),
-    path('dashboard/tutors/', views.AdminTutors.as_view(), name='tutors_list'),
     path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
     path('requests/', views.lesson_requests, name='requests'),
 ]

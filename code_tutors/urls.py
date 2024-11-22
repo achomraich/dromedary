@@ -24,23 +24,25 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
-    path('dashboard/tutor/', views.tutor_dashboard, name='tutor_dashboard'),
-    path('dashboard/student/', views.student_dashboard, name='student_dashboard'),
     path('log_in/', views.LogInView.as_view(), name='log_in'),
     path('log_out/', views.log_out, name='log_out'),
     path('password/', views.PasswordView.as_view(), name='password'),
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
+
     path('invoices/', views.invoice_management, name='invoice_management'),
     path('invoices/create/', views.create_invoice, name='create_invoice'),  # URL pattern for creating invoices
-    path('dashboard/students/', views.StudentsView.as_view(), name='students_list'),
-    path('dashboard/students/<int:student_id>/', views.StudentsView.as_view(), name='student_details'),
-    path('dashboard/students/<int:student_id>/edit/', views.StudentsView.as_view(), name='student_edit'),
-    path('dashboard/students/<int:student_id>/delete/', views.StudentsView.as_view(), name='student_delete'),
-    path('dashboard/lessons/', views.ViewLessons.as_view(), name='lessons_list'),
-    path('dashboard/tutors/', views.AdminTutors.as_view(), name='tutors_list'),
-    path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
+
+    path('dashboard/my_students/', views.StudentsView.as_view(), name='students_list'),
+    path('dashboard/my_students/<int:student_id>/', views.StudentsView.as_view(), name='student_details'),
+    path('dashboard/my_students/<int:student_id>/edit/', views.StudentsView.as_view(), name='student_edit'),
+    path('dashboard/my_students/<int:student_id>/delete/', views.StudentsView.as_view(), name='student_delete'),
+
+    path('dashboard/manage_tutors/', views.TutorsView.as_view(), name='tutors_list'),
+
+    path('dashboard/manage_lessons/', views.ViewLessons.as_view(), name='lessons_list'),
+    path('dashboard/manage_lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
+
     path('requests/', views.lesson_requests, name='requests'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

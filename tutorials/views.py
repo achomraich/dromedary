@@ -21,21 +21,13 @@ from tutorials.models import Lesson, LessonStatus, Tutor
 
 @login_required
 def dashboard(request):
-    """Display the current user's dashboard."""
     current_user = request.user
-    return render(request, 'dashboard.html', {'user': current_user})
-
-def admin_dashboard(request):
-    current_user = request.user
-    return render(request, 'admin/admin_dashboard.html', {'user': current_user})
-
-def tutor_dashboard(request):
-    current_user = request.user
-    return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
-
-def student_dashboard(request):
-    current_user = request.user
-    return render(request, 'student/student_dashboard.html', {'user': current_user})
+    if hasattr(current_user, 'admin_profile'):
+        return render(request, 'admin/admin_dashboard.html', {'user': current_user})
+    if hasattr(current_user, 'tutor_profile'):
+        return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
+    else:
+        return render(request, 'student/student_dashboard.html', {'user': current_user})
 
 @login_required
 def lesson_requests(request):
@@ -99,12 +91,6 @@ class LogInView(LoginProhibitedMixin, View):
         user = form.get_user()
         if user is not None:
             login(request, user)
-            if hasattr(user, 'admin_profile'):
-                return redirect('admin_dashboard')
-            elif hasattr(user, 'tutor_profile'):
-                return redirect('tutordashboard')
-            elif hasattr(user, 'student_profile'):
-                return redirect('student_dashboard')
             return redirect(self.next)
         messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
         return self.render()
@@ -202,7 +188,7 @@ def invoice_management(request):
 
         # Fetch existing invoices to display
         invoices = Invoice.objects.all()
-        return render(request, 'invoice_management.html', {'invoices': invoices})
+        return render(request, 'invoices/invoice_management.html', {'invoices': invoices})
 
 @require_POST
 def create_invoice(request):
@@ -232,7 +218,7 @@ class StudentsView(View):
         if student_id:
             return self.student_details(request, student_id)
         else:
-            return self.get_students_list(request)
+            return self.get_students(request, request.user.id)
         
     def post(self, request, student_id=None):
         if student_id:
@@ -245,13 +231,20 @@ class StudentsView(View):
 
         return redirect('students_list')
 
-    def get_students_list(self, request):
-        students_list = Student.objects.all()
-        paginator = Paginator(students_list, 20)
+    def get_students(self, request, tutor_id=None):
+        if hasattr(request.user, 'admin_profile'):
+            self.list_of_students = Student.objects.all()
+        elif hasattr(request.user, 'tutor_profile'):
+            lessons = Lesson.objects.filter(tutor_id=tutor_id)
+            self.list_of_students = Student.objects.filter(user_id__in=lessons.values('student_id'))
 
+        paginator = Paginator(self.list_of_students, 20)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        return render(request, 'admin/students/students_list.html', {'page_obj': page_obj})
+        if hasattr(request.user, 'admin_profile'):
+            return render(request, 'admin/manage_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
+        elif hasattr(request.user, 'tutor_profile'):
+            return render(request, 'tutor/my_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
 
     def student_details(self, request, student_id):
         student = get_object_or_404(Student, user__id=student_id)
@@ -259,11 +252,11 @@ class StudentsView(View):
         if request.path.endswith('edit/'):
             return self.edit_form(request, student)
         else:
-            return render(request, 'admin/students/student_details.html', {'student' : student})
+            return render(request, 'admin/manage_students/student_details.html', {'student' : student})
         
     def edit_form(self, request, student):
         form = UserForm(instance=student.user)
-        return render(request, 'admin/students/edit_student.html', {'form' : form})
+        return render(request, 'admin/manage_students/edit_student.html', {'form' : form})
     
     def edit_student(self, request, student):
         form = UserForm(request.POST, instance=student.user)
@@ -288,26 +281,15 @@ class ViewLessons(View):
         current_user = request.user
         if lesson_id:
             return self.lesson_detail(request, lesson_id)
+
         if hasattr(current_user, 'admin_profile'):
-            return self.admin_lessons_list(request)
+            self.list_of_lessons = Lesson.objects.all()
+        elif hasattr(request.user, 'student_profile'):
+            self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
         else:
-            return self.lessons_list(request, request.user.id)
+            self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
+        return render(request, 'shared/lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons})
 
-    def lessons_list(self, request, user_id):
-        """Display lessons for admin"""
-        if hasattr(request.user, 'student_profile'):
-            self.list_of_lessons = Lesson.objects.filter(student=user_id)
-        else:
-            self.list_of_lessons = Lesson.objects.filter(tutor=user_id)
-
-        return render(request, 'lessons_list.html', {"list_of_lessons": self.list_of_lessons})
-
-    def admin_lessons_list(self, request):
-        """Display lessons for admin"""
-        #print("problem")
-        list_of_lessons = Lesson.objects.all()
-        #print(list_of_lessons)
-        return render(request, 'lessons_list.html', {"list_of_lessons": list_of_lessons})
 
     def lesson_detail(self, request, lesson_id):
         """Display each lesson status for admin"""
@@ -317,16 +299,27 @@ class ViewLessons(View):
             raise Http404(f"Could not find lesson with primary key {lesson_id}")
         else:
             context = {"lessons": lessonStatus}
-            return render(request, 'lessons_details.html', context)
+            return render(request, 'shared/lessons/lessons_details.html', context)
 
+class TutorsView(View):
 
-
-class AdminTutors(View):
     def get(self, request):
-        return self.tutors_list(request)
+        if hasattr(request.user, 'admin_profile'):
+            return self.tutors_list(request)
+        elif hasattr(request.user, 'student_profile'):
+            return self.tutors_list(request, request.user.id)
 
-    def tutors_list(self, request):
-        """Display tutors for admin"""
-        list_of_tutors = Tutor.objects.all()
-        context = {"tutors": list_of_tutors}
-        return render(request, 'tutors_list.html', context)
+    def tutors_list(self, request, student_id=None):
+        """Display tutors for admin and student"""
+        if student_id:
+            lessons = Lesson.objects.filter(student_id=student_id)
+            self.list_of_tutors = Tutor.objects.filter(user_id__in=lessons.values('tutor_id'))
+        else:
+            self.list_of_tutors = Tutor.objects.all()
+
+        context = {"tutors": self.list_of_tutors}
+        if hasattr(request.user, 'admin_profile'):
+            return render(request, 'admin/manage_tutors/tutor_list.html', context)
+        elif hasattr(request.user, 'student_profile'):
+            return render(request, 'student/my_tutors/tutor_list.html', context)
+

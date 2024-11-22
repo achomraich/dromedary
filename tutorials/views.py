@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect, render, get_object_or_404
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
@@ -274,6 +274,7 @@ class StudentsView(View):
             messages.success(request, "Student details updated successfully.")
             return redirect('student_details', student_id=student.user.id)
         else:
+            print("did not update")
             return self.edit_form(request, student)
     
     def delete_student(self, request, student):
@@ -282,6 +283,61 @@ class StudentsView(View):
         messages.success(request, "Student deleted successfully.")
         return redirect('students_list')
 
+class TutorsView(View):
+    def get(self, request, tutor_id=None):
+        if tutor_id:
+            return self.tutor_details(request, tutor_id)
+        else:
+            return self.get_tutors_list(request)
+
+    def post(self, request, tutor_id=None):
+        if tutor_id:
+            tutor = get_object_or_404(Tutor, user__id=tutor_id)
+
+            if 'edit' in request.POST:
+                return self.edit_tutor(request, tutor)
+            elif 'delete' in request.POST:
+                return self.delete_tutor(request, tutor)
+
+        return redirect('tutors_list')
+
+    def get_tutors_list(self, request):
+        tutors_list = Tutor.objects.all()
+        pagination = Paginator(tutors_list, 20)
+
+        page_number = request.GET.get('page')
+        page_obj = pagination.get_page(page_number)
+        return render(request, 'admin/tutors/tutors_list.html', {'page_obj': page_obj})
+
+    def tutor_details(self, request, tutor_id):
+        tutor = get_object_or_404(Tutor, user__id=tutor_id)
+
+        if request.path.endswith('edit/'):
+            return self.edit_form(request, tutor)
+        else:
+            return render(request, 'admin/tutors/tutor_details.html', {'tutor' : tutor})
+
+    def edit_tutor(self, request, tutor):
+        if request.method == "POST":
+            form = UserForm(request.POST, instance=tutor.user)
+            print("form")
+            if form.is_valid():
+                try:
+                    form.save()
+                except:
+                    form.add_error(None, "It was not possible to edit this user.")
+                else:
+                    path = reverse('tutors_list')
+                    return HttpResponseRedirect(path)
+        else:
+            form = UserForm(instance=tutor.user)
+        return render(request, 'admin/tutors/edit_tutor.html', {'form' : form, 'tutor' : tutor.user})
+
+    def delete_tutor(self, request, tutor):
+        tutor.delete()
+        print("deleted")
+        messages.success(request, "Tutor deleted successfully.")
+        return redirect('tutors_list')
 class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
@@ -321,59 +377,6 @@ class ViewLessons(View):
 
 
 
-class TutorsView(View):
-    def get(self, request, tutor_id=None):
-        if tutor_id:
-            return self.tutor_details(request, tutor_id)
-        else:
-            return self.get_tutors_list(request)
 
-    def post(self, request, tutor_id=None):
-        if tutor_id:
-            tutor = get_object_or_404(Tutor, user__id=tutor_id)
-
-            if 'edit' in request.POST:
-                return self.edit_tutor(request, tutor)
-            elif 'delete' in request.POST:
-                return self.delete_tutor(request, tutor)
-
-        return redirect('tutors_list')
-
-    def get_tutors_list(self, request):
-        tutors_list = Tutor.objects.all()
-        pagination = Paginator(tutors_list, 20)
-
-        page_number = request.GET.get('page')
-        page_obj = pagination.get_page(page_number)
-        return render(request, 'admin/tutors/tutors_list.html', {'page_obj': page_obj})
-
-    def tutor_details(self, request, tutor_id):
-        tutor = get_object_or_404(Tutor, user__id=tutor_id)
-
-        if request.path.endswith('edit/'):
-            return self.edit_form(request, tutor)
-        else:
-            return render(request, 'admin/tutors/tutor_details.html', {'tutor' : tutor})
-
-    def edit_form(self, request, tutor):
-        form = UserForm(instance=tutor.user)
-        return render(request, 'admin/tutors/edit_tutor.html', {'form' : form})
-
-    def edit_tutor(self, request, tutor):
-        form = UserForm(request.POST, instance=tutor.user)
-
-        if form.is_valid():
-            form.save()
-            print("updated")
-            messages.success(request, "Tutor details updated successfully.")
-            return redirect('tutor_details', tutor_id=tutor.user.id)
-        else:
-            return self.edit_form(request, tutor)
-
-    def delete_tutor(self, request, tutor):
-        tutor.delete()
-        print("deleted")
-        messages.success(request, "Tutor deleted successfully.")
-        return redirect('tutors_list')
 
 

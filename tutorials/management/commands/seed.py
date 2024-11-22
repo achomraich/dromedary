@@ -51,19 +51,14 @@ class Command(BaseCommand):
         self.create_other_models()
 
     def create_other_models(self):
-        create_other_defaults()
-        # create_other_defaults()
-
         self.create_terms()
         self.terms = Term.objects.all()
 
         self.create_subjects()
         self.subjects = Subject.objects.all()
 
-        self.create_lessons()
         self.lessons = Lesson.objects.all()
 
-        self.create_lesson_status()
         self.generate_random_lessons()
         self.lessons = Lesson.objects.all()
 
@@ -245,52 +240,8 @@ def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
 
 def create_email(first_name, last_name):
-    return first_name + '.' + last_name + '@example.org'
+    return clean_and_lowercase(first_name) + '.' + clean_and_lowercase(last_name) + '@example.org'
 
-def create_other_defaults():
+def clean_and_lowercase(input_string):
+    return ''.join(filter(str.isalpha, input_string)).lower()
 
-    global lessons, lesson_status
-    tutors = Tutor.objects.all()
-    students = Student.objects.all()
-    lessons = [
-        {
-            'tutor': choice(tutors),
-            'student': choice(students),
-            'subject_id': Subject.objects.get(subject_id='2'),
-            'term_id': Term.objects.get(term_id='1'),
-            'frequency': 'W',
-            'duration': timedelta(hours=2, minutes=30),
-            'start_date': "2024-09-01",
-            'price_per_lesson': 20
-        },
-        {
-            'tutor': choice(tutors),
-            'student': choice(students),
-            'subject_id': Subject.objects.get(subject_id='2'),
-            'term_id': Term.objects.get(term_id='2'),
-            'frequency': 'M',
-            'duration': timedelta(hours=2, minutes=30),
-            'start_date': "2025-02-01",
-            'price_per_lesson': 30
-        }
-    ]
-    print("lessons added.")
-    
-    global lesson_status
-    
-    all_lessons = Lesson.objects.all()
-    lesson_status = [
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "15:30:00", 'status': "Completed", 'feedback': ''},
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "14:00:00", 'status': "Pending", 'feedback': ''},
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "19:30:00", 'status': "Pending", 'feedback': ''},
-        {'lesson_id': choice(all_lessons),
-         'date': "2024-10-05", 'time': "09:00:00", 'status': "Pending", 'feedback': ''}
-    ]
-    print("lesson_status added.")

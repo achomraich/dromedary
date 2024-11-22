@@ -19,8 +19,8 @@
             <tbody>
                 {% for lesson in list_of_lessons %}
                     <tr onclick="window.location.href='{% url 'lesson_detail' lesson.lesson_id %}'" style="cursor: pointer;">
-                        <td>{{ lesson.student.user.username }}</td>
-                        <td>{{ lesson.tutor.user.username }}</td>
+                        <td>{{ lesson.student.user.full_name }}</td>
+                        <td>{{ lesson.tutor.user.full_name }}</td>
                         <td>{{ lesson.subject_id.name }}</td>
                         <td>{{ lesson.term_id.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>

@@ -212,133 +212,113 @@ def create_invoice(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-class StudentsView(View):
+class EntityView(View):
+    model = None
+    list_admin = None
+    list_user = None
+    details = None
+    edit = None
+    redirect_url = None
 
-    def get(self, request, student_id=None):
-        if student_id:
-            return self.student_details(request, student_id)
+    def get(self, request, *args, **kwargs):
+        entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
+        if entity_id:
+            return self.entity_details(request, entity_id)
         else:
-            return self.get_students(request, request.user.id)
+            return self.get_entities(request)
         
-    def post(self, request, student_id=None):
-        if student_id:
-            student = get_object_or_404(Student, user__id=student_id)
+    def post(self, request, entity_id=None):
+        if entity_id:
+            entity = get_object_or_404(self.model, user__id=entity_id)
 
             if 'edit' in request.POST:
-                return self.edit_student(request, student)
+                return self.edit_entity(request, entity)
             elif 'delete' in request.POST:
-                return self.delete_student(request, student)
+                return self.delete_entity(request, entity)
 
-        return redirect('students_list')
+        return redirect(self.redirect_url)
 
-    def get_students(self, request, tutor_id=None):
+    def get_entities(self, request):
+        user = request.user
         if hasattr(request.user, 'admin_profile'):
-            self.list_of_students = Student.objects.all()
-        elif hasattr(request.user, 'tutor_profile'):
-            lessons = Lesson.objects.filter(tutor_id=tutor_id)
-            self.list_of_students = Student.objects.filter(user_id__in=lessons.values('student_id'))
+            entity_list = self.model.objects.all()
+        else:
+            if hasattr(request.user, 'tutor_profile'):
+                field = 'tutor_profile'
+            elif hasattr(request.user, 'student_profile'):
+                field = 'student_profile'
+            lessons = Lesson.objects.filter(**{field + '_id': user.id})
+            if field == 'tutor_profile':
+                entities = 'student_id'
+            else:
+                entities = 'tutor_id'
+            entity_list = self.model.objects.filter(user_id__in=lessons.values(entities))
 
-        paginator = Paginator(self.list_of_students, 20)
+        paginator = Paginator(entity_list, 20)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         if hasattr(request.user, 'admin_profile'):
-            return render(request, 'admin/manage_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
-        elif hasattr(request.user, 'tutor_profile'):
-            return render(request, 'tutor/my_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
+            template = self.list_admin
+        else:
+            template = self.list_user
+        return render(request, template, {'page_obj': page_obj, 'user': user})
 
-    def student_details(self, request, student_id):
-        student = get_object_or_404(Student, user__id=student_id)
+    def entity_details(self, request, entity_id):
+        entity = get_object_or_404(self.model, user__id=entity_id)
 
         if request.path.endswith('edit/'):
-            return self.edit_form(request, student)
+            return self.edit_form(request, entity)
         else:
-            return render(request, 'admin/manage_students/student_details.html', {'student' : student})
+            return render(request, self.details, {self.model.__name__.lower(): entity})
         
-    def edit_form(self, request, student):
-        form = UserForm(instance=student.user)
-        return render(request, 'admin/manage_students/edit_student.html', {'form' : form})
+    def edit_form(self, request, entity):
+        form = UserForm(instance = entity.user)
+        return render(request, self.edit, {'form' : form, self.model.__name__.lower(): entity})
     
-    def edit_student(self, request, student):
-        form = UserForm(request.POST, instance=student.user)
+    def edit_entity(self, request, entity):
+        form = UserForm(request.POST, instance=entity.user)
 
         if form.is_valid():
             form.save()
             print("updated")
             messages.success(request, "Student details updated successfully.")
-            return redirect('student_details', student_id=student.user.id)
+            return redirect(self.redirect_url)
         else:
             print("did not update")
-            return self.edit_form(request, student)
+            return self.edit_form(request, entity)
     
-    def delete_student(self, request, student):
-        student.delete()
+    def delete_student(self, request, entity):
+        entity.delete()
         print("deleted")
         messages.success(request, "Student deleted successfully.")
-        return redirect('students_list')
+        return redirect(self.redirect_url)
+    
+class StudentsView(EntityView):
+    model = Student
 
-class TutorsView(View):
+    list_admin = 'admin/manage_students/students_list.html'
+    list_user = 'tutor/my_students/students_list.html'
+    details = 'admin/manage_students/student_details.html'
+    edit = 'admin/manage_students/edit_student.html'
+    redirect_url = 'students_list'
 
-    def get(self, request, tutor_id=None):
-        if tutor_id:
-            return self.tutor_details(request, tutor_id)
-        else:
-            return self.get_tutors(request, request.user.id)
+    def get(self, request, student_id=None, *args, **kwargs):
+        return super().get(request, student_id=student_id, *args, **kwargs)
 
-    def post(self, request, tutor_id=None):
-        if tutor_id:
-            tutor = get_object_or_404(Tutor, user__id=tutor_id)
 
-            if 'edit' in request.POST:
-                return self.edit_tutor(request, tutor)
-            elif 'delete' in request.POST:
-                return self.delete_tutor(request, tutor)
+class TutorsView(EntityView):
+    model = Tutor
+    #form_class = None
+    list_admin = 'admin/manage_tutors/tutors_list.html'
+    list_user = 'student/my_tutors/tutors_list.html'
+    details = 'admin/manage_tutors/tutor_details.html'
+    edit = 'admin/manage_tutors/edit_tutor.html'
+    redirect_url = 'tutors_list'
 
-        return redirect('tutors_list')
+    def get(self, request, tutor_id=None, *args, **kwargs):
+        return super().get(request, tutor_id=tutor_id, *args, **kwargs)
 
-    def get_tutors(self, request, student_id=None):
-        if hasattr(request.user, 'admin_profile'):
-            self.list_of_tutors = Tutor.objects.all()
-        elif hasattr(request.user, 'student_profile'):
-            lessons = Lesson.objects.filter(student_id=student_id)
-            self.list_of_tutors = Tutor.objects.filter(user_id__in=lessons.values('tutor_id'))
 
-        paginator = Paginator(self.list_of_tutors, 20)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        if hasattr(request.user, 'admin_profile'):
-            return render(request, 'admin/manage_tutors/tutors_list.html', {'page_obj': page_obj, 'user': request.user})
-        elif hasattr(request.user, 'student_profile'):
-            return render(request, 'student/my_tutors/tutors_list.html', {'page_obj': page_obj, 'user': request.user})
-
-    def tutor_details(self, request, tutor_id):
-        tutor = get_object_or_404(Tutor, user__id=tutor_id)
-
-        if request.path.endswith('edit/'):
-            return self.edit_tutor(request, tutor)
-        else:
-            return render(request, 'admin/manage_tutors/tutor_details.html', {'tutor' : tutor})
-
-    def edit_tutor(self, request, tutor):
-        if request.method == "POST":
-            form = UserForm(request.POST, instance=tutor.user)
-            print("form")
-            if form.is_valid():
-                try:
-                    form.save()
-                except:
-                    form.add_error(None, "It was not possible to edit this user.")
-                else:
-                    path = reverse('tutors_list')
-                    return HttpResponseRedirect(path)
-        else:
-            form = UserForm(instance=tutor.user)
-        return render(request, 'admin/manage_tutors/edit_tutor.html', {'form' : form, 'tutor' : tutor.user})
-
-    def delete_tutor(self, request, tutor):
-        tutor.delete()
-        print("deleted")
-        messages.success(request, "Tutor deleted successfully.")
-        return redirect('tutors_list')
 class ViewLessons(View):
 
     def get(self, request, lesson_id=None):

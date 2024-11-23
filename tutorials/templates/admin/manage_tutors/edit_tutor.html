@@ -5,7 +5,7 @@
     <h1>Edit Tutor: {{ tutor.username }}</h1>
 
     <div class="card p-4 shadow-sm">
-        <form action="{% url 'tutor_edit' tutor.id %}" method="post">
+        <form action="{% url 'tutor_edit' tutor.user.id %}" method="post">
             {% csrf_token %}
             <div class="mb-3">
                 {{ form.as_p }}

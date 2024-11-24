@@ -1,6 +1,5 @@
 from django.test import TestCase
-from django.utils.timezone import now
-from tutorials.models import LessonRequest, LessonStatus, Student, User
+from tutorials.models import LessonRequest, Student, User
 
 class LessonRequestModelTest(TestCase):
     def setUp(self):

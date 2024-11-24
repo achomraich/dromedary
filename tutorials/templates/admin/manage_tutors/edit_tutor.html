@@ -5,12 +5,14 @@
     <h1>Edit Tutor: {{ tutor.username }}</h1>
 
     <div class="card p-4 shadow-sm">
-        <form action="{% url 'tutor_edit' tutor.user.id %}" method="post">
+        <form method="post">
             {% csrf_token %}
             <div class="mb-3">
                 {{ form.as_p }}
             </div>
             <button type="submit" class="btn btn-primary">Update</button>
+            <input type="hidden" name="edit" value="edit" />
+            <input type="hidden" name="entity_id" value="{{ form.instance.id }}" />
             <a href="{% url 'tutors_list' %}" class="btn btn-secondary ml-2">Cancel</a>
         </form>
     </div>

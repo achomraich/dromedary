@@ -11,6 +11,8 @@
                 {{ form.as_p }}
             </div>
             <button type="submit" class="btn btn-primary">Update</button>
+            <input type="hidden" name="edit" value="edit" />
+            <input type="hidden" name="entity_id" value="{{ form.instance.id }}" />
             <a href="{% url 'students_list' %}" class="btn btn-secondary ml-2">Cancel</a>
         </form>
     </div>

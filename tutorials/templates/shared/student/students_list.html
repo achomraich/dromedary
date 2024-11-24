@@ -2,24 +2,43 @@
 
 {% block content %}
 <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back</a>
+
+    <h1 class="mt-3 mb-2">Students List</h1>
+
     <form method="get" class="form-inline mb-3">
-        <!-- Search Input -->
-        <input type="text" name="search" class="form-control mr-2" placeholder="Search by name, username, or email" value="{{ search_query }}">
+        <div class="row">
+            <!-- Search Input -->
+            <div class="col-md-6 mb-3">
+                <label for="search" class ="form-label mb-1">Search</label>
+                <input 
+                        id="search"
+                        type="text" 
+                        name="search" 
+                        class="form-control mr-2" 
+                        placeholder="Search by name, username, or email" 
+                        value="{{ search_query }}"
+                >
+            </div>
+            <!-- Subject Filter Dropdown -->
+            <div class="col-md-6 mb-3">
+                <label for="subject-filter" class="form-label mb-1">Subject</label>
+                <select id="subject-filter" name="subject" class="form-select">
+                    <option value="">None selected</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.name }}" {% if subject.name == subject_query %}selected{% endif %}>
+                            {{ subject.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
         
-        <!-- Subject Filter Dropdown -->
-        <select id="subject-filter" name="subject" class="form-control mr-2">
-            <option value="">Filter by Subject</option>
-            {% for subject in subjects %}
-                <option value="{{ subject.name }}" {% if subject.name == subject_query %}selected{% endif %}>
-                    {{ subject.name }}
-                </option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <!-- Apply Filters Button --> 
+        <div class="text-end">
+            <button type="submit" class="btn btn-secondary">Apply Filters</button>
+        </div>
     </form>
-   
-    <h1 class="mb-4">Students List</h1>
     
     <table class="table table-bordered table-hover">
         <thead class="thead-dark">
@@ -34,12 +53,11 @@
         <tbody>
             {% for student in page_obj %}
             <tr>
-                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td>{{ student.user.username }}</td>
-                <td>{{ student.user.full_name }}</td>
-                <td>{{ student.user.email }}</td>
-                <td>
-                    
+                <td class="align-middle">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td class="align-middle">{{ student.user.username }}</td>
+                <td class="align-middle">{{ student.user.full_name }}</td>
+                <td class="align-middle">{{ student.user.email }}</td>
+                <td class="align-middle">
                     <a href="{% url 'student_details' student.user.id %}" class="btn btn-info btn-sm">View</a>
                     {% if user.is_authenticated and user.admin_profile %}
                         <a href="{% url 'student_edit' student.user.id %}" class="btn btn-warning btn-sm">Edit</a>

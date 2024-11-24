@@ -2,19 +2,22 @@
 
 {% block content %}
 <div class="container">
-    <a href="{% url 'students_list' %}" class="btn btn-secondary mb-3">Back</a>
     <div class="row justify-content-center">
-        <div class="col-md-10">
+        <div class="col-12">
+            <a href="{% url 'students_list' %}" class="btn btn-secondary mt-2 mb-4">Back</a>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Student Details: {{ student.user.username }}</h4>
+                <div class="card-header py-3">
+                    <h4 class="card-title mb-0">Student Details: {{ student.user.username }}</h4>
                 </div>
                 <div class="card-body">
-                    <p><strong>Full Name:</strong> {{ student.user.full_name }}</p>
-                    <p><strong>Email:</strong> {{ student.user.email }}</p>
-                    
-                    
-                    <h5 class="mt-4">Lessons</h5>
+                    <h5 class="mt-2"><strong>Full Name:</strong> {{ student.user.full_name }}</h5>
+                    <h5 class="mt-3"><strong>Email:</strong> {{ student.user.email }}</h5>
+                
+                    <h5 class="mt-4"><strong>Lessons</strong></h5>
                     {% if lessons %}
                         <table class="table table-bordered table-striped">
                             <thead>
@@ -47,8 +50,8 @@
                     {% endif %}
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{% url 'student_edit' student.user.id %}" class="btn btn-warning btn-sm">Edit</a>
-                    <a href="{% url 'students_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
+                    <a href="{% url 'student_edit' student.user.id %}" class="btn btn-warning">Edit</a>
+                    <a href="{% url 'students_list' %}" class="btn btn-secondary">Back to List</a>
                 </div>
             </div>
         </div>

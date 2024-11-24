@@ -1,54 +1,7 @@
-{% extends 'base_content.html' %}
+<!DOCTYPE html>
 
+<html lang="en">
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Tutor Details: {{ tutor.user.username }}</h4>
-                </div>
-                <div class="card-body">
-                    <p><strong>Full Name:</strong> {{ tutor.user.full_name }}</p>
-                    <p><strong>Email:</strong> {{ tutor.user.email }}</p>
-                    <h5 class="mt-4">Lessons</h5>
-                    {% if lessons %}
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Subject</th>
-                                    <th>Student</th>
-                                    <th>Student Email</th>
-                                    <th>Term</th>
-                                    <th>Frequency</th>
-                                    <th>Duration</th>
-                                    <th>Price</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for lesson in lessons %}
-                                    <tr>
-                                        <td>{{ lesson.subject_id.name }}</td>
-                                        <td>{{ lesson.student.user.full_name }}</td>
-                                        <td>{{ lesson.student.user.email }}</td>
-                                        <td>{{ lesson.term_id.start_date }} - {{ lesson.term_id.end_date }}</td>
-                                        <td>{{ lesson.get_frequency_display }}</td>
-                                        <td>{{ lesson.duration }}</td>
-                                        <td>${{ lesson.price_per_lesson }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p>No lessons found for this Tutor.</p>
-                    {% endif %}
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{% url 'tutor_edit' tutor.user.id %}" class="btn btn-warning btn-sm">Edit</a>
-                    <a href="{% url 'tutors_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+  {% include "shared/tutor/tutor_details.html" %}
 {% endblock %}
+</html>

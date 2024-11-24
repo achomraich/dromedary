@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-10">
             <div class="card">
                 <div class="card-header">
                     <h4 class="card-title">Student Details: {{ student.user.username }}</h4>
@@ -11,7 +11,39 @@
                 <div class="card-body">
                     <p><strong>Full Name:</strong> {{ student.user.full_name }}</p>
                     <p><strong>Email:</strong> {{ student.user.email }}</p>
-                    <p><strong>Other details:</strong> (Lessons, tutors related and modules)</p>
+                    
+                    
+                    <h5 class="mt-4">Lessons</h5>
+                    {% if lessons %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Tutor</th>
+                                    <th>Tutor Email</th>
+                                    <th>Term</th>
+                                    <th>Frequency</th>
+                                    <th>Duration</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lesson in lessons %}
+                                    <tr>
+                                        <td>{{ lesson.subject_id.name }}</td>
+                                        <td>{{ lesson.tutor.user.full_name }}</td>
+                                        <td>{{ lesson.tutor.user.email }}</td>
+                                        <td>{{ lesson.term_id.start_date }} - {{ lesson.term_id.end_date }}</td>
+                                        <td>{{ lesson.get_frequency_display }}</td>
+                                        <td>{{ lesson.duration }}</td>
+                                        <td>${{ lesson.price_per_lesson }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No lessons found for this student.</p>
+                    {% endif %}
                 </div>
                 <div class="card-footer text-center">
                     <a href="{% url 'student_edit' student.user.id %}" class="btn btn-warning btn-sm">Edit</a>

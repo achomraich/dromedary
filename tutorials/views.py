@@ -16,7 +16,7 @@ from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-from tutorials.models import Student, Admin, Tutor
+from tutorials.models import Student, Admin, Tutor, Subject
 from tutorials.models import Lesson, LessonStatus, Tutor
 
 @login_required
@@ -266,10 +266,32 @@ class EntityView(View):
     def entity_details(self, request, entity_id):
         entity = get_object_or_404(self.model, user__id=entity_id)
 
+        lessons = None
+        tutors = None
+        students = None
+
+        if isinstance(entity, Student):
+            lessons = Lesson.objects.filter(student=entity).select_related(
+            'tutor', 'subject_id', 'term_id'
+        )
+        
+            tutors = set(lesson.tutor for lesson in lessons)
+
+        elif isinstance(entity, Tutor):
+            lessons = Lesson.objects.filter(tutor=entity)
+        
+            students = set(lesson.student for lesson in lessons)
+
+        content = {
+            self.model.__name__.lower(): entity,  
+            'lessons': lessons, 
+            'tutors': tutors,  
+            'students': students,
+        }
         if request.path.endswith('edit/'):
             return self.edit_form(request, entity)
         else:
-            return render(request, self.details, {self.model.__name__.lower(): entity})
+            return render(request, self.details, content)
         
     def edit_form(self, request, entity):
         form = UserForm(instance = entity.user)
@@ -308,7 +330,7 @@ class StudentsView(EntityView):
 
 class TutorsView(EntityView):
     model = Tutor
-    #form_class = None
+
     list_admin = 'admin/manage_tutors/tutors_list.html'
     list_user = 'student/my_tutors/tutors_list.html'
     details = 'admin/manage_tutors/tutor_details.html'

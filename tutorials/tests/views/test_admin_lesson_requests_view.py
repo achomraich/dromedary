@@ -39,3 +39,16 @@ class AdminLessonRequestsViewTest(TestCase):
         self.assertIn('lesson_requests', response.context)
         self.assertEqual(len(response.context['lesson_requests']), 1)
         self.assertEqual(response.context['lesson_requests'][0], self.lesson_request)
+
+    def test_admin_lesson_requests_template_content(self):
+        # Access the admin_lesson_requests view
+        response = self.client.get(reverse('admin_lesson_requests'))
+
+        # Check for content in the rendered template
+        self.assertContains(response, 'Lesson Requests')
+        self.assertContains(response, 'Python')  # Language
+        self.assertContains(response, 'Tuesday')  # Day
+        self.assertContains(response, '10:00')  # Time
+        self.assertContains(response, '45')  # Length
+        self.assertContains(response, 'Weekly')  # Frequency (convert frequency choice in template)
+        self.assertContains(response, 'pending')  # Status

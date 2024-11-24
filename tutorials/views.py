@@ -29,14 +29,6 @@ def dashboard(request):
     else:
         return render(request, 'student/student_dashboard.html', {'user': current_user})
 
-@login_required
-def lesson_requests(request):
-    """Display the lesson requests to the current user."""
-
-    current_user = request.user
-    return render(request, 'requests.html', {'user': current_user})
-
-
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""
@@ -212,6 +204,10 @@ def create_invoice(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
+def admin_lesson_requests(request):
+    lesson_requests = LessonRequest.objects.all().order_by('-created')
+    return render(request, 'admin_lesson_requests.html', {'lesson_requests:' lesson_requests})
+
 class StudentsView(View):
 
     def get(self, request, student_id=None):
@@ -364,4 +360,5 @@ class ViewLessons(View):
         else:
             context = {"lessons": lessonStatus}
             return render(request, 'shared/lessons/lessons_details.html', context)
+
 

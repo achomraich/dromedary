@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from tutorials.models import Student, Admin, Tutor, Subject
 from tutorials.models import Lesson, LessonStatus, Tutor
+import logging
 
 @login_required
 def dashboard(request):
@@ -227,16 +228,22 @@ class EntityView(View):
         else:
             return self.get_entities(request)
         
-    def post(self, request, entity_id=None):
-        if entity_id:
-            entity = get_object_or_404(self.model, user__id=entity_id)
+    def post(self, request, *args, **kwargs):
+        entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
+        if not entity_id:
+            messages.error(request, "No entity ID provided for the operation.")
+            return redirect(self.redirect_url)
 
-            if 'edit' in request.POST:
-                return self.edit_entity(request, entity)
-            elif 'delete' in request.POST:
-                return self.delete_entity(request, entity)
+        entity = get_object_or_404(self.model, user__id=entity_id)
 
+        if 'edit' in request.POST:
+            return self.edit_entity(request, entity)
+        elif 'delete' in request.POST:
+            return self.delete_entity(request, entity)
+        messages.error(request, "Invalid operation.")
         return redirect(self.redirect_url)
+    
+   
 
     def get_entities(self, request):
         user = request.user
@@ -308,7 +315,7 @@ class EntityView(View):
         return render(request, self.edit, {'form' : form, self.model.__name__.lower(): entity})
     
     def edit_entity(self, request, entity):
-        form = UserForm(request.POST, instance=entity.user)
+        form = UserForm(request.POST, instance=entity.user.id)
 
         if form.is_valid():
             form.save()
@@ -319,11 +326,13 @@ class EntityView(View):
             print("did not update")
             return self.edit_form(request, entity)
     
-    def delete_student(self, request, entity):
-        entity.delete()
+    def delete_entity(self, request, entity):
+        entity.user.delete()
         print("deleted")
         messages.success(request, "Student deleted successfully.")
         return redirect(self.redirect_url)
+    
+    
     
 class StudentsView(EntityView):
     model = Student
@@ -336,6 +345,9 @@ class StudentsView(EntityView):
 
     def get(self, request, student_id=None, *args, **kwargs):
         
+        return super().get(request, student_id=student_id, *args, **kwargs)
+    
+    def post(self, request, student_id=None, *args, **kwargs):
         return super().get(request, student_id=student_id, *args, **kwargs)
 
     def apply_filters(self, request, entity_list):
@@ -356,6 +368,9 @@ class TutorsView(EntityView):
     redirect_url = 'tutors_list'
 
     def get(self, request, tutor_id=None, *args, **kwargs):
+        return super().get(request, tutor_id=tutor_id, *args, **kwargs)
+    
+    def post(self, request, tutor_id=None, *args, **kwargs):
         return super().get(request, tutor_id=tutor_id, *args, **kwargs)
     
     def apply_filters(self, request, entity_list):

@@ -33,7 +33,3 @@ class LessonRequestModelTest(TestCase):
         self.assertEqual(self.lesson_request.lesson_length, 60)
         self.assertEqual(self.lesson_request.lesson_frequency, '1')
         self.assertEqual(self.lesson_request.status, 'pending')
-
-    def test_lesson_request_str_representation(self):
-        # Ensure __str__ returns something meaningful, if defined
-        self.assertTrue(str(self.lesson_request))

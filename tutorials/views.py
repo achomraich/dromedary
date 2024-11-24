@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from tutorials.models import Student, Admin, Tutor
 from tutorials.models import Lesson, LessonStatus, Tutor
+from tutorials.models import LessonRequest
 
 @login_required
 def dashboard(request):
@@ -206,7 +207,7 @@ def create_invoice(request):
 
 def admin_lesson_requests(request):
     lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'admin_lesson_requests.html', {'lesson_requests:' lesson_requests})
+    return render(request, 'admin_lesson_requests.html', {'lesson_requests': lesson_requests})
 
 class StudentsView(View):
 

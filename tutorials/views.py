@@ -240,6 +240,9 @@ class EntityView(View):
 
     def get_entities(self, request):
         user = request.user
+        search = request.GET.get('search', '')
+        #subject_filter = request.GET.get('subject', '')
+        subjects = Subject.objects.all()
         if hasattr(request.user, 'admin_profile'):
             entity_list = self.model.objects.all()
         else:
@@ -254,6 +257,10 @@ class EntityView(View):
                 entities = 'tutor_id'
             entity_list = self.model.objects.filter(user_id__in=lessons.values(entities))
 
+        if search:
+            entity_list = entity_list.filter(user__username__icontains=search) | entity_list.filter(user__first_name__icontains=search) | entity_list.filter(user__last_name__icontains=search) | entity_list.filter(user__email__icontains=search)
+
+        entity_list = self.apply_filters(request, entity_list)
         paginator = Paginator(entity_list, 20)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -261,7 +268,10 @@ class EntityView(View):
             template = self.list_admin
         else:
             template = self.list_user
-        return render(request, template, {'page_obj': page_obj, 'user': user})
+        return render(request, template, {'page_obj': page_obj, 'user': user, 'search_query': search, 'subject_query': request.GET.get('subject', ''), 'subjects': subjects})
+
+    def apply_filters(self, request, entity_list):
+        return entity_list
 
     def entity_details(self, request, entity_id):
         entity = get_object_or_404(self.model, user__id=entity_id)
@@ -325,8 +335,16 @@ class StudentsView(EntityView):
     redirect_url = 'students_list'
 
     def get(self, request, student_id=None, *args, **kwargs):
+        
         return super().get(request, student_id=student_id, *args, **kwargs)
 
+    def apply_filters(self, request, entity_list):
+        subject_filter = request.GET.get('subject', '')
+        if subject_filter:
+            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            entity_list = entity_list.filter(user_id__in=filtered_lessons.values('student_id')).distinct() 
+
+        return entity_list
 
 class TutorsView(EntityView):
     model = Tutor
@@ -339,6 +357,14 @@ class TutorsView(EntityView):
 
     def get(self, request, tutor_id=None, *args, **kwargs):
         return super().get(request, tutor_id=tutor_id, *args, **kwargs)
+    
+    def apply_filters(self, request, entity_list):
+        subject_filter = request.GET.get('subject', '')
+        if subject_filter:
+            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            entity_list = entity_list.filter(user_id__in=filtered_lessons.values('tutor_id')).distinct() 
+
+        return entity_list
 
 
 class ViewLessons(View):

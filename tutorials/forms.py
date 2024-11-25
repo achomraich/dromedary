@@ -30,6 +30,11 @@ class UserForm(forms.ModelForm):
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
+        error_messages = {
+            'username': {
+                'unique': "This username already exists. Please use a different one.",
+            },
+        }
 
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""

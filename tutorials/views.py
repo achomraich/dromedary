@@ -1,9 +1,13 @@
+from functools import reduce
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.db import IntegrityError
+from django.db.models import Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
@@ -16,8 +20,7 @@ from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-from tutorials.models import Student, Admin, Tutor
-from tutorials.models import Lesson, LessonStatus, Subject, LessonUpdateRequest
+from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest
 
 @login_required
 def dashboard(request):
@@ -28,14 +31,6 @@ def dashboard(request):
         return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
     else:
         return render(request, 'student/student_dashboard.html', {'user': current_user})
-
-@login_required
-def lesson_requests(request):
-    """Display the lesson requests to the current user."""
-
-    current_user = request.user
-    return render(request, 'requests.html', {'user': current_user})
-
 
 @login_prohibited
 def home(request):
@@ -212,133 +207,201 @@ def create_invoice(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
+def admin_lesson_requests(request):
+    lesson_requests = LessonRequest.objects.all().order_by('-created')
+    return render(request, 'admin_lesson_requests.html', {'lesson_requests': lesson_requests})
+
 class StudentsView(View):
 
     def get(self, request, student_id=None):
         if student_id:
             return self.student_details(request, student_id)
+
+class EntityView(View):
+    model = None
+    list_admin = None
+    list_user = None
+    details = None
+    edit = None
+    redirect_url = None
+
+    def get(self, request, *args, **kwargs):
+        entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
+        if entity_id:
+            return self.entity_details(request, entity_id)
         else:
-            return self.get_students(request, request.user.id)
+            return self.get_entities(request)
         
-    def post(self, request, student_id=None):
-        if student_id:
-            student = get_object_or_404(Student, user__id=student_id)
+    def post(self, request, *args, **kwargs):
+        entity_id = request.POST.get('entity_id')
+        if not entity_id:
+            messages.error(request, "No entity ID provided for the operation.")
+            return redirect(self.redirect_url)
 
-            if 'edit' in request.POST:
-                return self.edit_student(request, student)
-            elif 'delete' in request.POST:
-                return self.delete_student(request, student)
+        entity = get_object_or_404(self.model, user__id=entity_id)
 
-        return redirect('students_list')
+        if 'edit' in request.POST:
+            return self.edit_entity(request, entity)
+        elif 'delete' in request.POST:
+            return self.delete_entity(request, entity)
 
-    def get_students(self, request, tutor_id=None):
-        if hasattr(request.user, 'admin_profile'):
-            self.list_of_students = Student.objects.all()
-        elif hasattr(request.user, 'tutor_profile'):
-            lessons = Lesson.objects.filter(tutor_id=tutor_id)
-            self.list_of_students = Student.objects.filter(user_id__in=lessons.values('student_id'))
+        messages.error(request, "Invalid operation.")
+        return redirect(self.redirect_url)
 
-        paginator = Paginator(self.list_of_students, 20)
-        page_number = request.GET.get('page')
+    def get_entities(self, request):
+        user = request.user
+        search = request.GET.get('search', '')
+        subjects = Subject.objects.all()
+
+        profile_map = {
+            'admin_profile': lambda: self.model.objects.all().order_by('user__username'),
+            'tutor_profile': lambda: self._get_entities_for_tutor(user),
+            'student_profile': lambda: self._get_entities_for_student(user),
+        }
+
+        entity_list = None
+        for profile, entity_filter in profile_map.items():
+            if hasattr(user, profile):
+                entity_list = entity_filter()
+                break
+
+        if not entity_list:
+            #messages.error(request, "No valid profile for this operation.")
+            print('got there')
+            raise PermissionDenied("No valid profile for this operation.")
+
+        if search:
+            query = reduce(lambda q1, q2: q1 | q2, [
+                Q(user__username__icontains=search),
+                Q(user__first_name__icontains=search),
+                Q(user__last_name__icontains=search),
+                Q(user__email__icontains=search)
+            ])
+            entity_list = entity_list.filter(query)
+
+        entity_list = self.apply_filters(request, entity_list)
+        page_number = request.GET.get('page', 1)
+        paginator = Paginator(entity_list, 20)
         page_obj = paginator.get_page(page_number)
-        if hasattr(request.user, 'admin_profile'):
-            return render(request, 'admin/manage_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
-        elif hasattr(request.user, 'tutor_profile'):
-            return render(request, 'tutor/my_students/students_list.html', {'page_obj': page_obj, 'user': request.user})
 
-    def student_details(self, request, student_id):
-        student = get_object_or_404(Student, user__id=student_id)
+        template = self.list_admin if hasattr(request.user, 'admin_profile') else self.list_user
+        return render(request, template, {
+            'page_obj': page_obj,
+            'user': user,
+            'search_query': search,
+            'subject_query': request.GET.get('subject', ''),
+            'subjects': subjects
+        })
 
-        if request.path.endswith('edit/'):
-            return self.edit_form(request, student)
-        else:
-            return render(request, 'admin/manage_students/student_details.html', {'student' : student})
+    def _get_entities_for_tutor(self, user):
+        lessons = Lesson.objects.filter(tutor_id=user.id)
+        return self.model.objects.filter(user_id__in=lessons.values('student_id')).order_by('user__username').distinct()
+
+    def _get_entities_for_student(self, user):
+        lessons = Lesson.objects.filter(student_id=user.id)
+        return self.model.objects.filter(user_id__in=lessons.values('tutor_id')).order_by('user__username').distinct()
+
+    def entity_details(self, request, entity_id):
+        entity = get_object_or_404(self.model, user__id=entity_id)
+
+        lessons = None
+        tutors = None
+        students = None
+
+        if isinstance(entity, Student):
+            lessons = Lesson.objects.filter(student=entity).select_related(
+            'tutor', 'subject_id', 'term_id'
+        )
         
-    def edit_form(self, request, student):
-        form = UserForm(instance=student.user)
-        return render(request, 'admin/manage_students/edit_student.html', {'form' : form})
+            tutors = set(lesson.tutor for lesson in lessons)
+
+        else:
+            lessons = Lesson.objects.filter(tutor=entity)
+        
+            students = set(lesson.student for lesson in lessons)
+
+        content = {
+            self.model.__name__.lower(): entity,  
+            'lessons': lessons, 
+            'tutors': tutors,  
+            'students': students,
+        }
+        if request.path.endswith('edit/'):
+            print("i'm here")
+            return self.edit_form(request, entity)
+        else:
+            return render(request, self.details, content)
+        
+    def edit_form(self, request, entity, form=None):
+        entity.refresh_from_db()
+        if not form:
+            form = UserForm(instance = entity.user)
+        return render(request, self.edit, {'form' : form, self.model.__name__.lower(): entity})
     
-    def edit_student(self, request, student):
-        form = UserForm(request.POST, instance=student.user)
+    def edit_entity(self, request, entity):
+        form = UserForm(request.POST, instance=entity.user)
 
         if form.is_valid():
             form.save()
-            print("updated")
-            messages.success(request, "Student details updated successfully.")
-            return redirect('student_details', student_id=student.user.id)
+            messages.success(request, "Details updated successfully.")
+            return redirect(self.redirect_url)
         else:
-            print("did not update")
-            return self.edit_form(request, student)
+            print("Form errors:", form.errors.as_data())
+            messages.error(request, "Failed to update details. Please correct the errors and try again.")
+
+        return self.edit_form(request, entity, form)
     
-    def delete_student(self, request, student):
-        student.delete()
-        print("deleted")
-        messages.success(request, "Student deleted successfully.")
-        return redirect('students_list')
+    def delete_entity(self, request, entity):
+        entity.user.delete()
+        messages.success(request, "Deleted successfully.")
+        return redirect(self.redirect_url)
+    
+    
+    
+class StudentsView(EntityView):
+    model = Student
 
-class TutorsView(View):
+    list_admin = 'admin/manage_students/students_list.html'
+    list_user = 'tutor/my_students/students_list.html'
+    details = 'admin/manage_students/student_details.html'
+    edit = 'admin/manage_students/edit_student.html'
+    redirect_url = 'students_list'
 
-    def get(self, request, tutor_id=None):
-        if tutor_id:
-            return self.tutor_details(request, tutor_id)
-        else:
-            return self.get_tutors(request, request.user.id)
+    def get(self, request, student_id=None, *args, **kwargs):
+        
+        return super().get(request, student_id=student_id, *args, **kwargs)
+    
+    def post(self, request, student_id=None, *args, **kwargs):
+        return super().post(request, student_id=student_id, *args, **kwargs)
 
-    def post(self, request, tutor_id=None):
-        if tutor_id:
-            tutor = get_object_or_404(Tutor, user__id=tutor_id)
+    def apply_filters(self, request, entity_list):
+        subject_filter = request.GET.get('subject', '')
+        if subject_filter:
+            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            entity_list = entity_list.filter(user_id__in=filtered_lessons.values('student_id')).distinct() 
+        return entity_list
 
-            if 'edit' in request.POST:
-                return self.edit_tutor(request, tutor)
-            elif 'delete' in request.POST:
-                return self.delete_tutor(request, tutor)
+class TutorsView(EntityView):
+    model = Tutor
 
-        return redirect('tutors_list')
+    list_admin = 'admin/manage_tutors/tutors_list.html'
+    list_user = 'student/my_tutors/tutors_list.html'
+    details = 'admin/manage_tutors/tutor_details.html'
+    edit = 'admin/manage_tutors/edit_tutor.html'
+    redirect_url = 'tutors_list'
 
-    def get_tutors(self, request, student_id=None):
-        if hasattr(request.user, 'admin_profile'):
-            self.list_of_tutors = Tutor.objects.all()
-        elif hasattr(request.user, 'student_profile'):
-            lessons = Lesson.objects.filter(student_id=student_id)
-            self.list_of_tutors = Tutor.objects.filter(user_id__in=lessons.values('tutor_id'))
-
-        paginator = Paginator(self.list_of_tutors, 20)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        if hasattr(request.user, 'admin_profile'):
-            return render(request, 'admin/manage_tutors/tutors_list.html', {'page_obj': page_obj, 'user': request.user})
-        elif hasattr(request.user, 'student_profile'):
-            return render(request, 'student/my_tutors/tutors_list.html', {'page_obj': page_obj, 'user': request.user})
-
-    def tutor_details(self, request, tutor_id):
-        tutor = get_object_or_404(Tutor, user__id=tutor_id)
-
-        if request.path.endswith('edit/'):
-            return self.edit_tutor(request, tutor)
-        else:
-            return render(request, 'admin/manage_tutors/tutor_details.html', {'tutor' : tutor})
-
-    def edit_tutor(self, request, tutor):
-        if request.method == "POST":
-            form = UserForm(request.POST, instance=tutor.user)
-            print("form")
-            if form.is_valid():
-                try:
-                    form.save()
-                except:
-                    form.add_error(None, "It was not possible to edit this user.")
-                else:
-                    path = reverse('tutors_list')
-                    return HttpResponseRedirect(path)
-        else:
-            form = UserForm(instance=tutor.user)
-        return render(request, 'admin/manage_tutors/edit_tutor.html', {'form' : form, 'tutor' : tutor.user})
-
-    def delete_tutor(self, request, tutor):
-        tutor.delete()
-        print("deleted")
-        messages.success(request, "Tutor deleted successfully.")
-        return redirect('tutors_list')
+    def get(self, request, tutor_id=None, *args, **kwargs):
+        return super().get(request, tutor_id=tutor_id, *args, **kwargs)
+    
+    def post(self, request, tutor_id=None, *args, **kwargs):
+        return super().post(request, tutor_id=tutor_id, *args, **kwargs)
+    
+    def apply_filters(self, request, entity_list):
+        subject_filter = request.GET.get('subject', '')
+        if subject_filter:
+            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            entity_list = entity_list.filter(user_id__in=filtered_lessons.values('tutor_id')).distinct()
+        return entity_list
 
 class ViewLessons(View):
 
@@ -404,7 +467,6 @@ class ViewLessons(View):
         else:
             context = {"lessons": lessonStatus, "user": request.user}
             return render(request, 'shared/lessons/lessons_details.html', context)
-
 
 class SubjectView(View):
 
@@ -514,6 +576,3 @@ class UpdateLessonRequest(View):
                     form.add_error(None, f"An error occurred: {str(e)}")
 
         return form
-
-
-

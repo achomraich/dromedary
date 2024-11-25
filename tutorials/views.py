@@ -22,7 +22,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from tutorials.models import Student, Admin, Tutor, Subject
 from tutorials.models import Lesson, LessonStatus, Tutor
-import logging
+from tutorials.models import LessonRequest
 
 @login_required
 def dashboard(request):
@@ -33,14 +33,6 @@ def dashboard(request):
         return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
     else:
         return render(request, 'student/student_dashboard.html', {'user': current_user})
-
-@login_required
-def lesson_requests(request):
-    """Display the lesson requests to the current user."""
-
-    current_user = request.user
-    return render(request, 'requests.html', {'user': current_user})
-
 
 @login_prohibited
 def home(request):
@@ -216,6 +208,16 @@ def create_invoice(request):
 
     # Redirect back to the invoice management page
     return redirect('invoice_management')
+
+def admin_lesson_requests(request):
+    lesson_requests = LessonRequest.objects.all().order_by('-created')
+    return render(request, 'admin_lesson_requests.html', {'lesson_requests': lesson_requests})
+
+class StudentsView(View):
+
+    def get(self, request, student_id=None):
+        if student_id:
+            return self.student_details(request, student_id)
 
 class EntityView(View):
     model = None
@@ -429,4 +431,5 @@ class ViewLessons(View):
         else:
             context = {"lessons": lessonStatus}
             return render(request, 'shared/lessons/lessons_details.html', context)
+
 

@@ -13,16 +13,14 @@ from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-from tutorials.models import Student, Admin, Tutor, Subject
-from tutorials.models import Lesson, LessonStatus, Tutor
-from tutorials.models import LessonRequest
+from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest
 
 @login_required
 def dashboard(request):
@@ -405,7 +403,6 @@ class TutorsView(EntityView):
             entity_list = entity_list.filter(user_id__in=filtered_lessons.values('tutor_id')).distinct()
         return entity_list
 
-
 class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
@@ -415,21 +412,167 @@ class ViewLessons(View):
 
         if hasattr(current_user, 'admin_profile'):
             self.list_of_lessons = Lesson.objects.all()
+            self.status = 'admin'
         elif hasattr(request.user, 'student_profile'):
             self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
+            self.status = 'student'
         else:
             self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
-        return render(request, 'shared/lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons})
+            self.status = 'tutor'
+        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons})
 
+    def post(self, request, lesson_id=None):
 
-    def lesson_detail(self, request, lesson_id):
+        if lesson_id:
+            if 'update_feedback' in request.path:
+                return self.update_feedback(request, lesson_id)
+        #return redirect('lessons_details')
+
+    def handle_lessons_form(self, request, lesson=None):
+        form = LessonFeedbackForm(request.POST or None, instance=lesson)
+
+        if request.method == "POST":
+            if form.is_valid():
+                try:
+                    form.save()
+                except:
+                    form.add_error(None, "It was not possible to update this feedback")
+                else:
+                    path = reverse('lesson_detail', args=[lesson.lesson_id.lesson_id])
+                    return HttpResponseRedirect(path)
+            else:
+                form = LessonFeedbackForm()
+
+        return form
+
+    def update_feedback(self, request, status_id=None):
+        lesson = get_object_or_404(LessonStatus, pk=status_id)
+        form = self.handle_lessons_form(request, lesson)
+
+        if isinstance(form, HttpResponseRedirect):
+            return form
+
+        return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
+
+    def lesson_detail(self, request, lessonStatus_id):
         """Display each lesson status for admin"""
+        if lessonStatus_id:
+            if 'update_feedback'in request.path:
+                return self.update_feedback(request, lessonStatus_id)
+
         try:
-            lessonStatus = LessonStatus.objects.filter(lesson_id=lesson_id)
+            lessonStatus = LessonStatus.objects.filter(lesson_id=lessonStatus_id)
         except Exception as e:
-            raise Http404(f"Could not find lesson with primary key {lesson_id}")
+            raise Http404(f"Could not find lesson with primary key {lessonStatus_id}")
         else:
-            context = {"lessons": lessonStatus}
+            context = {"lessons": lessonStatus, "user": request.user}
             return render(request, 'shared/lessons/lessons_details.html', context)
 
+class SubjectView(View):
 
+    def get(self, request, subject_id=None):
+        if subject_id:
+            return self.edit_subject(request, subject_id)
+
+        if hasattr(request.user, 'admin_profile'):
+            self.list_of_subjects = Subject.objects.all()
+
+        paginator = Paginator(self.list_of_subjects, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, 'admin/manage_subjects/subjects_list.html', {'page_obj': page_obj})
+
+    def post(self, request, subject_id=None):
+        if 'create' in request.path:
+            return self.create_subject(request)
+
+        if subject_id:
+            if request.path.endswith('edit/'):
+                return self.edit_subject(request, subject_id)
+            elif request.path.endswith('delete/'):
+                subject = get_object_or_404(Subject, pk=subject_id)
+                return self.delete_subject(request, subject)
+
+        return redirect('subjects_list')
+
+    def delete_subject(self, request, subject):
+        subject.delete()
+        return redirect('subjects_list')
+
+    def handle_subject_form(self, request, subject=None):
+        form = SubjectForm(request.POST or None, instance=subject)
+
+        if request.method == "POST":
+            if form.is_valid():
+                try:
+                    form.save()
+                except:
+                    form.add_error(None, "It was not possible to update this subject")
+                else:
+                    path = reverse('subjects_list')
+                    return HttpResponseRedirect(path)
+            else:
+                form = SubjectForm()
+
+        return form
+
+    def edit_subject(self, request, subject_id):
+        subject = get_object_or_404(Subject, pk=subject_id)
+        form = self.handle_subject_form(request, subject)
+
+        if isinstance(form, HttpResponseRedirect):
+            return form
+
+        return render(request, 'admin/manage_subjects/subject_edit.html', {'form': form, 'subject': subject})
+
+    def create_subject(self, request):
+        form = self.handle_subject_form(request)
+
+        return render(request, 'admin/manage_subjects/subject_create.html', {'form': form})
+
+class UpdateLessonRequest(View):
+
+    def post(self, request, lesson_id=None):
+        print(f"POST request received for lesson_id: {lesson_id}")  # Debug
+        if lesson_id:
+            if request.path.endswith('request_changes/'):
+                return self.request_change(request, lesson_id)
+
+        return redirect('lessons_list')
+
+    def request_change(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        print(f"Request change for Lesson ID: {lesson_id}")  # Debug
+        form = self.handle_subject_form(request, lesson)
+
+        if isinstance(form, HttpResponseRedirect):  # Check for redirection
+            return form
+
+        return render(
+            request,
+            'student/manage_lessons/request_changes.html',
+            {
+                'form': form,
+                'subject': lesson.subject_id.name,
+            }
+        )
+
+    def handle_subject_form(self, request, lesson=None):
+
+        lesson_update_instance, _ = LessonUpdateRequest.objects.get_or_create(lesson=lesson)
+
+        form = UpdateLessonRequestForm(
+            data=request.POST or None,
+            instance=lesson_update_instance
+        )
+
+        if request.method == "POST":
+            if form.is_valid():
+                try:
+                    form.save()
+                    return HttpResponseRedirect(reverse('lessons_list'))
+                except Exception as e:
+                    form.add_error(None, f"An error occurred: {str(e)}")
+
+        return form

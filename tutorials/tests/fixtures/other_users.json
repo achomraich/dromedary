@@ -34,5 +34,29 @@
       "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
       "is_active": true
     }
+  },
+  {
+    "model": "tutorials.user",
+    "pk": 5,
+    "fields": {
+      "first_name": "Roger",
+      "last_name": "Smith",
+      "username": "@rogersmith",
+      "email": "rogersmith@example.org",
+      "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+      "is_active": true
+    }
+  },
+  {
+    "model": "tutorials.user",
+    "pk": 6,
+    "fields": {
+      "first_name": "James",
+      "last_name": "Doe",
+      "username": "@jamesdoe",
+      "email": "jamesdoe@example.org",
+      "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+      "is_active": true
+    }
   }
 ]

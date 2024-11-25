@@ -86,3 +86,18 @@ class TutorsTestCase(TestCase):
         self.assertRedirects(response, reverse('students_list'))
         self.assertFalse(Student.objects.filter(user__username='@janedoe').exists())
         self.assertFalse(Student.objects.filter(user__username='@janey').exists())
+
+    def test_get_search_student(self):
+        self.client.login(username='@johndoe', password='Password123')
+        response = self.client.get(self.url, {'search': 'janedoe'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/manage_students/students_list.html')
+        self.assertContains(response, self.student1.user.username)
+        self.assertNotContains(response, self.student2.user.username)
+
+    def test_get_search_subject(self):
+        self.client.login(username='@johndoe', password='Password123')
+        response = self.client.get(self.url, {'subject': 'Python'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/manage_students/students_list.html')
+        self.assertContains(response, self.student1.user.username)

@@ -1,16 +1,68 @@
 {% extends 'base_content.html' %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Edit Student: {{ form.instance.username }}</h1>
+    <h1>Edit Student: {{ student.user.username }}</h1>
 
     <div class="card p-4 shadow-sm">
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-                {{ form.as_p }}
+                <label for="id_first_name" class="form-label">First Name: </label>
+                {{ form.first_name|add_class:"form-control" }}
+                {% if form.first_name.errors %}
+                    <div class="text-danger">
+                        {% for error in form.first_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
+            <div class="mb-3">
+                <label for="id_last_name" class="form-label">Last Name: </label>
+                {{ form.last_name|add_class:"form-control" }}
+                {% if form.last_name.errors %}
+                    <div class="text-danger">
+                        {% for error in form.last_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="id_username" class="form-label">Username: </label>
+                {{ form.username|add_class:"form-control" }}
+                {% if form.username.errors %}
+                    <div class="text-danger">
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="id_email" class="form-label">Email: </label>
+                {{ form.email|add_class:"form-control" }}
+                {% if form.email.errors %}
+                    <div class="text-danger">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+
+            <div class="mb-4">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-2">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary me-2">Update</button>
             <input type="hidden" name="edit" value="edit" />
             <input type="hidden" name="entity_id" value="{{ form.instance.id }}" />
             <a href="{% url 'students_list' %}" class="btn btn-secondary ml-2">Cancel</a>

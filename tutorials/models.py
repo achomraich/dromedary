@@ -96,18 +96,13 @@ class TutorAvailability(models.Model):
 
 
 class Subject(models.Model):
-    # SUBJECT = ["Python", "C++", "JS", "TypeScript", "Scala", "Ruby"]
-    SUBJECT_CHOICES = [
-        ('Python', 'Course description'),
-        ('C++', 'Course description'),
-        ('JS', 'Course description'),
-        ('TypeScript', 'Course description'),
-        ('Scala', 'Course description'),
-        ('Ruby', 'Course description'),
-    ]
+
     subject_id = models.BigAutoField(primary_key=True)
-    name = models.CharField(max_length=20, choices=SUBJECT_CHOICES)
-    # description = models.CharField()
+    name = models.CharField(max_length=20)
+    description = models.CharField(
+        max_length=255,
+        default=''
+    )
 
 
 class Term(models.Model):
@@ -141,9 +136,25 @@ class Lesson(models.Model):
 
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
-    CONFIRMED = 'Confirmed', 'Confirmed'
+    BOOKED = 'Booked', 'Booked'
     CANCELLED = 'Cancelled', 'Cancelled'
     COMPLETED = 'Completed', 'Completed'
+
+class LessonUpdateRequest(models.Model):
+    UPDATE_CHOICES = [
+        ('1', 'Change Tutor'),
+        ('2', 'Change Day/Time'),
+        ('3', 'Cancel Lessons'),
+        ('4', 'Change Frequency'),
+        ('5', 'Change Duration of the Lesson')
+    ]
+    lesson_update_id = models.BigAutoField(primary_key=True)
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)
+    update_option=models.CharField(max_length=50, choices=UPDATE_CHOICES, default="1")
+    details = models.CharField(max_length=255, default="")
+
+    def __str__(self):
+        return f"Update Request for Lesson {self.lesson.lesson_id} - {self.get_update_option_display()}"
 
 
 class LessonStatus(models.Model):
@@ -156,7 +167,7 @@ class LessonStatus(models.Model):
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
-        default=Status.PENDING)
+        default=Status.BOOKED)
     feedback = models.CharField(max_length=255)
     invoiced = models.BooleanField(default=False)
 
@@ -192,8 +203,6 @@ class Requests(models.Model):
         max_length=10,
         choices=Status.choices,
         default=Status.PENDING)
-
-
 
 class TutorReviews(models.Model):
     RATING_CHOICES = [

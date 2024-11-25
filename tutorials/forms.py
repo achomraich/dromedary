@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -30,6 +30,11 @@ class UserForm(forms.ModelForm):
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
+        error_messages = {
+            'username': {
+                'unique': "This username already exists. Please use a different one.",
+            },
+        }
 
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
@@ -130,3 +135,65 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
             Student.objects.create(user=user)
 
         return user
+
+class SubjectForm(forms.ModelForm):
+
+    class Meta:
+
+        model = Subject
+        fields = ['name', 'description']
+
+    def __init__(self, *args, **kwargs):
+        subject = kwargs.get('instance', None)
+
+        super().__init__(*args, **kwargs)
+
+        if subject and subject.pk:
+            self.fields['name'].disabled = True
+        else:
+            self.fields['name'].disabled = False
+
+
+class LessonFeedbackForm(forms.ModelForm):
+    lesson_name = forms.CharField(label='Lesson Subject', required=False, disabled=True)
+    student_name = forms.CharField(label='Student', required=False, disabled=True)
+    lesson_date = forms.DateField(label='Lesson Date', required=False, disabled=True)
+    lesson_time = forms.TimeField(label='Lesson Time', required=False, disabled=True)
+
+    class Meta:
+        model = LessonStatus
+        fields = ['feedback']
+
+    def __init__(self, *args, **kwargs):
+        lesson_status = kwargs.get('instance')
+        if lesson_status:
+            lesson = lesson_status.lesson_id
+            student = lesson.student
+            kwargs['initial'] = kwargs.get('initial', {})
+
+            kwargs['initial']['lesson_name'] = lesson.subject_id.name
+            kwargs['initial']['student_name'] = student.user.full_name()
+            kwargs['initial']['lesson_date'] = lesson_status.date
+            kwargs['initial']['lesson_time'] = lesson_status.time
+
+        super().__init__(*args, **kwargs)
+
+class UpdateLessonRequestForm(forms.ModelForm):
+    tutor_name = forms.CharField(label='Tutor', required=False, disabled=True)
+    duration = forms.CharField(label='Lesson duration', required=False, disabled=True)
+
+    frequency = forms.CharField(label='Lesson frequency', required=False, disabled=True)
+
+    class Meta:
+        model = LessonUpdateRequest
+        fields = ['update_option', 'details']
+
+    def __init__(self, *args, **kwargs):
+        lesson_update_instance = kwargs.get('instance')
+        if lesson_update_instance and lesson_update_instance.lesson:
+            kwargs.setdefault('initial', {})
+            kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.tutor.user.full_name()
+            kwargs['initial']['duration'] = lesson_update_instance.lesson.duration
+            kwargs['initial']['frequency'] = lesson_update_instance.lesson.frequency
+            kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject_id.name
+        super().__init__(*args, **kwargs)

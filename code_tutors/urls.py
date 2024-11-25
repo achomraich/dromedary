@@ -46,6 +46,13 @@ urlpatterns = [
 
     path('dashboard/lessons/', views.ViewLessons.as_view(), name='lessons_list'),
     path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
+    path('dashboard/lessons/<int:lesson_id>/update_feedback', views.ViewLessons.as_view(), name='update_feedback'),
+    path('dashboard/lessons/<int:lesson_id>/request_changes/', views.UpdateLessonRequest.as_view(), name='request_changes'),
+
+    path('dashboard/subjects/', views.SubjectView.as_view(), name='subjects_list'),
+    path('dashboard/subjects/<int:subject_id>/edit/', views.SubjectView.as_view(), name='subject_edit'),
+    path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
+    path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
 
     path('dashboard/requests/', views.LessonRequest, name='admin_lesson_requests'),
 ]

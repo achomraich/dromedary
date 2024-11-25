@@ -247,10 +247,10 @@ class EntityView(View):
     def get_entities(self, request):
         user = request.user
         search = request.GET.get('search', '')
-        #subject_filter = request.GET.get('subject', '')
         subjects = Subject.objects.all()
+
         if hasattr(request.user, 'admin_profile'):
-            entity_list = self.model.objects.all()
+            entity_list = self.model.objects.all().order_by('user__username').distinct()
         else:
             if hasattr(request.user, 'tutor_profile'):
                 field = 'tutor'
@@ -261,7 +261,7 @@ class EntityView(View):
                 entities = 'student_id'
             else:
                 entities = 'tutor_id'
-            entity_list = self.model.objects.filter(user_id__in=lessons.values(entities))
+            entity_list = self.model.objects.filter(user_id__in=lessons.values(entities)).order_by('user__username').distinct()
 
         if search:
             entity_list = entity_list.filter(user__username__icontains=search) | entity_list.filter(user__first_name__icontains=search) | entity_list.filter(user__last_name__icontains=search) | entity_list.filter(user__email__icontains=search)
@@ -270,6 +270,7 @@ class EntityView(View):
         paginator = Paginator(entity_list, 20)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
+
         if hasattr(request.user, 'admin_profile'):
             template = self.list_admin
         else:

@@ -14,6 +14,7 @@
                     <th>Term Start Date</th>
                     <th>Duration</th>
                     <th>Frequency</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,6 +26,14 @@
                         <td>{{ lesson.term_id.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>
                         <td>{{ lesson.frequency|format_frequency }}</td>
+                    <td>
+                            {% if user.is_authenticated and user.student_profile %}
+                                <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary mb-3">Update Lesson</button>
+                                </form>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

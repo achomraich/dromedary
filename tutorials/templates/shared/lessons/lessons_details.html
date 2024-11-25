@@ -12,6 +12,7 @@
                     <th>Time</th>
                     <th>Status</th>
                     <th>Feedback</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,6 +22,12 @@
                         <td>{{ lesson.time }}</td>
                         <td>{{ lesson.status }}</td>
                         <td>{{ lesson.feedback }}</td>
+
+                        <td>
+                            {% if user.is_authenticated and user.tutor_profile and lesson.status == "Completed" %}
+                            <a href="{% url 'update_feedback' lesson.status_id %}" class="btn btn-warning btn-sm">Update Feedback</a>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status
+from django.db.models import Q, Exists, OuterRef
 
 @login_required
 def dashboard(request):
@@ -344,6 +345,7 @@ class ViewLessons(View):
     def get(self, request, lesson_id=None):
         current_user = request.user
         message = {}
+        self.can_be_updated = []
         lessons_with_requests = set()
         if lesson_id:
             return self.lesson_detail(request, lesson_id)
@@ -355,6 +357,16 @@ class ViewLessons(View):
             self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
             self.status = 'student'
 
+            self.can_be_updated = self.list_of_lessons.filter(
+                Exists(
+                    LessonStatus.objects.filter(
+                        lesson_id=OuterRef('pk'),
+                        status=Status.BOOKED
+                    )
+                )
+            )
+            print(self.can_be_updated)
+
             lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons)
             lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
 
@@ -364,7 +376,7 @@ class ViewLessons(View):
             self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
             self.status = 'tutor'
 
-        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'message':message})
+        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'message':message, 'can_handle_requuest': self.can_be_updated})
 
     def post(self, request, lesson_id=None):
 

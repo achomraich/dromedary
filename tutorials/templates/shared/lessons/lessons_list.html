@@ -38,12 +38,20 @@
                         </td>
                         <td>
                             {% if user.is_authenticated and user.student_profile %}
-                                <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary mb-3"
-                                    {% if lesson.lesson_id in lessons_with_requests %}disabled{% endif %}>
-                                        Update Lesson</button>
-                                </form>
+                                {% if lesson in can_handle_requuest %}
+                                    <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary mb-3"
+                                            {% if lesson.lesson_id in lessons_with_requests %}disabled{% endif %}>
+                                            Update Lesson</button>
+                                    </form>
+                                {% else %}
+                                    {% if lesson.lesson_id in lessons_with_requests %}
+                                        <p>Request already made</p>
+                                    {% else %}
+                                        <p>No Booked Lessons</p>
+                                    {% endif %}
+                                {% endif %}
                             {% endif %}
                         </td>
                     </tr>

@@ -28,3 +28,10 @@ def format_frequency(value):
 def get(dictionary: dict, key):
     print(f"Type of update_message: {type(dictionary)}")
     return dictionary.get(key)
+
+@register.filter
+def dict_get(dictionary, key):
+    try:
+        return dictionary.get(key)
+    except AttributeError:
+        return None

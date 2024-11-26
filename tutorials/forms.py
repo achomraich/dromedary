@@ -187,10 +187,20 @@ class UpdateLessonRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         lesson_update_instance = kwargs.get('instance')
+        user = kwargs.pop('user_role', None)
         if lesson_update_instance and lesson_update_instance.lesson:
             kwargs.setdefault('initial', {})
-            kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.tutor.user.full_name()
+            if user and hasattr(user, 'student_profile'):
+                kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.tutor.user.full_name()
+            if user and hasattr(user, 'tutor_profile'):
+                kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.student.user.full_name()
             kwargs['initial']['duration'] = lesson_update_instance.lesson.duration
             kwargs['initial']['frequency'] = lesson_update_instance.lesson.frequency
             kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject_id.name
+
         super().__init__(*args, **kwargs)
+        if user:
+            if hasattr(user, 'tutor_profile'):
+                self.fields['update_option'].choices = [
+                    choice for choice in LessonUpdateRequest.UPDATE_CHOICES if choice[0] == '2' or choice[0] == '3'
+                ]

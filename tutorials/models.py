@@ -148,10 +148,17 @@ class LessonUpdateRequest(models.Model):
         ('4', 'Change Frequency'),
         ('5', 'Change Duration of the Lesson')
     ]
+
+    MADE_BY_CHOICES = [
+        ('Tutor', 'Tutor'),
+        ('Student', 'Student'),
+    ]
+
     lesson_update_id = models.BigAutoField(primary_key=True)
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)
     update_option=models.CharField(max_length=50, choices=UPDATE_CHOICES, default="1")
     details = models.CharField(max_length=255, default="")
+    made_by = models.CharField(max_length=10, choices=MADE_BY_CHOICES, default="Tutor")
 
     def __str__(self):
         return f"Update Request for Lesson {self.lesson.lesson_id} - {self.get_update_option_display()}"

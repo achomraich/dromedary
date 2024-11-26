@@ -30,15 +30,17 @@
                         <td>{{ lesson.duration|format_duration }}</td>
                         <td>{{ lesson.frequency|format_frequency }}</td>
                         <td>
-                            {% if user.is_authenticated and user.student_profile and lesson.lesson_id in lessons_with_requests %}
-                                <p>Request made: {{ message|get:lesson.lesson_id }} </p>
+                            {% if user.is_authenticated and lesson.lesson_id in lessons_with_requests %}
+                                Requested by {{ message|get:lesson.lesson_id|dict_get:"made_by" }} :
+                                {{ message|get:lesson.lesson_id|dict_get:"update_option" }}
                             {% else %}
-                                <p>—</p>
+
+                                    <p>—</p>
                             {% endif %}
                         </td>
                         <td>
-                            {% if user.is_authenticated and user.student_profile %}
-                                {% if lesson in can_handle_requuest %}
+                            {% if user.is_authenticated and user.student_profile or user.tutor_profile %}
+                                {% if lesson in can_handle_request %}
                                     <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-primary mb-3"

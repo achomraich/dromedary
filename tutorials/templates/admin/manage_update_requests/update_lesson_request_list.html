@@ -16,6 +16,7 @@
                     <th>Duration</th>
                     <th>Frequency</th>
                     <th>To Do</th>
+                    <th>Requested By</th>
                     <th>Notes</th>
                     <th>Action</th>
                 </tr>
@@ -29,6 +30,7 @@
                         <td>{{ lesson.lesson.duration|format_duration }}</td>
                         <td>{{ lesson.lesson.frequency|format_frequency }}</td>
                         <td>{{ lesson.get_update_option_display }}</td>
+                        <td>{{ lesson.made_by }}</td>
                         <td>{{ lesson.details}}</td>
                         <td>
                             <button type="submit" class="btn btn-primary">Handle the Request</button>

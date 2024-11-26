@@ -357,26 +357,31 @@ class ViewLessons(View):
             self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
             self.status = 'student'
 
-            self.can_be_updated = self.list_of_lessons.filter(
-                Exists(
-                    LessonStatus.objects.filter(
-                        lesson_id=OuterRef('pk'),
-                        status=Status.BOOKED
-                    )
-                )
-            )
-            print(self.can_be_updated)
-
-            lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons)
-            lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
-
-            message ={request.lesson_id: request.get_update_option_display() for request in lessons_requests}
-            print(message)
         else:
             self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
             self.status = 'tutor'
 
-        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'message':message, 'can_handle_requuest': self.can_be_updated})
+        self.can_be_updated = self.list_of_lessons.filter(
+            Exists(
+                LessonStatus.objects.filter(
+                    lesson_id=OuterRef('pk'),
+                    status=Status.BOOKED
+                )
+            )
+        )
+        print(self.can_be_updated)
+
+        lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons)
+        lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
+
+        message = {
+            request.lesson_id: {
+                "update_option": request.get_update_option_display(),
+                "made_by": request.made_by
+            }
+            for request in lessons_requests
+        }
+        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'message': message, 'can_handle_request': self.can_be_updated})
 
     def post(self, request, lesson_id=None):
 
@@ -530,12 +535,18 @@ class UpdateLessonRequest(View):
 
             form = UpdateLessonRequestForm(
                 data=request.POST,
-                instance=lesson_update_instance
+                instance=lesson_update_instance,
+                user_role=request.user
             )
 
             if form.is_valid():
                 try:
                     saved_instance = form.save()
+                    if hasattr(request.user, 'tutor_profile'):
+                        saved_instance.made_by = 'Tutor'
+                    elif hasattr(request.user, 'student_profile'):
+                        saved_instance.made_by = 'Student'
+                    saved_instance.save()
                     self.change_status(saved_instance)
                 except Exception as e:
                     form.add_error(None, f"An error occurred: {str(e)}")

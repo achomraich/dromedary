@@ -16,12 +16,11 @@ from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-<<<<<<< HEAD
+
 from tutorials.models import Student, Admin, Tutor
 from tutorials.models import Lesson, LessonStatus, Subject, LessonUpdateRequest
-=======
+
 from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status
->>>>>>> 1a33f0f (Implement update lesson request handling for students)
 
 @login_required
 def dashboard(request):

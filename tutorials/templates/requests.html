@@ -20,12 +20,12 @@
       <tbody>
         {% for request in lesson_requests %}
           <tr>
-            <td>{{ request.student.full_name }}</td>
+            <td>{{ request.student.user.username }}</td>
             <td>{{ request.language }}</td>
             <td>{{ request.lesson_time }}</td>
             <td>{{ request.lesson_day }}</td>
             <td>{{ request.lesson_length }}</td>
-            <td>{{ request.lesson_frequency }}</td>
+            <td>{{ request.get_lesson_frequency_display }}</td>
             <td>{{ request.status }}</td>
             <td>{{ request.created }}</td>
           </tr>

@@ -207,9 +207,9 @@ def create_invoice(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-def admin_lesson_requests(request):
+def requests(request):
     lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'admin_lesson_requests.html', {'lesson_requests': lesson_requests})
+    return render(request, 'requests.html', {'requests': lesson_requests})
 
 class StudentsView(View):
 

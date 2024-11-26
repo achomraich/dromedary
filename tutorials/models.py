@@ -221,12 +221,12 @@ class TutorReviews(models.Model):
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
     
 class LessonRequest(models.Model):
-    LANGUAGE = {
+    LANGUAGE = [
         ('python','Python'),
         ('c++','C++'),
         ('java','Java'),
-    }
-    DAYS = {
+    ]
+    DAYS = [
         ('mon','Monday'),
         ('tue','Tuesday'),
         ('wed','Wednesday'),
@@ -234,16 +234,16 @@ class LessonRequest(models.Model):
         ('fri','Friday'),
         ('sat','Saturday'),
         ('sun','Sunday'),
-    }
-    FREQUENCY = {
+    ]
+    FREQUENCY = [
         (1,'Weekly'),
         (2,'Biweekly'),
-    }
+    ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     language = models.CharField(max_length=10, choices=LANGUAGE)
     lesson_time = models.TimeField()
-    lesson_day = models.CharField(max_length=9, choices=DAYS)
+    lesson_day = models.CharField(max_length=3, choices=DAYS)
     lesson_length = models.IntegerField()
-    lesson_frequency = models.CharField(max_length=20, choices=FREQUENCY)
+    lesson_frequency = models.IntegerField(choices=FREQUENCY)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)

@@ -54,7 +54,6 @@ urlpatterns = [
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
     path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
 
-
     path('dashboard/update_requests/', views.UpdateLessonRequest.as_view(), name='update_requests'),
     path('dashboard/requests/', views.LessonRequest, name='admin_lesson_requests'),
 ]

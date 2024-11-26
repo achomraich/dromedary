@@ -1,5 +1,7 @@
 {% extends 'base_content.html' %}
+{% load lesson_filters %}
 {% block content %}
+
     <div class="container">
     <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
 
@@ -14,6 +16,7 @@
                     <th>Term Start Date</th>
                     <th>Duration</th>
                     <th>Frequency</th>
+                    <th>Notes</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -26,11 +29,20 @@
                         <td>{{ lesson.term_id.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>
                         <td>{{ lesson.frequency|format_frequency }}</td>
-                    <td>
+                        <td>
+                            {% if user.is_authenticated and user.student_profile and lesson.lesson_id in lessons_with_requests %}
+                                <p>Request made: {{ message|get:lesson.lesson_id }} </p>
+                            {% else %}
+                                <p>—</p>
+                            {% endif %}
+                        </td>
+                        <td>
                             {% if user.is_authenticated and user.student_profile %}
                                 <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary mb-3">Update Lesson</button>
+                                    <button type="submit" class="btn btn-primary mb-3"
+                                    {% if lesson.lesson_id in lessons_with_requests %}disabled{% endif %}>
+                                        Update Lesson</button>
                                 </form>
                             {% endif %}
                         </td>

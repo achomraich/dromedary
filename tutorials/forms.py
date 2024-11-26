@@ -176,12 +176,14 @@ class LessonFeedbackForm(forms.ModelForm):
 class UpdateLessonRequestForm(forms.ModelForm):
     tutor_name = forms.CharField(label='Tutor', required=False, disabled=True)
     duration = forms.CharField(label='Lesson duration', required=False, disabled=True)
-
     frequency = forms.CharField(label='Lesson frequency', required=False, disabled=True)
 
     class Meta:
         model = LessonUpdateRequest
         fields = ['update_option', 'details']
+        widgets = {
+            'details': forms.Textarea(attrs={'rows': 4, 'cols': 50, 'placeholder': 'Enter additional details here...'}),
+        }
 
     def __init__(self, *args, **kwargs):
         lesson_update_instance = kwargs.get('instance')

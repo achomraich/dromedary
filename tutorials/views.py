@@ -16,8 +16,12 @@ from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
+<<<<<<< HEAD
 from tutorials.models import Student, Admin, Tutor
 from tutorials.models import Lesson, LessonStatus, Subject, LessonUpdateRequest
+=======
+from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status
+>>>>>>> 1a33f0f (Implement update lesson request handling for students)
 
 @login_required
 def dashboard(request):
@@ -344,6 +348,8 @@ class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
         current_user = request.user
+        message = {}
+        lessons_with_requests = set()
         if lesson_id:
             return self.lesson_detail(request, lesson_id)
 
@@ -353,17 +359,23 @@ class ViewLessons(View):
         elif hasattr(request.user, 'student_profile'):
             self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
             self.status = 'student'
+
+            lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons)
+            lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
+
+            message ={request.lesson_id: request.get_update_option_display() for request in lessons_requests}
+            print(message)
         else:
             self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
             self.status = 'tutor'
-        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons})
+
+        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'message':message})
 
     def post(self, request, lesson_id=None):
 
         if lesson_id:
             if 'update_feedback' in request.path:
                 return self.update_feedback(request, lesson_id)
-        #return redirect('lessons_details')
 
     def handle_lessons_form(self, request, lesson=None):
         form = LessonFeedbackForm(request.POST or None, instance=lesson)
@@ -392,7 +404,6 @@ class ViewLessons(View):
         return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
 
     def lesson_detail(self, request, lessonStatus_id):
-        """Display each lesson status for admin"""
         if lessonStatus_id:
             if 'update_feedback'in request.path:
                 return self.update_feedback(request, lessonStatus_id)
@@ -415,9 +426,9 @@ class SubjectView(View):
         if hasattr(request.user, 'admin_profile'):
             self.list_of_subjects = Subject.objects.all()
 
-        paginator = Paginator(self.list_of_subjects, 20)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+            paginator = Paginator(self.list_of_subjects, 20)
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
 
         return render(request, 'admin/manage_subjects/subjects_list.html', {'page_obj': page_obj})
 
@@ -471,8 +482,16 @@ class SubjectView(View):
 
 class UpdateLessonRequest(View):
 
+    def get(self, request):
+        current_user = request.user
+        if hasattr(current_user, 'admin_profile'):
+            list_of_requests = LessonUpdateRequest.objects.all()
+        else:
+            return HttpResponseRedirect('dashboard')
+
+        return render(request, 'admin/manage_update_requests/update_lesson_request_list.html', {'list_of_requests': list_of_requests})
+
     def post(self, request, lesson_id=None):
-        print(f"POST request received for lesson_id: {lesson_id}")  # Debug
         if lesson_id:
             if request.path.endswith('request_changes/'):
                 return self.request_change(request, lesson_id)
@@ -481,10 +500,9 @@ class UpdateLessonRequest(View):
 
     def request_change(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
-        print(f"Request change for Lesson ID: {lesson_id}")  # Debug
         form = self.handle_subject_form(request, lesson)
 
-        if isinstance(form, HttpResponseRedirect):  # Check for redirection
+        if isinstance(form, HttpResponseRedirect):
             return form
 
         return render(
@@ -497,23 +515,41 @@ class UpdateLessonRequest(View):
         )
 
     def handle_subject_form(self, request, lesson=None):
-
-        lesson_update_instance, _ = LessonUpdateRequest.objects.get_or_create(lesson=lesson)
-
-        form = UpdateLessonRequestForm(
-            data=request.POST or None,
-            instance=lesson_update_instance
-        )
-
         if request.method == "POST":
+            try:
+                lesson_update_instance = LessonUpdateRequest.objects.get(lesson=lesson)
+            except LessonUpdateRequest.DoesNotExist:
+                lesson_update_instance = LessonUpdateRequest(lesson=lesson)
+
+            form = UpdateLessonRequestForm(
+                data=request.POST,
+                instance=lesson_update_instance
+            )
+
             if form.is_valid():
                 try:
-                    form.save()
-                    return HttpResponseRedirect(reverse('lessons_list'))
+                    saved_instance = form.save()
+                    self.change_status(saved_instance)
                 except Exception as e:
                     form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
 
         return form
 
+    def change_status(self, saved_instance):
+        """
+        Update the lesson's status after a successful save.
+        """
+        if saved_instance and saved_instance.lesson:
+            try:
+                lesson = saved_instance.lesson
+                print(f"Changing status for lesson {lesson.lesson_id} to 'Pending Update'")
 
+                LessonStatus.objects.filter(
+                    status=Status.BOOKED,
+                    lesson_id=lesson
+                ).update(status=Status.PENDING)
+            except Exception as e:
+                print(f"Error in changing status: {e}")
 

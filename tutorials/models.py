@@ -158,7 +158,6 @@ class LessonUpdateRequest(models.Model):
 
 
 class LessonStatus(models.Model):
-    # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
 
     status_id = models.BigAutoField(primary_key=True)
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE, default=0)
@@ -194,7 +193,7 @@ class Invoices(models.Model):
 
 
 class Requests(models.Model):
-    # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
+
     request_id = models.BigAutoField(primary_key=True)
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)

@@ -22,3 +22,9 @@ def format_frequency(value):
     elif value == 'D':
         return 'Day'
     return value
+
+
+@register.filter
+def get(dictionary: dict, key):
+    print(f"Type of update_message: {type(dictionary)}")
+    return dictionary.get(key)

@@ -1,0 +1,41 @@
+{% extends 'base_content.html' %}
+{% load lesson_filters %}
+{% block content %}
+
+    <div class="container">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
+
+        <h1 class="mb-2">Lessons</h1>
+        {% load lesson_filters %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>Duration</th>
+                    <th>Frequency</th>
+                    <th>To Do</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in list_of_requests %}
+                    <tr>
+                        <td>{{ lesson.lesson.student.user.full_name }}</td>
+                        <td>{{ lesson.lesson.tutor.user.full_name }}</td>
+                        <td>{{ lesson.lesson.subject_id.name }}</td>
+                        <td>{{ lesson.lesson.duration|format_duration }}</td>
+                        <td>{{ lesson.lesson.frequency|format_frequency }}</td>
+                        <td>{{ lesson.get_update_option_display }}</td>
+                        <td>{{ lesson.details}}</td>
+                        <td>
+                            <button type="submit" class="btn btn-primary">Handle the Request</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

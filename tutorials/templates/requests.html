@@ -7,23 +7,33 @@
       <table class="table table-striped">
       <thead>
         <tr>
-          <th>Lesson ID</th>
-          <th>Subject</th>
+          <th>Student</th>
+          <th>Language</th>
           <th>Time</th>
           <th>Day</th>
           <th>Length</th>
+          <th>Frequency</th>
+          <th>Status</th>
+          <th>Date Requested</th>
         </tr>
       </thead>
       <tbody>
-        {% for request in requests %}
-            <tr>
-              <td>{{ request.lesson_id}}</td>
-              <td>{{ request.subject }}</td>
-              <td>{{ request.lesson_time }}</td>
-              <td>{{ request.lesson_day }}</td>
-              <td>{{ request.lesson_length }}</td>
-            </tr>
-          {% endfor %}
+        {% for request in lesson_requests %}
+          <tr>
+            <td>{{ request.student.full_name }}</td>
+            <td>{{ request.language }}</td>
+            <td>{{ request.lesson_time }}</td>
+            <td>{{ request.lesson_day }}</td>
+            <td>{{ request.lesson_length }}</td>
+            <td>{{ request.lesson_frequency }}</td>
+            <td>{{ request.status }}</td>
+            <td>{{ request.created }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8">No lesson requests found.</td>
+          </tr>
+        {% endfor %}
       </tbody>
       </table>
     </div>

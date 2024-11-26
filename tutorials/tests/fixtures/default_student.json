@@ -1,0 +1,16 @@
+[
+  {
+    "model": "tutorials.student",
+    "pk": 2,
+    "fields": {
+      "user": 2
+    }
+  },
+  {
+    "model": "tutorials.student",
+    "pk": 5,
+    "fields": {
+      "user": 5
+    }
+  }
+]

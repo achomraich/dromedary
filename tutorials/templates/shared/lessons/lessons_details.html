@@ -25,7 +25,10 @@
 
                         <td>
                             {% if user.is_authenticated and user.tutor_profile and lesson.status == "Completed" %}
-                            <a href="{% url 'update_feedback' lesson.status_id %}" class="btn btn-warning btn-sm">Update Feedback</a>
+                                <a href="{% url 'update_feedback' lesson.status_id %}" class="btn btn-warning btn-sm">Update Feedback</a>
+                            {% endif %}
+                            {% if user.is_authenticated and not user.admin_profile and lesson.status == "Booked" %}
+                                <a href="{% url 'cancel_lesson' lesson.status_id %}" class="btn btn-warning btn-sm">Cancel Lesson</a>
                             {% endif %}
                         </td>
                     </tr>

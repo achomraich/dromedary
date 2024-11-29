@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, Lesson
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -91,7 +91,7 @@ class PasswordForm(NewPasswordMixin):
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
     """Form enabling unregistered users to sign up."""
 
-    role = forms.ChoiceField(choices=[('Tutor', 'Tutor'), ('Student', 'Student')])
+    role = forms.ChoiceField(choices=[('Tutor', 'Tutor'), ('Student', 'Student'), ('Admin', 'Admin')])
 
     class Meta:
         """Form options."""
@@ -150,10 +150,10 @@ class SubjectForm(forms.ModelForm):
 
 
 class LessonFeedbackForm(forms.ModelForm):
-    lesson_name = forms.CharField(label='Lesson Subject', required=False, disabled=True)
-    student_name = forms.CharField(label='Student', required=False, disabled=True)
-    lesson_date = forms.DateField(label='Lesson Date', required=False, disabled=True)
-    lesson_time = forms.TimeField(label='Lesson Time', required=False, disabled=True)
+    lesson_name = forms.CharField(label='Lesson Subject', required=True, disabled=True)
+    student_name = forms.CharField(label='Student', required=True, disabled=True)
+    lesson_date = forms.DateField(label='Lesson Date', required=True, disabled=True)
+    lesson_time = forms.TimeField(label='Lesson Time', required=True, disabled=True)
 
     class Meta:
         model = LessonStatus
@@ -174,9 +174,9 @@ class LessonFeedbackForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 class UpdateLessonRequestForm(forms.ModelForm):
-    tutor_name = forms.CharField(label='Tutor', required=False, disabled=True)
-    duration = forms.CharField(label='Lesson duration', required=False, disabled=True)
-    frequency = forms.CharField(label='Lesson frequency', required=False, disabled=True)
+    tutor_name = forms.CharField(label='Lesson with: ', required=False, disabled=True)
+    duration = forms.CharField(label='Lesson duration: ', required=False, disabled=True)
+    frequency = forms.CharField(label='Lesson frequency: ', required=False, disabled=True)
 
     class Meta:
         model = LessonUpdateRequest
@@ -204,3 +204,51 @@ class UpdateLessonRequestForm(forms.ModelForm):
                 self.fields['update_option'].choices = [
                     choice for choice in LessonUpdateRequest.UPDATE_CHOICES if choice[0] == '2' or choice[0] == '3'
                 ]
+
+class UpdateLessonForm(forms.ModelForm):
+    tutor_name = forms.CharField(label='Tutor', required=False)
+    student = forms.CharField(label='Student', required=False, disabled=True)
+    frequency = forms.CharField(label='Lesson frequency', required=False)
+    update_option = forms.CharField(label='Request', required=False, disabled=True)
+    details = forms.CharField(label='Request details', required=False, disabled=True)
+    duration = forms.TimeField(label='Lesson Duration', required=False)
+    day_of_week = forms.DateField(label='Day of Week', required=False)
+
+    class Meta:
+        model = Lesson
+        fields = ['tutor_name', 'frequency', 'duration', 'day_of_week']
+
+    def __init__(self, *args, **kwargs):
+        # Extract arguments
+        lesson_update_instance = kwargs.get('instance', None)
+        option = kwargs.pop('update_option', None)
+        day_of_week = kwargs.pop('day_of_week', None)
+        details = kwargs.pop('details', None)
+
+        # Initialize initial data after form creation
+        super().__init__(*args, **kwargs)
+
+        if lesson_update_instance:
+            # Manually set the initial data
+            self.fields['student'].initial = lesson_update_instance.student.user.full_name() if lesson_update_instance.student else ''
+            self.fields['tutor_name'].initial = lesson_update_instance.tutor.user.full_name() if lesson_update_instance.tutor else ''
+            print(lesson_update_instance.tutor.user.full_name())
+            self.fields['update_option'].initial = option
+            self.fields['details'].initial = details
+            self.fields['duration'].initial = lesson_update_instance.duration
+            self.fields['day_of_week'].initial = day_of_week
+            self.fields['frequency'].initial = lesson_update_instance.frequency
+
+            # Debugging: Check if initial values are set correctly
+            print("Field values after initialization:")
+            print(f"tutor_name: {self.fields['tutor_name'].initial}")
+            print(f"frequency: {self.fields['frequency'].initial}")
+            print(f"duration: {self.fields['duration'].initial}")
+            print(f"day_of_week: {self.fields['day_of_week'].initial}")
+
+        # Set the fields' properties: Make sure fields are editable if required
+        self.fields['tutor_name'].disabled = False
+        self.fields['frequency'].disabled = False
+        self.fields['duration'].disabled = False
+        self.fields['day_of_week'].disabled = False
+

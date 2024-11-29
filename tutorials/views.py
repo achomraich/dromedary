@@ -9,7 +9,7 @@ from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, UpdateLessonForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from .models import Invoice
@@ -344,9 +344,7 @@ class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
         current_user = request.user
-        message = {}
         self.can_be_updated = []
-        lessons_with_requests = set()
         if lesson_id:
             return self.lesson_detail(request, lesson_id)
 
@@ -388,6 +386,8 @@ class ViewLessons(View):
         if lesson_id:
             if 'update_feedback' in request.path:
                 return self.update_feedback(request, lesson_id)
+            elif 'cancel_lesson' in request.path:
+                return self.cancel_lesson(request, lesson_id)
 
     def handle_lessons_form(self, request, lesson=None):
         form = LessonFeedbackForm(request.POST or None, instance=lesson)
@@ -415,10 +415,31 @@ class ViewLessons(View):
 
         return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
 
+    def cancel_lesson(self, request, status_id=None):
+
+        lesson = get_object_or_404(LessonStatus, pk=status_id)
+        if lesson.status == Status.BOOKED:
+            lesson.status = Status.CANCELLED
+            lesson.save()
+        lesson.feedback = f'Lesson was cancelled by {self.status}'
+        lesson.save()
+
+        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.lesson_id)
+
     def lesson_detail(self, request, lessonStatus_id):
+
+        if hasattr(request.user, 'admin_profile'):
+            self.status = 'admin'
+        elif hasattr(request.user, 'student_profile'):
+            self.status = 'student'
+        else:
+            self.status = 'tutor'
+
         if lessonStatus_id:
             if 'update_feedback'in request.path:
                 return self.update_feedback(request, lessonStatus_id)
+            if 'cancel_lesson'in request.path:
+                return self.cancel_lesson(request, lessonStatus_id)
 
         try:
             lessonStatus = LessonStatus.objects.filter(lesson_id=lessonStatus_id)
@@ -557,7 +578,7 @@ class UpdateLessonRequest(View):
 
     def change_status(self, saved_instance):
         """
-        Update the lesson's status after a successful save.
+        Update the lesson's status
         """
         if saved_instance and saved_instance.lesson:
             try:
@@ -570,4 +591,65 @@ class UpdateLessonRequest(View):
                 ).update(status=Status.PENDING)
             except Exception as e:
                 print(f"Error in changing status: {e}")
+
+class UpdateLesson(View):
+
+    def get(self, request, lesson_id=None):
+        print(lesson_id)
+        return self.update_lesson(request, lesson_id)
+
+    def post(self, request, lesson_id=None):
+        print('Y')
+        if lesson_id:
+            if request.path.endswith(f'update_requests/{lesson_id}/'):
+                print('Y')
+                return self.update_lesson(request, lesson_id)
+
+        return redirect('update_requests')
+
+    def update_lesson(self, request, lesson_id):
+        option = LessonUpdateRequest.objects.get(lesson_id=lesson_id).update_option
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        form = self.handle_update_lesson_form(request, option, lesson)
+
+        if isinstance(form, HttpResponseRedirect):
+            return form
+
+        return render(
+            request,
+            'admin/manage_update_requests/update_lesson.html',
+            {
+                'form': form
+            }
+        )
+
+    def handle_update_lesson_form(self, request, update_option, lesson=None):
+        if request.method == "POST":
+            try:
+                lesson_update_instance = Lesson.objects.get(lesson_id=lesson.lesson_id)
+            except LessonUpdateRequest.DoesNotExist:
+                Http404()
+
+            details = LessonUpdateRequest.objects.get(lesson_id=lesson.lesson_id).details
+            update_option = LessonUpdateRequest.objects.get(lesson_id=lesson).get_update_option_display()
+            request_instance = get_object_or_404(LessonUpdateRequest, lesson=lesson)
+
+            form = UpdateLessonForm(
+                data=request.POST,
+                instance=lesson_update_instance,
+                update_option=update_option,
+                details=details
+            )
+
+            if form.is_valid():
+                try:
+                    saved_instance = form.save()
+                    #self.change_status(saved_instance)
+                except Exception as e:
+                    form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
+
+        return form
+
 

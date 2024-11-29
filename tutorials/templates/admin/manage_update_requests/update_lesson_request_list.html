@@ -33,7 +33,10 @@
                         <td>{{ lesson.made_by }}</td>
                         <td>{{ lesson.details}}</td>
                         <td>
-                            <button type="submit" class="btn btn-primary">Handle the Request</button>
+                            <form action="{% url 'update_lesson' lesson.lesson_id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary" >Handle the Request</button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

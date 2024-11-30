@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -197,3 +197,8 @@ class UpdateLessonRequestForm(forms.ModelForm):
             kwargs['initial']['frequency'] = lesson_update_instance.lesson.frequency
             kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject_id.name
         super().__init__(*args, **kwargs)
+
+class LessonRequestForm(forms.ModelForm):
+    class Meta:
+        model = LessonRequest
+        fields = ['language','lesson_time','lesson_day','lesson_length','lesson_frequency']

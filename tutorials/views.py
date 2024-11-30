@@ -230,6 +230,9 @@ def create_lesson_request(request):
         form = LessonRequestForm()
 
     return render(request, 'lesson_request_form.html', {'form': form})
+
+def lesson_request_success(request):
+    return render(request, 'lesson_request_success.html')
     
 
 class StudentsView(View):

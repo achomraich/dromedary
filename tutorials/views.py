@@ -13,7 +13,7 @@ from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, LessonRequestForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from .models import Invoice
@@ -210,6 +210,27 @@ def create_invoice(request):
 def requests(request):
     lesson_requests = LessonRequest.objects.all().order_by('-created')
     return render(request, 'requests.html', {'requests': lesson_requests})
+
+def create_lesson_request(request):
+    if request.method == 'POST':
+        form = LessonRequestForm(request.POST)
+        if form.is_valid():
+            # Create lesson request but don't save it yet
+            lesson_request = form.save(commit=False)
+
+            # Associate the logged-in student's profile with the lesson request
+            lesson_request.student = request.user.student_profile
+
+            # Save the lesson request to the database
+            lesson_request.save()
+
+            # Redirect to a success page or another page after form submission
+            return redirect('lesson_request_success')
+    else:
+        form = LessonRequestForm()
+
+    return render(request, 'lesson_request_form.html', {'form': form})
+    
 
 class StudentsView(View):
 

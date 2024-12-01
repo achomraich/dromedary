@@ -1,0 +1,16 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1>Welcome to your student dashboard {{ user.username }}</h1>
+      <p class="mt-3">
+            <a href="{% url 'tutors_list' %}" class="btn btn-primary">My Tutors</a>
+            <a href="{% url 'lessons_list' %}" class="btn btn-primary">My Lessons</a>
+            <!--<a href="" class="btn btn-primary">Lesson requests</a>-->
+            <!--<a href="" class="btn btn-primary">Manage Invoices</a>-->
+        </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base_content.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <a href="{% url 'tutors_list' %}" class="btn btn-secondary mt-2 mb-4">Back</a>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-3">
+                    <h4 class="card-title mb-0">Tutor Details: {{ tutor.user.username }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5 class="mt-2"><strong>Full Name:</strong></h5>
+                        <p>{{ tutor.user.full_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5 class="mt-3"><strong>Email:</strong></h5>
+                        <p>{{ tutor.user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5 class="mt-3"><strong>Other details:</strong></h5>
+                        <p>(Students related and modules)</p>
+                    </div>
+                    
+                    <h5 class="mt-4"><strong>Lessons</strong></h5>
+                    {% if lessons %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Student</th>
+                                    <th>Student Email</th>
+                                    <th>Term</th>
+                                    <th>Frequency</th>
+                                    <th>Duration</th>
+                                    <th>Pay</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lesson in lessons %}
+                                    <tr>
+                                        <td>{{ lesson.subject_id.name }}</td>
+                                        <td>{{ lesson.student.user.full_name }}</td>
+                                        <td>{{ lesson.student.user.email }}</td>
+                                        <td>{{ lesson.term_id.start_date }} - {{ lesson.term_id.end_date }}</td>
+                                        <td>{{ lesson.get_frequency_display }}</td>
+                                        <td>{{ lesson.duration }}</td>
+                                        <td>${{ lesson.price_per_lesson }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No lessons found for this tutor.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-center">
+                    {% if user.is_authenticated and user.admin_profile %}
+                        <a href="{% url 'tutor_edit' tutor.user.id %}" class="btn btn-warning me-2">Edit</a>
+                    {% endif %}
+                    <a href="{% url 'tutors_list' %}" class="btn btn-secondary">Back to List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

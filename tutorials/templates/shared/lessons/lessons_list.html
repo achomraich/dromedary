@@ -1,0 +1,42 @@
+{% extends 'base_content.html' %}
+{% block content %}
+    <div class="container">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
+
+        <h1 class="mb-2">Lessons</h1>
+        {% load lesson_filters %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Teacher</th>
+                    <th>Subject</th>
+                    <th>Term Start Date</th>
+                    <th>Duration</th>
+                    <th>Frequency</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in list_of_lessons %}
+                    <tr onclick="window.location.href='{% url 'lesson_detail' lesson.lesson_id %}'" style="cursor: pointer;">
+                        <td>{{ lesson.student.user.full_name }}</td>
+                        <td>{{ lesson.tutor.user.full_name }}</td>
+                        <td>{{ lesson.subject_id.name }}</td>
+                        <td>{{ lesson.term_id.start_date }}</td>
+                        <td>{{ lesson.duration|format_duration }}</td>
+                        <td>{{ lesson.frequency|format_frequency }}</td>
+                    <td>
+                            {% if user.is_authenticated and user.student_profile %}
+                                <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary mb-3">Update Lesson</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

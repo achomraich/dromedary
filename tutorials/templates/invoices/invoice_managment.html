@@ -47,12 +47,13 @@
             <!-- This block will loop through invoices provided by the view -->
             {% for invoice in invoices %}
             <tr>
+                <td>{{ invoice.id }}</td>
                 <td>{{ invoice.student }}</td>
                 <td>{{ invoice.amount }}</td>
                 <td>{{ invoice.due_date }}</td>
                 <td>{{ invoice.is_paid|yesno:"Paid,Unpaid" }}</td>
                 <td>
-                    <a href="{% url 'update_invoice' invoice.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                     <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-sm btn-info">View</a>
                 </td>
             </tr>
             {% empty %}

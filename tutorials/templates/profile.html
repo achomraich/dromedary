@@ -3,12 +3,24 @@
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <h1>Edit profile</h1>
-      <form action="{% url 'profile' %}" method="post">
-        {% csrf_token %}
-        {% include 'partials/bootstrap_form.html' with form=form %}
-        <input type="submit" value="Update" class="btn btn-primary">
-      </form>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back</a>
+        <h1 class="mt-2 mb-3">Edit profile</h1>
+        <form action="{% url 'profile' %}" method="post">
+            {% csrf_token %}
+            {% include 'partials/bootstrap_form.html' with form=user_form %}
+            {% if tutor_form %}
+                {% include 'partials/bootstrap_form.html' with form=tutor_form %}
+                <label for="id_subjects" class="form-label">Subjects Taught:</label>
+                <div class="d-flex flex-wrap">
+                {% for subject in tutor_form.subjects %}
+                    <div class="me-5">
+                        {{ subject }}
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+            <input type="submit" value="Update" class="btn btn-primary mt-3">
+        </form>
     </div>
   </div>
 </div>

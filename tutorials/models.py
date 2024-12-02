@@ -71,7 +71,8 @@ class Invoice(models.Model):
 
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
-
+    subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
+    experience = models.TextField(blank=True)
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
@@ -80,6 +81,17 @@ class Student(models.Model):
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
+class TutorBio(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    bio = models.CharField(max_length=255)
+
+class TaughtSubjects(models.Model):
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey('Subject', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('tutor', 'subject_id')
 
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
@@ -94,7 +106,6 @@ class TutorAvailability(models.Model):
     # available or booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
 
-
 class Subject(models.Model):
 
     subject_id = models.BigAutoField(primary_key=True)
@@ -103,6 +114,9 @@ class Subject(models.Model):
         max_length=255,
         default=''
     )
+
+    def __str__(self):
+        return self.name
 
 
 class Term(models.Model):

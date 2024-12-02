@@ -239,12 +239,30 @@ def create_invoice(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-def requests(request):
-    lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'requests.html', {'lesson_requests': lesson_requests})
+class RequestView(View):
+    status = None
+    requests_list = None
 
-def create_lesson_request(request):
-    if request.method == 'POST':
+    def get(self, request, request_id=None):
+        current_user = request.user
+        #if request_id:
+        #    return self.request_detail(request, request_id)
+
+        if hasattr(current_user, 'admin_profile'):
+            self.requests_list = LessonRequest.objects.all().order_by('-created')
+            self.status = 'admin'
+        elif hasattr(request.user, 'student_profile'):
+            self.requests_list = LessonRequest.objects.filter(student=current_user.id)
+            self.status = 'student'
+        return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
+
+class MakeRequestView(View):
+
+    def get(self, request, *args, **kwargs):
+        form = LessonRequestForm()
+        return render(request, 'student/requests/lesson_request_form.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
         form = LessonRequestForm(request.POST)
         if form.is_valid():
             # Create lesson request but don't save it yet
@@ -260,13 +278,8 @@ def create_lesson_request(request):
             return redirect('dashboard')
         else:
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
-    else:
-        form = LessonRequestForm()
 
-    return render(request, 'lesson_request_form.html', {'form': form})
-
-def lesson_request_success(request):
-    return render(request, 'lesson_request_success.html')
+        return render(request, 'student/requests/lesson_request_form.html', {'form': form})
 
 class EntityView(View):
     model = None

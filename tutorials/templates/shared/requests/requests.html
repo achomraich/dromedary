@@ -37,8 +37,16 @@
                         <form action="" method="post" style="display:inline;">
                             {% csrf_token %}
                             <input type="hidden" name="reject" value="reject">
-                            <input type="hidden" name="request" value="{{ request }}">
+                            <input type="hidden" name="request_id" value="{{ request }}">
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
+                        </form>
+                    {% endif %}
+                    {% if user.is_authenticated and user.student_profile %}
+                        <form action="" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="cancel" value="cancel">
+                            <input type="hidden" name="request_id" value="{{ request }}">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">Cancel</button>
                         </form>
                     {% endif %}
                 </td>

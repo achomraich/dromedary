@@ -255,9 +255,11 @@ def create_lesson_request(request):
 
             # Save the lesson request to the database
             lesson_request.save()
-
+            messages.success(request, "Request submitted successfully.")
             # Redirect to a success page or another page after form submission
-            return redirect('lesson_request_success')
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Failed to update details. Please correct the errors and try again.")
     else:
         form = LessonRequestForm()
 
@@ -265,13 +267,6 @@ def create_lesson_request(request):
 
 def lesson_request_success(request):
     return render(request, 'lesson_request_success.html')
-    
-
-class StudentsView(View):
-
-    def get(self, request, student_id=None):
-        if student_id:
-            return self.student_details(request, student_id)
 
 class EntityView(View):
     model = None
@@ -311,8 +306,8 @@ class EntityView(View):
 
         profile_map = {
             'admin_profile': lambda: self.model.objects.all().order_by('user__username'),
-            'tutor_profile': lambda: self._get_entities_for_tutor(user),
-            'student_profile': lambda: self._get_entities_for_student(user),
+            'tutor_profile': lambda: self.get_entities_for_tutor(user),
+            'student_profile': lambda: self.get_entities_for_student(user),
         }
 
         entity_list = None
@@ -320,11 +315,6 @@ class EntityView(View):
             if hasattr(user, profile):
                 entity_list = entity_filter()
                 break
-
-        if not entity_list:
-            #messages.error(request, "No valid profile for this operation.")
-            print('got there')
-            raise PermissionDenied("No valid profile for this operation.")
 
         if search:
             query = reduce(lambda q1, q2: q1 | q2, [
@@ -349,11 +339,11 @@ class EntityView(View):
             'subjects': subjects
         })
 
-    def _get_entities_for_tutor(self, user):
+    def get_entities_for_tutor(self, user):
         lessons = Lesson.objects.filter(tutor_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('student_id')).order_by('user__username').distinct()
 
-    def _get_entities_for_student(self, user):
+    def get_entities_for_student(self, user):
         lessons = Lesson.objects.filter(student_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('tutor_id')).order_by('user__username').distinct()
 
@@ -411,9 +401,7 @@ class EntityView(View):
         entity.user.delete()
         messages.success(request, "Deleted successfully.")
         return redirect(self.redirect_url)
-    
-    
-    
+
 class StudentsView(EntityView):
     model = Student
 

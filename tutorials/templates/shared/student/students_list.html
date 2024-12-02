@@ -70,6 +70,10 @@
                     {% endif %}
                 </td>
             </tr>
+            {% empty %}   
+            <tr>
+                <td class="align-middle" colspan="8">No students found.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

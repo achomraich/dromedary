@@ -228,4 +228,10 @@ class UpdateLessonRequestForm(forms.ModelForm):
 class LessonRequestForm(forms.ModelForm):
     class Meta:
         model = LessonRequest
-        fields = ['language','lesson_time','lesson_day','lesson_length','lesson_frequency']
+        fields = ['subject','term','time','day','frequency']
+        widgets = {
+            'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'day': forms.Select(attrs={'class': 'form-select'}),
+            'frequency': forms.Select(attrs={'class': 'form-select'}),
+            'term': forms.Select(attrs={'class': 'form-select'}),
+        }

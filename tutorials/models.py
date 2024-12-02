@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -77,7 +79,6 @@ class Tutor(models.Model):
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
-
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
@@ -128,6 +129,9 @@ class Term(models.Model):
     term_id = models.BigAutoField(primary_key=True)
     start_date = models.DateField()
     end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.start_date.strftime('%b %Y')} - {self.end_date.strftime('%b %Y')}"
 
 
 class Lesson(models.Model):
@@ -185,12 +189,6 @@ class LessonStatus(models.Model):
     feedback = models.CharField(max_length=255)
     invoiced = models.BooleanField(default=False)
 
-'''class Booking(models.Model):
-    booking_id = models.BigAutoField(primary_key=True)
-    lesson_id = models.ForeignKey(Lesson.lesson_id, on_delete=models.CASCADE)
-    admin_id = models.ForeignKey(PlatformAdmin.admin_id, on_delete=models.CASCADE)
-    booking_date = models.DateField()'''
-
 class Invoices(models.Model):
     PAYMENT_CHOICES = [
         ("P", "Paid"),
@@ -205,18 +203,6 @@ class Invoices(models.Model):
     due_date = models.DateField()
     total_amount = models.IntegerField()
     status = models.CharField(max_length=1, choices=PAYMENT_CHOICES, default="U")
-
-
-class Requests(models.Model):
-    # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
-    request_id = models.BigAutoField(primary_key=True)
-    student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
-    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=10,
-        choices=Status.choices,
-        default=Status.PENDING)
 
 class TutorReviews(models.Model):
     RATING_CHOICES = [
@@ -235,29 +221,28 @@ class TutorReviews(models.Model):
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
     
 class LessonRequest(models.Model):
-    LANGUAGE = [
-        ('python','Python'),
-        ('c++','C++'),
-        ('java','Java'),
-    ]
     DAYS = [
-        ('mon','Monday'),
-        ('tue','Tuesday'),
-        ('wed','Wednesday'),
-        ('thu','Thursday'),
-        ('fri','Friday'),
-        ('sat','Saturday'),
-        ('sun','Sunday'),
+        ('Mon', 'Monday'),
+        ('Tue', 'Tuesday'),
+        ('Wed', 'Wednesday'),
+        ('Thu', 'Thursday'),
+        ('Fri', 'Friday'),
+        ('Sat', 'Saturday'),
+        ('Sun', 'Sunday'),
     ]
+
     FREQUENCY = [
-        (1,'Weekly'),
-        (2,'Biweekly'),
+        ('Weekly', 'Weekly'),
+        ('Biweekly', 'Biweekly'),
     ]
+
+    request = models.BigAutoField(primary_key=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    language = models.CharField(max_length=10, choices=LANGUAGE)
-    lesson_time = models.TimeField()
-    lesson_day = models.CharField(max_length=3, choices=DAYS)
-    lesson_length = models.IntegerField()
-    lesson_frequency = models.IntegerField(choices=FREQUENCY)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    time = models.TimeField()
+    day = models.CharField(max_length=3, choices=DAYS)
+    duration = models.DurationField(default=timedelta(hours=1))
+    frequency = models.CharField(max_length=10, choices=FREQUENCY, default="Weekly")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)

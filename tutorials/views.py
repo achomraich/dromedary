@@ -11,9 +11,11 @@ from django.db.models import Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
+from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, \
+    UpdateLessonRequestForm, TutorForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from .models import Invoice
@@ -131,22 +133,53 @@ class PasswordView(LoginRequiredMixin, FormView):
         return reverse('dashboard')
 
 
-class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    """Display user profile editing screen, and handle profile modifications."""
-
-    model = UserForm
+class ProfileUpdateView(LoginRequiredMixin, TemplateView):
     template_name = "profile.html"
-    form_class = UserForm
 
-    def get_object(self):
-        """Return the object (user) to be updated."""
-        user = self.request.user
-        return user
+    def get_context_data(self, **kwargs):
+        """Add forms to the context."""
+        context = super().get_context_data(**kwargs)
 
-    def get_success_url(self):
-        """Return redirect URL after successful update."""
-        messages.add_message(self.request, messages.SUCCESS, "Profile updated!")
+        if hasattr(self.request.user, 'tutor_profile'):
+            tutor_form = TutorForm(instance=self.request.user.tutor_profile)
+        else:
+            tutor_form = None
+
+        context['user_form'] = UserForm(instance=self.request.user)
+        context['tutor_form'] = tutor_form
+        return context
+
+    def post(self, request, *args, **kwargs):
+        user_form = UserForm(self.request.POST, instance=self.request.user)
+        if hasattr(self.request.user, 'tutor_profile'):
+            tutor_form = TutorForm(self.request.POST, instance=self.request.user.tutor_profile)
+        else:
+            tutor_form = None  # Don't handle tutor form if no tutor profile
+
+        self.save_forms(user_form, tutor_form)
+
+        if self.forms_are_valid(user_form, tutor_form):
+            messages.success(request, "Profile updated successfully!")
+            return redirect(self.get_success_url())
+
+        return self.render_to_response(self.get_context_data(form={'user_form': user_form, 'tutor_form': tutor_form}))
+
+    @staticmethod
+    def get_success_url():
+        """Redirect after successful update."""
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+
+    @staticmethod
+    def save_forms(user_form, tutor_form):
+        if user_form.is_valid():
+            user_form.save()
+        if tutor_form and tutor_form.is_valid():
+            tutor_form.save()
+
+    @staticmethod
+    def forms_are_valid(user_form, tutor_form):
+        if user_form.is_valid() and (tutor_form is None or tutor_form.is_valid()):
+            return True
 
 
 class SignUpView(LoginProhibitedMixin, FormView):

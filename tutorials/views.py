@@ -209,7 +209,7 @@ def create_invoice(request):
 
 def requests(request):
     lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'requests.html', {'requests': lesson_requests})
+    return render(request, 'requests.html', {'lesson_requests': lesson_requests})
 
 def create_lesson_request(request):
     if request.method == 'POST':

@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from tutorials.models import *
+from datetime import datetime, date
 
 class BaseSeleniumTest(StaticLiveServerTestCase):
 
@@ -18,6 +19,9 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
 
             {'username': '@charlie', 'email': 'charlie.johnson@example.org',
              'first_name': 'Charlie', 'last_name': 'Johnson', 'role': 'Student'},
+
+            {'username': '@student', 'email': 'student.example1@example.org',
+             'first_name': 'StudentName', 'last_name': 'StudentSurname', 'role': 'Student'}
         ]
         self.test_password = "Qa1"
 
@@ -57,7 +61,8 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
             Subject.objects.create(name=s["name"])
 
     def seed_lessons_model(self):
-        lessons = [{
+        lessons = [
+            {
             'tutor': Tutor.objects.get(pk=2),
             'student': Student.objects.get(pk=3),
             'subject_id': Subject.objects.get(pk=1),
@@ -65,7 +70,10 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
             'frequency': 'W',
             'duration': timedelta(hours=2, minutes=30),
             'start_date': "2024-09-01",
-            'price_per_lesson': 20}, {
+            'price_per_lesson': 20
+            },
+
+            {
             'tutor': Tutor.objects.get(pk=2),
             'student': Student.objects.get(pk=3),
             'subject_id': Subject.objects.get(pk=2),
@@ -73,7 +81,10 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
             'frequency': 'M',
             'duration': timedelta(hours=2, minutes=30),
             'start_date': "2025-02-01",
-            'price_per_lesson': 30}, {
+            'price_per_lesson': 30
+            },
+
+            {
             'tutor': Tutor.objects.get(pk=2),
             'student': Student.objects.get(pk=3),
             'subject_id': Subject.objects.get(pk=3),
@@ -81,8 +92,8 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
             'frequency': 'D',
             'duration': timedelta(hours=2, minutes=30),
             'start_date': "2025-03-01",
-            'price_per_lesson': 10},
-        ]
+            'price_per_lesson': 10
+            }]
 
         for lesson in lessons:
             Lesson.objects.create(
@@ -102,21 +113,21 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
             {'lesson_id': Lesson.objects.get(pk=1),
              'date': "2024-10-05", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
             {'lesson_id': Lesson.objects.get(pk=1),
-             'date': "2024-10-05", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
+             'date': "2024-10-12", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
             {'lesson_id': Lesson.objects.get(pk=2),
              'date': "2024-10-05", 'time': "15:30:00", 'status': "Completed", 'feedback': ''},
             {'lesson_id': Lesson.objects.get(pk=2),
-             'date': "2024-10-05", 'time': "14:00:00", 'status': "Pending", 'feedback': ''},
+             'date': "2024-10-12", 'time': "14:00:00", 'status': "Cancelled", 'feedback': ''},
             {'lesson_id': Lesson.objects.get(pk=3),
-             'date': "2024-10-05", 'time': "19:30:00", 'status': "Pending", 'feedback': ''},
+             'date': "2024-12-06", 'time': "19:30:00", 'status': "Booked", 'feedback': ''},
             {'lesson_id': Lesson.objects.get(pk=3),
-             'date': "2024-10-05", 'time': "09:00:00", 'status': "Pending", 'feedback': ''}
+             'date': "2024-12-12", 'time': "09:00:00", 'status': "Booked", 'feedback': ''}
         ]
 
         for status_data in lessonStatus:
             LessonStatus.objects.create(
                 lesson_id=status_data['lesson_id'],
-                date=status_data['date'],
+                date=datetime.strptime(status_data['date'], '%Y-%m-%d').date(),
                 time=status_data['time'],
                 status=status_data['status'],
                 feedback=status_data['feedback'],
@@ -129,17 +140,15 @@ class BaseSeleniumTest(StaticLiveServerTestCase):
     @classmethod
     def setUpClass(cls):
 
+        super().setUpClass()
         cls.seed_user_model(cls)
         cls.seed_term_model(cls)
         cls.seed_subject_model(cls)
         cls.seed_lessons_model(cls)
         cls.seed_lessonStatus_model(cls)
-
-        super().setUpClass()
-        cls.driver = webdriver.Chrome()
+        #cls.driver = webdriver.Chrome()
 
     @classmethod
     def tearDownClass(cls):
         cls.driver.quit()
         super().tearDownClass()
-

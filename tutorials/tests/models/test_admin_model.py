@@ -29,22 +29,18 @@ class AdminModelTest(TestCase):
         self.assertEqual(self.admin.user.last_name, "Doe")
 
     def test_full_name_method(self):
-        """Test the 'full_name' method of the User model."""
         self.assertEqual(self.admin.user.full_name(), "John Doe")
 
     def test_update_admin(self):
-        """Test that the associated User and Admin can be updated."""
         self.user.first_name = "Jane"
         self.user.save()
         self.assertEqual(self.admin.user.first_name, "Jane")
 
     def test_delete_user_deletes_admin(self):
-        """Test that deleting a User instance also deletes the associated Admin instance."""
         self.user.delete()
         with self.assertRaises(Admin.DoesNotExist):
             Admin.objects.get(user=self.user)
 
     def test_admin_without_user(self):
-        """Ensure that creating a Admin without a User is not allowed."""
         with self.assertRaises(IntegrityError):
             Admin.objects.create(user=None)

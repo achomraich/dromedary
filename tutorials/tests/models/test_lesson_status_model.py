@@ -22,7 +22,6 @@ class LessonStatusModelTestCase(TestCase):
         )
 
     def test_create_valid_lesson_status(self):
-        """Test creating a valid LessonStatus."""
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=date(2023, 9, 15),
@@ -36,18 +35,16 @@ class LessonStatusModelTestCase(TestCase):
         self.assertTrue(lesson_status.invoiced)
 
     def test_invalid_status_choice(self):
-        """Test that an invalid status choice raises a ValidationError."""
         with self.assertRaises(ValidationError):
             lesson_status = LessonStatus(
                 lesson_id=self.lesson,
                 date=date(2023, 9, 15),
                 time=time(10, 30),
-                status="INVALID",  # Invalid choice
+                status="INVALID",
             )
-            lesson_status.full_clean()  # Trigger validation
+            lesson_status.full_clean()
 
     def test_blank_feedback(self):
-        """Test that feedback defaults to an empty string."""
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=date(2023, 9, 15),
@@ -57,7 +54,6 @@ class LessonStatusModelTestCase(TestCase):
         self.assertEqual(lesson_status.feedback, "")
 
     def test_default_invoiced(self):
-        """Test that invoiced defaults to False."""
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=date(2023, 9, 15),
@@ -67,27 +63,24 @@ class LessonStatusModelTestCase(TestCase):
         self.assertFalse(lesson_status.invoiced)
 
     def test_missing_date(self):
-        """Test that a LessonStatus cannot be created without a date."""
         with self.assertRaises(ValidationError):
             lesson_status = LessonStatus(
                 lesson_id=self.lesson,
                 time=time(10, 30),
                 status=Status.PENDING,
             )
-            lesson_status.full_clean()  # Trigger validation
+            lesson_status.full_clean()
 
     def test_missing_time(self):
-        """Test that a LessonStatus cannot be created without a time."""
         with self.assertRaises(ValidationError):
             lesson_status = LessonStatus(
                 lesson_id=self.lesson,
                 date=date(2023, 9, 15),
                 status=Status.PENDING,
             )
-            lesson_status.full_clean()  # Trigger validation
+            lesson_status.full_clean()
 
     def test_missing_lesson_id(self):
-        """Test that a LessonStatus cannot be created without a lesson."""
         with self.assertRaises(ValidationError):
             lesson_status = LessonStatus(
                 date=date(2023, 9, 15),
@@ -97,7 +90,6 @@ class LessonStatusModelTestCase(TestCase):
             lesson_status.full_clean()
 
     def test_future_date(self):
-        """Test that a LessonStatus can have a future date."""
         future_date = date(2024, 1, 1)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -108,7 +100,6 @@ class LessonStatusModelTestCase(TestCase):
         self.assertEqual(lesson_status.date, future_date)
 
     def test_past_date(self):
-        """Test that a LessonStatus can have a past date."""
         past_date = date(2022, 1, 1)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -119,19 +110,17 @@ class LessonStatusModelTestCase(TestCase):
         self.assertEqual(lesson_status.date, past_date)
 
     def test_future_date_with_feedback(self):
-        """Test that feedback is cleared for future dates."""
         future_date = date.today() + timedelta(days=30)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
             status=Status.BOOKED,
-            feedback="This should be cleared",  # Non-empty feedback
+            feedback="This should be cleared",
         )
         self.assertEqual(lesson_status.feedback, "")
 
     def test_past_date_pending_status(self):
-        """Test that past dates with PENDING status are changed to CANCELLED."""
         past_date = date.today() - timedelta(days=30)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -139,10 +128,9 @@ class LessonStatusModelTestCase(TestCase):
             time=time(10, 30),
             status=Status.PENDING,
         )
-        self.assertEqual(lesson_status.status, Status.CANCELLED)  # Status should be updated
+        self.assertEqual(lesson_status.status, Status.CANCELLED)
 
     def test_past_date_booked_status(self):
-        """Test that past dates with BOOKED status are changed to COMPLETED."""
         past_date = date.today() - timedelta(days=30)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -150,10 +138,9 @@ class LessonStatusModelTestCase(TestCase):
             time=time(10, 30),
             status=Status.BOOKED,
         )
-        self.assertEqual(lesson_status.status, Status.COMPLETED)  # Status should be updated
+        self.assertEqual(lesson_status.status, Status.COMPLETED)
 
     def test_future_date_empty_feedback(self):
-        """Test that feedback remains empty for future dates when initially empty."""
         future_date = date.today() + timedelta(days=30)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -161,10 +148,9 @@ class LessonStatusModelTestCase(TestCase):
             time=time(10, 30),
             status=Status.BOOKED,
         )
-        self.assertEqual(lesson_status.feedback, "")  # Feedback should remain empty
+        self.assertEqual(lesson_status.feedback, "")
 
     def test_today_date(self):
-        """Test that feedback is not cleared for today."""
         today = date.today()
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -173,10 +159,9 @@ class LessonStatusModelTestCase(TestCase):
             status=Status.BOOKED,
             feedback="Feedback should remain",
         )
-        self.assertEqual(lesson_status.feedback, "Feedback should remain")  # Feedback should not be cleared
+        self.assertEqual(lesson_status.feedback, "Feedback should remain")
 
     def test_feedback_empty_for_future_and_past_dates(self):
-        """Test that feedback remains empty for both future and past dates if it's already empty."""
         future_date = date.today() + timedelta(days=30)
         past_date = date.today() - timedelta(days=30)
 
@@ -188,7 +173,7 @@ class LessonStatusModelTestCase(TestCase):
             status=Status.BOOKED,
             feedback="",  # Empty feedback
         )
-        self.assertEqual(lesson_status_future.feedback, "")  # Feedback should remain empty
+        self.assertEqual(lesson_status_future.feedback, "")
 
         # For past date with empty feedback
         lesson_status_past = LessonStatus.objects.create(
@@ -198,21 +183,20 @@ class LessonStatusModelTestCase(TestCase):
             status=Status.BOOKED,
             feedback="",  # Empty feedback
         )
-        self.assertEqual(lesson_status_past.feedback, "")  # Feedback should remain empty
+        self.assertEqual(lesson_status_past.feedback, "")
 
     def test_future_date_with_non_empty_feedback(self):
-        """Test that feedback is cleared when the date is in the future and feedback is non-empty."""
         future_date = date.today() + timedelta(days=30)
         lesson_status = LessonStatus(
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
             status=Status.BOOKED,
-            feedback="This should be cleared",  # Non-empty feedback
+            feedback="This should be cleared",
         )
-        lesson_status.full_clean()  # Explicitly call clean() here
-        # Now, let's check if feedback is cleared
-        self.assertEqual(lesson_status.feedback, "")  # Feedback should be cleared
+        lesson_status.full_clean()
+
+        self.assertEqual(lesson_status.feedback, "")
 
 
 

@@ -8,6 +8,8 @@ from libgravatar import Gravatar
 from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
+from uaclient.actions import status
+
 
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
@@ -75,6 +77,9 @@ class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
     subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
     experience = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.user.full_name()
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
@@ -158,6 +163,9 @@ class Status(models.TextChoices):
     CANCELLED = 'Cancelled', 'Cancelled'
     COMPLETED = 'Completed', 'Completed'
 
+    CONFIRMED = 'Confirmed', 'Confirmed'
+    REJECTED = 'Rejected', 'Rejected'
+
 class LessonUpdateRequest(models.Model):
     UPDATE_CHOICES = [
         ('1', 'Change Tutor'),
@@ -236,7 +244,7 @@ class LessonRequest(models.Model):
         ('Biweekly', 'Biweekly'),
     ]
 
-    request = models.BigAutoField(primary_key=True)
+    request_id = models.BigAutoField(primary_key=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
@@ -246,3 +254,10 @@ class LessonRequest(models.Model):
     frequency = models.CharField(max_length=10, choices=FREQUENCY, default="Weekly")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['request_id']
+
+    @property
+    def not_cancelled(self):
+        return self.status != Status.CANCELLED

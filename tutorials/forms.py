@@ -5,7 +5,8 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson
+
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -234,4 +235,12 @@ class LessonRequestForm(forms.ModelForm):
             'day': forms.Select(attrs={'class': 'form-select'}),
             'frequency': forms.Select(attrs={'class': 'form-select'}),
             'term': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class AssignTutorForm(forms.ModelForm):
+    class Meta:
+        model = Lesson
+        fields = ['tutor']
+        widgets = {
+            'tutor': forms.Select(attrs={'class': 'form-select'}),
         }

@@ -14,10 +14,11 @@ from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, LessonRequestForm, TutorForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, \
+    UpdateLessonRequestForm, LessonRequestForm, TutorForm, AssignTutorForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
-from .models import Invoice
+from .models import Invoice, Status
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
@@ -245,8 +246,9 @@ class RequestView(View):
 
     def get(self, request, request_id=None):
         current_user = request.user
-        #if request_id:
-        #    return self.request_detail(request, request_id)
+
+        if request_id:
+            return self.request_assign(request, request_id)
 
         if hasattr(current_user, 'admin_profile'):
             self.requests_list = LessonRequest.objects.all().order_by('-created')
@@ -256,11 +258,65 @@ class RequestView(View):
             self.status = 'student'
         return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
 
+    def post(self, request, *args, **kwargs):
+        lrequest_id = request.POST.get('request_id')
+        if not lrequest_id:
+            messages.error(request, "No entity ID provided for the operation.")
+            return redirect('admin/requests/requests.html')
+
+        lrequest = get_object_or_404(LessonRequest, request_id=lrequest_id)
+
+        if 'edit' in request.POST:
+            return self.assign_tutor(request, lrequest)
+        elif 'reject' in request.POST:
+            return self.reject_request(request, lrequest)
+        elif 'cancel' in request.POST:
+            return self.cancel_request(request, lrequest)
+
+        messages.error(request, "Invalid operation.")
+        return redirect('requests')
+
+    def request_assign(self, request, request_id, form=None):
+        lrequest = get_object_or_404(LessonRequest, request_id=request_id)
+        lrequest.refresh_from_db()
+        if not form:
+            form = AssignTutorForm(instance = lrequest)
+        return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
+
+    def assign_tutor(self, request, lrequest):
+        form = AssignTutorForm(request.POST, instance=lrequest)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Tutor updated successfully.")
+            lrequest.status = Status.CONFIRMED
+            lrequest.save()
+            print(lrequest.status)
+            return redirect('requests')
+        else:
+            print("Form errors:", form.errors.as_data())
+            messages.error(request, "Failed to update details. Please correct the errors and try again.")
+
+        lrequest.refresh_from_db()
+
+    def reject_request(self, request, lrequest):
+        lrequest.status = Status.REJECTED
+        lrequest.save()
+        messages.success(request, "Request rejected.")
+        return redirect('requests')
+
+    def cancel_request(self, request, lrequest):
+        lrequest.status = Status.CANCELLED
+        lrequest.save()
+        messages.success(request, "Request cancelled.")
+        return redirect('requests')
+
 class MakeRequestView(View):
 
     def get(self, request, *args, **kwargs):
         form = LessonRequestForm()
         return render(request, 'student/requests/lesson_request_form.html', {'form': form})
+
 
     def post(self, request, *args, **kwargs):
         form = LessonRequestForm(request.POST)

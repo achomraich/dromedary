@@ -56,5 +56,6 @@ urlpatterns = [
 
     path('dashboard/requests/', views.RequestView.as_view(), name='requests'),
     path('dashboard/request/', views.MakeRequestView.as_view(), name='lesson_request'),
+    path('dashboard/request/<int:request_id>/assign/', views.RequestView.as_view(), name='request_assign'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -32,20 +32,20 @@
                 <td class="align-middle">{{ request.created }}</td>
                 <td class="align-middle">{{ request.status }}</td>
                 <td class="align-middle">
-                    {% if user.is_authenticated and user.admin_profile %}
-                        <a href="" class="btn btn-warning btn-sm">Assign</a>
+                    {% if user.is_authenticated and user.admin_profile and request.not_cancelled %}
+                        <a href="{% url 'request_assign' request.request_id %}" class="btn btn-warning btn-sm">Assign</a>
                         <form action="" method="post" style="display:inline;">
                             {% csrf_token %}
                             <input type="hidden" name="reject" value="reject">
-                            <input type="hidden" name="request_id" value="{{ request }}">
+                            <input type="hidden" name="request_id" value="{{ request.request_id }}">
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
                         </form>
                     {% endif %}
-                    {% if user.is_authenticated and user.student_profile %}
+                    {% if user.is_authenticated and user.student_profile and request.not_cancelled %}
                         <form action="" method="post" style="display:inline;">
                             {% csrf_token %}
                             <input type="hidden" name="cancel" value="cancel">
-                            <input type="hidden" name="request_id" value="{{ request }}">
+                            <input type="hidden" name="request_id" value="{{ request.request_id }}">
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">Cancel</button>
                         </form>
                     {% endif %}

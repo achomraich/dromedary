@@ -27,7 +27,7 @@ class LessonUpdateRequestTestCase(TestCase):
         self.subject = Subject.objects.create(name="Python", description="This is Python coding course")
 
         self.term = Term.objects.create(start_date=datetime.date(2024, 9, 1),
-                                        end_date=datetime.date(2024, 1, 15))
+                                        end_date=datetime.date(2025, 1, 15))
 
         self.lesson = Lesson.objects.create(tutor=self.tutor,
                                             student=self.student,

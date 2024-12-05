@@ -17,7 +17,9 @@
                     <th>Duration</th>
                     <th>Frequency</th>
                     <th>Notes</th>
-                    <th>Action</th>
+                    {% if user.student_profile or user.tutor_profile %}
+                        <th>Action</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -29,16 +31,10 @@
                         <td>{{ lesson.term_id.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>
                         <td>{{ lesson.frequency|format_frequency }}</td>
-                        <td>
-                            {% if user.is_authenticated and lesson.lesson_id in lessons_with_requests %}
-                                Requested by {{ message|get:lesson.lesson_id|dict_get:"made_by" }} :
-                                {{ message|get:lesson.lesson_id|dict_get:"update_option" }}
-                            {% else %}
-                                    <p>—</p>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.is_authenticated and user.student_profile or user.tutor_profile %}
+                        <td>{{lesson.notes}}</td>
+                        {% if user.student_profile or user.tutor_profile %}
+                            <td>
+
                                 {% if lesson in can_handle_request %}
                                     <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
                                         {% csrf_token %}
@@ -53,8 +49,9 @@
                                         <p>No Booked Lessons</p>
                                     {% endif %}
                                 {% endif %}
-                            {% endif %}
-                        </td>
+
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>

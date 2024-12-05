@@ -26,7 +26,6 @@ def format_frequency(value):
 
 @register.filter
 def get(dictionary: dict, key):
-    print(f"Type of update_message: {type(dictionary)}")
     return dictionary.get(key)
 
 @register.filter

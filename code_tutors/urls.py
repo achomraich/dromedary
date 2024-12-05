@@ -54,6 +54,9 @@ urlpatterns = [
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
     path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
 
+    path('dashboard/calendar/', views.Calendar.as_view(), name='calendar'),
+    path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),
+
     path('dashboard/requests/', views.requests, name='requests'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

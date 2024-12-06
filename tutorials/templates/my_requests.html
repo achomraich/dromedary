@@ -30,7 +30,10 @@
             <td>{{ request.status }}</td>
             <td>{{ request.created }}</td>
             <td>
-                <button type="submit" class="btn btn-primary mb-3">Update Lesson</button>
+              <form method="post" action="{% url 'delete_request' request.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary mb-3">Delete Lesson</button>
+              </form>
             </td>
           </tr>
         {% empty %}

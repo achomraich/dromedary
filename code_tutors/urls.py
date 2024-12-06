@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tutorials import views
+from tutorials.views import InvoiceListView, CreateInvoiceView, InvoiceDetailView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -58,5 +59,14 @@ urlpatterns = [
     path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),
 
     path('dashboard/requests/', views.requests, name='requests'),
+    path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
+    path('invoices/create/', CreateInvoiceView.as_view(), name='create_invoice'),
+    path('invoices/<int:invoice_id>/', InvoiceDetailView.as_view(), name='invoice_detail'),
+    path('invoices/', views.invoice_management, name='invoice_management'),
+    path('invoices/create/', views.create_invoice, name='create_invoice'),
+
+    path('dashboard/lesson-request/', views.create_lesson_request, name='lesson_request'),
+    path('dashboard/lesson-request-success/', views.lesson_request_success, name='lesson_request_success'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+

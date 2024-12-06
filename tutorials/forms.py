@@ -237,10 +237,29 @@ class LessonRequestForm(forms.ModelForm):
             'term': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['subject'].empty_label = "Select an option"
+        self.fields['day'].choices = [('', 'Select an option')] + [
+            choice for choice in self.fields['day'].choices if choice[0] != ''
+        ]
+        self.fields['frequency'].choices = [('', 'Select an option')] + [
+            choice for choice in self.fields['frequency'].choices if choice[0] != ''
+        ]
+        self.fields['term'].empty_label = "Select an option"
+
+
 class AssignTutorForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['tutor']
+        fields = ['tutor', 'start_date', 'price_per_lesson']
         widgets = {
             'tutor': forms.Select(attrs={'class': 'form-select'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'price_per_lesson': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter price'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tutor'].empty_label = "Please select"
+        self.fields['price_per_lesson'].label = "Price per Lesson (£)"

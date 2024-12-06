@@ -251,7 +251,7 @@ class LessonRequest(models.Model):
     time = models.TimeField()
     day = models.CharField(max_length=3, choices=DAYS)
     duration = models.DurationField(default=timedelta(hours=1))
-    frequency = models.CharField(max_length=10, choices=FREQUENCY, default="Weekly")
+    frequency = models.CharField(max_length=10, choices=FREQUENCY)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)
 

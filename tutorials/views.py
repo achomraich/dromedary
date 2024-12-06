@@ -1,3 +1,4 @@
+from datetime import date
 from functools import reduce
 
 from django.conf import settings
@@ -262,7 +263,7 @@ class RequestView(View):
         lrequest_id = request.POST.get('request_id')
         if not lrequest_id:
             messages.error(request, "No entity ID provided for the operation.")
-            return redirect('admin/requests/requests.html')
+            return redirect('requests')
 
         lrequest = get_object_or_404(LessonRequest, request_id=lrequest_id)
 
@@ -279,25 +280,44 @@ class RequestView(View):
     def request_assign(self, request, request_id, form=None):
         lrequest = get_object_or_404(LessonRequest, request_id=request_id)
         lrequest.refresh_from_db()
+
         if not form:
-            form = AssignTutorForm(instance = lrequest)
+            form = AssignTutorForm()
+
         return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
 
     def assign_tutor(self, request, lrequest):
-        form = AssignTutorForm(request.POST, instance=lrequest)
+
+        form = AssignTutorForm(request.POST)
 
         if form.is_valid():
-            form.save()
-            messages.success(request, "Tutor updated successfully.")
+            tutor = form.cleaned_data['tutor']
+            start_date = form.cleaned_data['start_date']
+            price_per_lesson = form.cleaned_data['price_per_lesson']
+
+            # Create a new Lesson based on the form data and LessonRequest details
+            Lesson.objects.create(
+                tutor=tutor,
+                student=lrequest.student,
+                subject_id=lrequest.subject,
+                term_id=lrequest.term,
+                frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
+                duration=lrequest.duration,  # Duration from the LessonRequest
+                start_date=start_date,
+                price_per_lesson=price_per_lesson,
+            )
+
             lrequest.status = Status.CONFIRMED
             lrequest.save()
-            print(lrequest.status)
+
+            messages.success(request, "Request assigned successfully.")
+
             return redirect('requests')
         else:
             print("Form errors:", form.errors.as_data())
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
-
-        lrequest.refresh_from_db()
+            lrequest.refresh_from_db()
+            return self.request_assign(request, lrequest.request_id, form)
 
     def reject_request(self, request, lrequest):
         lrequest.status = Status.REJECTED

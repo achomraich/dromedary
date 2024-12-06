@@ -49,41 +49,10 @@ class User(AbstractUser):
 
         return self.gravatar(size=60)
 
-class Tutor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
-
-
-class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
-
-
-class Admin(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
-
-
-class TutorAvailability(models.Model):
-    STATUS_CHOICES = [
-        ('a', 'Available'),
-        ('b', 'Booked'),
-    ]
-    id = models.BigAutoField(primary_key=True)
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day_of_week = models.CharField(max_length=10)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    # available or booked
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
-
-class Subject(models.Model):
-        def is_overdue(self):
-            # Helper method to check if the invoice is overdue
-            return not self.is_paid and self.due_date < timezone.now().date()
 
 # tested
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
-
-
     subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
     experience = models.TextField(blank=True)
 
@@ -97,18 +66,24 @@ class Student(models.Model):
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
-class TutorBio(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    bio = models.CharField(max_length=255)
+class Subject(models.Model):
+
+    subject_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=20)
+    description = models.CharField(
+        max_length=255,
+        default=''
+    )
+
+    def __str__(self):
+        return self.name
 
 class TaughtSubjects(models.Model):
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('tutor', 'subject_id')
-
 
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
@@ -129,7 +104,6 @@ class DaysOfWeek(models.TextChoices):
     SAT = 'Sat', 'Saturday'
     SUN = 'Sun', 'Sunday'
 
-
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
         ('Available', 'Available'),
@@ -142,19 +116,6 @@ class TutorAvailability(models.Model):
     end_time = models.TimeField()
     # available or booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
-
-
-class Subject(models.Model):
-
-    subject_id = models.BigAutoField(primary_key=True)
-    name = models.CharField(max_length=20)
-    description = models.CharField(
-        max_length=255,
-        default=''
-    )
-
-    def __str__(self):
-        return self.name
 
 
 class Term(models.Model):

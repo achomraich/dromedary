@@ -301,7 +301,7 @@ class EntityView(View):
         if isinstance(entity, Student):
             lessons = Lesson.objects.filter(student=entity).select_related(
                 'tutor', 'subject_id', 'term_id'
-
+            )
             tutors = set(lesson.tutor for lesson in lessons)
 
         else:
@@ -1002,7 +1002,7 @@ class Calendar(View):
         elif hasattr(user, 'student_profile'):
             lessons = Lesson.objects.filter(student__user=user)
 
-        first_day = datetime(year, month, 1).date()
+        first_day = datetime.datetime(year, month, 1).date()
         last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
         frequency_lessons = self.lessons_frequency(lessons, first_day)

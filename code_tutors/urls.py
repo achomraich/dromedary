@@ -67,6 +67,8 @@ urlpatterns = [
 
     path('dashboard/lesson-request/', views.create_lesson_request, name='lesson_request'),
     path('dashboard/lesson-request-success/', views.lesson_request_success, name='lesson_request_success'),
+    path('dashboard/my-requests/', views.my_requests, name='my_requests'),
+    path('remove/<int:request_id>/', views.delete_request, name='delete_request'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

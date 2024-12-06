@@ -4,6 +4,7 @@ from django.db import models
 from libgravatar import Gravatar
 from django.core.exceptions import ValidationError
 from datetime import timedelta, date
+
 from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
@@ -43,43 +44,17 @@ class User(AbstractUser):
 
     def mini_gravatar(self):
         """Return a URL to a miniature version of the user's gravatar."""
-        
+
         return self.gravatar(size=60)
 
-class Invoice(models.Model):
-        # Reference to the student (user) who is receiving the invoice
-        student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='invoices')
-
-        # Invoice amount with a minimum value validator to ensure it is positive number
-        amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
-
-        # Due date for the payment
-        due_date = models.DateField()
-
-        # Payment status, marking whether the invoice has been paid
-        is_paid = models.BooleanField(default=False)
-
-        # Timestamp for when the invoice was created and last updated
-        created_at = models.DateTimeField(auto_now_add=True)
-        updated_at = models.DateTimeField(auto_now=True)
-
-        def __str__(self):
-            # Representation of the invoice in admin or shell views
-            return f"Invoice for {self.student.username} - Amount: {self.amount}"
-
-        def is_overdue(self):
-            # Helper method to check if the invoice is overdue
-            return not self.is_paid and self.due_date < timezone.now().date()
-
-# tested
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
 
-# tested
+
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
-# tested
+
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
@@ -97,7 +72,52 @@ class TutorAvailability(models.Model):
     # available or booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
 
+class Subject(models.Model):
+        def is_overdue(self):
+            # Helper method to check if the invoice is overdue
+            return not self.is_paid and self.due_date < timezone.now().date()
+
 # tested
+class Tutor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
+
+
+    subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
+    experience = models.TextField(blank=True)
+
+class Student(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
+
+# tested
+class Admin(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
+
+class TutorBio(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    bio = models.CharField(max_length=255)
+
+class TaughtSubjects(models.Model):
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey('Subject', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('tutor', 'subject_id')
+
+class TutorAvailability(models.Model):
+    STATUS_CHOICES = [
+        ('a', 'Available'),
+        ('b', 'Booked'),
+    ]
+    id = models.BigAutoField(primary_key=True)
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    day_of_week = models.CharField(max_length=10)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    # available or booked
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
+
+
 class Subject(models.Model):
 
     subject_id = models.BigAutoField(primary_key=True)
@@ -107,7 +127,10 @@ class Subject(models.Model):
         default=''
     )
 
-#tested
+    def __str__(self):
+        return self.name
+
+
 class Term(models.Model):
     """TERM_NAME = {
         1: "Sept-Jan",
@@ -186,7 +209,7 @@ class LessonUpdateRequest(models.Model):
 
     lesson_update_id = models.BigAutoField(primary_key=True)
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)
-    update_option=models.CharField(max_length=50, choices=UPDATE_CHOICES, default="1")
+    update_option = models.CharField(max_length=50, choices=UPDATE_CHOICES, default="1")
     details = models.CharField(max_length=255, default="")
     made_by = models.CharField(max_length=10, choices=MADE_BY_CHOICES, default="Tutor")
     is_handled = models.CharField(max_length=10, choices=IS_HANDLED_CHOICES, default="N")
@@ -250,7 +273,6 @@ class Invoices(models.Model):
     total_amount = models.IntegerField()
     status = models.CharField(max_length=1, choices=PAYMENT_CHOICES, default="U")
 
-
 class Requests(models.Model):
 
     request_id = models.BigAutoField(primary_key=True)
@@ -261,6 +283,7 @@ class Requests(models.Model):
         max_length=10,
         choices=Status.choices,
         default=Status.PENDING)
+
 
 class TutorReviews(models.Model):
     RATING_CHOICES = [
@@ -277,24 +300,73 @@ class TutorReviews(models.Model):
     text = models.CharField(max_length=255)
     date = models.DateField()
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
-    
+
 class LessonRequest(models.Model):
-    lesson_id = models.AutoField(primary_key=True)
-    SUBJECTS = {
-        (1,'Python'),
-        (2,'C++'),
-        (3,'Java'),
-    }
-    subject = models.CharField(max_length=10, choices=SUBJECTS)
+    LANGUAGE = [
+        ('python', 'Python'),
+        ('c++', 'C++'),
+        ('java', 'Java'),
+    ]
+    DAYS = [
+        ('mon', 'Monday'),
+        ('tue', 'Tuesday'),
+        ('wed', 'Wednesday'),
+        ('thu', 'Thursday'),
+        ('fri', 'Friday'),
+        ('sat', 'Saturday'),
+        ('sun', 'Sunday'),
+    ]
+    FREQUENCY = [
+        (1, 'Weekly'),
+        (2, 'Biweekly'),
+    ]
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    language = models.CharField(max_length=10, choices=LANGUAGE)
     lesson_time = models.TimeField()
-    DAYS = {
-        (1,'Monday'),
-        (2,'Tuesday'),
-        (3,'Wednesday'),
-        (4,'Thursday'),
-        (5,'Friday'),
-        (6,'Saturday'),
-        (7,'Sunday'),
-    }
-    lesson_day = models.CharField(max_length=9, choices=DAYS)
+    lesson_day = models.CharField(max_length=3, choices=DAYS)
     lesson_length = models.IntegerField()
+    lesson_frequency = models.IntegerField(choices=FREQUENCY)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created = models.DateTimeField(auto_now_add=True)
+
+class Invoice(models.Model):
+    PAYMENT_STATUS = [
+        ('UNPAID', 'Unpaid'),
+        ('PAID', 'Paid'),
+        ('OVERDUE', 'Overdue')
+    ]
+
+    id = models.AutoField(primary_key=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_invoices')
+    lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default='UNPAID')
+    due_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Invoice #{self.id} - {self.student.user.full_name()}"  # Changed from invoice_id to id
+
+    def mark_as_paid(self):
+        self.status = 'PAID'
+        self.save()
+        self.lessons.all().update(invoiced=True)
+
+    def check_if_overdue(self):
+        if self.status == 'UNPAID' and self.due_date < timezone.now().date():
+            self.status = 'OVERDUE'
+            self.save()
+
+    def get_total_hours(self):
+        return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
+
+
+# Changed the model name to avoid conflicts
+class InvoiceLessonLink(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    lesson = models.ForeignKey('LessonStatus', on_delete=models.CASCADE)
+
+    class Meta:
+        # Add a unique constraint to prevent duplicate entries
+        unique_together = ('invoice', 'lesson')

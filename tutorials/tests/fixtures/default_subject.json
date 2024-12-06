@@ -1,0 +1,16 @@
+[
+  {
+    "model": "tutorials.subject",
+    "pk": 1,
+    "fields": {
+      "name": "Python"
+    }
+  },
+  {
+    "model": "tutorials.subject",
+    "pk": 2,
+    "fields": {
+      "name": "C++"
+    }
+  }
+]

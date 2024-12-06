@@ -1,5 +1,6 @@
 """Forms for the tutorials app."""
 from cProfile import label
+from datetime import timedelta
 
 from django import forms
 from django.contrib.auth import authenticate
@@ -473,7 +474,7 @@ class InvoiceForm(forms.ModelForm):
 class LessonRequestForm(forms.ModelForm):
     class Meta:
         model = LessonRequest
-        fields = ['subject','term','time','day','frequency']
+        fields = ['subject','term','day','time','duration','frequency']
         widgets = {
             'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'day': forms.Select(attrs={'class': 'form-select'}),

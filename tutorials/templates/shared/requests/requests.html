@@ -1,4 +1,5 @@
 {% extends 'base_content.html' %}
+{% load lesson_filters %}
 
 {% block content %}
 <div class="container">
@@ -13,6 +14,7 @@
                 <th scope="col">Subject</th>
                 <th scope="col">Term</th>
                 <th scope="col">Time</th>
+                <th scope="col">Duration</th>
                 <th scope="col">Day</th>
                 <th scope="col">Frequency</th>
                 <th scope="col">Date Requested</th>
@@ -27,6 +29,7 @@
                 <td class="align-middle">{{ request.subject }}</td>
                 <td class="align-middle">{{ request.term }}</td>
                 <td class="align-middle">{{ request.time }}</td>
+                <td class="align-middle">{{ request.duration|format_duration }}</td>
                 <td class="align-middle">{{ request.day }}</td>
                 <td class="align-middle">{{ request.frequency }}</td>
                 <td class="align-middle">{{ request.created }}</td>

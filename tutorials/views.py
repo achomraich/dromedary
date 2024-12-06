@@ -270,6 +270,11 @@ def my_requests(request):
     my_requests = LessonRequest.objects.all().order_by('-created')
     return render(request, 'my_requests.html', {'my_requests': my_requests})
 
+def delete_request(request, request_id):
+    request = get_object_or_404(LessonRequest, pk=request_id)
+    request.delete()
+    return redirect('my_requests')
+
 class StudentsView(View):
 
     def get(self, request, student_id=None):

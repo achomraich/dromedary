@@ -55,6 +55,9 @@ urlpatterns = [
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
     path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
 
+    path('dashboard/calendar/', views.Calendar.as_view(), name='calendar'),
+    path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),
+
     path('dashboard/requests/', views.requests, name='requests'),
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
     path('invoices/create/', CreateInvoiceView.as_view(), name='create_invoice'),

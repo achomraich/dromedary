@@ -12,14 +12,14 @@ from django.db.models import Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, \
-    UpdateLessonRequestForm, LessonRequestForm, TutorForm, AssignTutorForm
+    UpdateLessonRequestForm, LessonRequestForm, TutorForm, AssignTutorForm, TutorAvailabilityForm
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
-from .models import Invoice, Status
+from .models import Invoice, Status, TutorAvailability
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
@@ -709,3 +709,50 @@ class UpdateLessonRequest(View):
                     form.add_error(None, f"An error occurred: {str(e)}")
 
         return form
+
+class AvailabilityView(ListView):
+    model = TutorAvailability
+    template_name = 'tutor/my_availability/availabilities.html'
+    context_object_name = 'availabilities'
+
+    def get_queryset(self):
+        # Filter availabilities for the logged-in tutor
+        return TutorAvailability.objects.filter(tutor=self.request.user.tutor_profile)
+
+    def post(self, request, *args, **kwargs):
+        if 'remove' in request.POST:
+            availability_id = request.POST.get('availability')
+            try:
+                availability = TutorAvailability.objects.get(id=availability_id)
+                availability.delete()
+                messages.success(request, "Deleted successfully.")
+            except TutorAvailability.DoesNotExist:
+                messages.error(request, "The selected availability does not exist.")
+            return redirect('availability')
+
+
+class AddEditAvailabilityView(View):
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            availability = get_object_or_404(TutorAvailability, pk=pk)
+            form = TutorAvailabilityForm(instance=availability)
+        else:
+            form = TutorAvailabilityForm()
+        return render(request, 'tutor/my_availability/add_edit_availability.html', {'form': form, 'pk': pk})
+
+    def post(self, request, pk=None, *args, **kwargs):
+        if pk:
+            availability = get_object_or_404(TutorAvailability, pk=pk)
+            form = TutorAvailabilityForm(request.POST, instance=availability)
+        else:
+            form = TutorAvailabilityForm(request.POST)
+
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.tutor = request.user.tutor_profile
+            availability.save()
+            messages.success(request, "Availability saved successfully.")
+            return redirect('availability')
+        else:
+            messages.error(request, "Failed to save availability. Please correct the errors and try again.")
+        return render(request, 'tutor/my_availability/add_edit_availability.html', {'form': form, 'pk': pk})

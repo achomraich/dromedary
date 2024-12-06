@@ -33,13 +33,15 @@
                 <td class="align-middle">{{ request.status }}</td>
                 <td class="align-middle">
                     {% if user.is_authenticated and user.admin_profile and request.not_cancelled %}
-                        <a href="{% url 'request_assign' request.request_id %}" class="btn btn-warning btn-sm">Assign</a>
-                        <form action="" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="reject" value="reject">
-                            <input type="hidden" name="request_id" value="{{ request.request_id }}">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
-                        </form>
+                        {% if request.not_confirmed %}
+                            <a href="{% url 'request_assign' request.request_id %}" class="btn btn-warning btn-sm">Assign</a>
+                            <form action="" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="reject" value="reject">
+                                <input type="hidden" name="request_id" value="{{ request.request_id }}">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                     {% if user.is_authenticated and user.student_profile and request.not_cancelled %}
                         <form action="" method="post" style="display:inline;">

@@ -99,18 +99,39 @@ class TaughtSubjects(models.Model):
     class Meta:
         unique_together = ('tutor', 'subject_id')
 
+
+class Status(models.TextChoices):
+    PENDING = 'Pending', 'Pending'
+    BOOKED = 'Booked', 'Booked'
+    CANCELLED = 'Cancelled', 'Cancelled'
+    COMPLETED = 'Completed', 'Completed'
+
+    CONFIRMED = 'Confirmed', 'Confirmed'
+    REJECTED = 'Rejected', 'Rejected'
+
+
+
+class DaysOfWeek(models.TextChoices):
+    MON = 'Mon', 'Monday'
+    TUE = 'Tue', 'Tuesday'
+    WED = 'Wed', 'Wednesday'
+    THU = 'Thu', 'Thursday'
+    FRI = 'Fri', 'Friday'
+    SAT = 'Sat', 'Saturday'
+    SUN = 'Sun', 'Sunday'
+
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
-        ('a', 'Available'),
-        ('b', 'Booked'),
+        ('Available', 'Available'),
+        ('Booked', 'Booked'),
     ]
     id = models.BigAutoField(primary_key=True)
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day_of_week = models.CharField(max_length=10)
+    day = models.CharField(max_length=15, choices=DaysOfWeek.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
     # available or booked
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
 class Subject(models.Model):
 
@@ -157,14 +178,7 @@ class Lesson(models.Model):
     start_date = models.DateField()
     price_per_lesson = models.IntegerField()
 
-class Status(models.TextChoices):
-    PENDING = 'Pending', 'Pending'
-    BOOKED = 'Booked', 'Booked'
-    CANCELLED = 'Cancelled', 'Cancelled'
-    COMPLETED = 'Completed', 'Completed'
 
-    CONFIRMED = 'Confirmed', 'Confirmed'
-    REJECTED = 'Rejected', 'Rejected'
 
 class LessonUpdateRequest(models.Model):
     UPDATE_CHOICES = [
@@ -229,15 +243,6 @@ class TutorReviews(models.Model):
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
     
 class LessonRequest(models.Model):
-    DAYS = [
-        ('Mon', 'Monday'),
-        ('Tue', 'Tuesday'),
-        ('Wed', 'Wednesday'),
-        ('Thu', 'Thursday'),
-        ('Fri', 'Friday'),
-        ('Sat', 'Saturday'),
-        ('Sun', 'Sunday'),
-    ]
 
     FREQUENCY = [
         ('Weekly', 'Weekly'),
@@ -249,7 +254,7 @@ class LessonRequest(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
-    day = models.CharField(max_length=3, choices=DAYS)
+    day = models.CharField(max_length=3, choices=DaysOfWeek)
     duration = models.DurationField(default=timedelta(hours=1))
     frequency = models.CharField(max_length=10, choices=FREQUENCY)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
@@ -261,3 +266,6 @@ class LessonRequest(models.Model):
     @property
     def not_cancelled(self):
         return self.status != Status.CANCELLED
+
+    def not_confirmed(self):
+        return self.status != Status.CONFIRMED

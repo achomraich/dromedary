@@ -5,7 +5,8 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson, \
+    TutorAvailability
 
 
 class LogInForm(forms.Form):
@@ -263,3 +264,23 @@ class AssignTutorForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['tutor'].empty_label = "Please select"
         self.fields['price_per_lesson'].label = "Price per Lesson (£)"
+
+class TutorAvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = TutorAvailability
+        fields = ['day', 'start_time', 'end_time', 'status']
+        widgets = {
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'day': forms.Select(attrs={'class': 'form-select'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['day'].choices = [('', 'Select an option')] + [
+            choice for choice in self.fields['day'].choices if choice[0] != ''
+        ]
+        self.fields['status'].choices = [('', 'Select an option')] + [
+            choice for choice in self.fields['status'].choices if choice[0] != ''
+        ]

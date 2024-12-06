@@ -265,7 +265,10 @@ def create_lesson_request(request):
 
 def lesson_request_success(request):
     return render(request, 'lesson_request_success.html')
-    
+
+def my_requests(request):
+    my_requests = LessonRequest.objects.all().order_by('-created')
+    return render(request, 'my_requests.html', {'my_requests': my_requests})
 
 class StudentsView(View):
 

@@ -19,7 +19,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tutorials import views
-from tutorials.views import InvoiceListView, CreateInvoiceView, InvoiceDetailView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,9 +30,6 @@ urlpatterns = [
     path('password/', views.PasswordView.as_view(), name='password'),
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
-
-    path('invoices/', views.invoice_management, name='invoice_management'),
-    path('invoices/create/', views.create_invoice, name='create_invoice'),  # URL pattern for creating invoices
 
     path('dashboard/students/', views.StudentsView.as_view(), name='students_list'),
     path('dashboard/students/<int:student_id>/', views.StudentsView.as_view(), name='student_details'),
@@ -61,17 +57,20 @@ urlpatterns = [
     path('dashboard/calendar/', views.Calendar.as_view(), name='calendar'),
     path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),
 
-    path('dashboard/requests/', views.requests, name='requests'),
+    path('dashboard/requests/', views.RequestView.as_view(), name='requests'),
+    path('dashboard/request/', views.MakeRequestView.as_view(), name='lesson_request'),
+    path('dashboard/request/<int:request_id>/assign/', views.RequestView.as_view(), name='request_assign'),
+
+    path('availability/', views.AvailabilityView.as_view(), name='availability'),
+    path('availability/add/', views.AddEditAvailabilityView.as_view(), name='availability_add'),
+    path('availability/edit/<int:pk>/', views.AddEditAvailabilityView.as_view(), name='availability_edit'),
+
     path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
     path('invoices/create/', CreateInvoiceView.as_view(), name='create_invoice'),
     path('invoices/<int:invoice_id>/', InvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/', views.invoice_management, name='invoice_management'),
     path('invoices/create/', views.create_invoice, name='create_invoice'),
 
-    path('dashboard/lesson-request/', views.create_lesson_request, name='lesson_request'),
-    path('dashboard/lesson-request-success/', views.lesson_request_success, name='lesson_request_success'),
-    path('dashboard/my-requests/', views.my_requests, name='my_requests'),
-    path('remove/<int:request_id>/', views.delete_request, name='delete_request'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

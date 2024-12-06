@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -85,6 +87,9 @@ class Tutor(models.Model):
     subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
     experience = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.user.full_name()
+
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
@@ -104,18 +109,39 @@ class TaughtSubjects(models.Model):
     class Meta:
         unique_together = ('tutor', 'subject_id')
 
+
+class Status(models.TextChoices):
+    PENDING = 'Pending', 'Pending'
+    BOOKED = 'Booked', 'Booked'
+    CANCELLED = 'Cancelled', 'Cancelled'
+    COMPLETED = 'Completed', 'Completed'
+
+    CONFIRMED = 'Confirmed', 'Confirmed'
+    REJECTED = 'Rejected', 'Rejected'
+
+
+class DaysOfWeek(models.TextChoices):
+    MON = 'Mon', 'Monday'
+    TUE = 'Tue', 'Tuesday'
+    WED = 'Wed', 'Wednesday'
+    THU = 'Thu', 'Thursday'
+    FRI = 'Fri', 'Friday'
+    SAT = 'Sat', 'Saturday'
+    SUN = 'Sun', 'Sunday'
+
+
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
-        ('a', 'Available'),
-        ('b', 'Booked'),
+        ('Available', 'Available'),
+        ('Booked', 'Booked'),
     ]
     id = models.BigAutoField(primary_key=True)
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day_of_week = models.CharField(max_length=10)
+    day = models.CharField(max_length=15, choices=DaysOfWeek.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
     # available or booked
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
 
 class Subject(models.Model):
@@ -140,6 +166,9 @@ class Term(models.Model):
     term_id = models.BigAutoField(primary_key=True)
     start_date = models.DateField()
     end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.start_date.strftime('%b %Y')} - {self.end_date.strftime('%b %Y')}"
 
     def clean(self):
         if self.start_date >= self.end_date:
@@ -175,18 +204,12 @@ class Lesson(models.Model):
         if not isinstance(self.duration, timedelta):
             raise ValidationError("Duration must be a valid timedelta object.")
 
+
         if self.duration <= timedelta(0):
             raise ValidationError({"duration": "Duration must be a positive value."})
 
         if self.price_per_lesson <= 0:
             raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
-
-# tested
-class Status(models.TextChoices):
-    PENDING = 'Pending', 'Pending'
-    BOOKED = 'Booked', 'Booked'
-    CANCELLED = 'Cancelled', 'Cancelled'
-    COMPLETED = 'Completed', 'Completed'
 
 class LessonUpdateRequest(models.Model):
     UPDATE_CHOICES = [
@@ -273,18 +296,6 @@ class Invoices(models.Model):
     total_amount = models.IntegerField()
     status = models.CharField(max_length=1, choices=PAYMENT_CHOICES, default="U")
 
-class Requests(models.Model):
-
-    request_id = models.BigAutoField(primary_key=True)
-    student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
-    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=10,
-        choices=Status.choices,
-        default=Status.PENDING)
-
-
 class TutorReviews(models.Model):
     RATING_CHOICES = [
         (1, 'Poor'),
@@ -302,32 +313,33 @@ class TutorReviews(models.Model):
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
 
 class LessonRequest(models.Model):
-    LANGUAGE = [
-        ('python', 'Python'),
-        ('c++', 'C++'),
-        ('java', 'Java'),
-    ]
-    DAYS = [
-        ('mon', 'Monday'),
-        ('tue', 'Tuesday'),
-        ('wed', 'Wednesday'),
-        ('thu', 'Thursday'),
-        ('fri', 'Friday'),
-        ('sat', 'Saturday'),
-        ('sun', 'Sunday'),
-    ]
+
     FREQUENCY = [
-        (1, 'Weekly'),
-        (2, 'Biweekly'),
+        ('Weekly', 'Weekly'),
+        ('Biweekly', 'Biweekly'),
     ]
+
+    request_id = models.BigAutoField(primary_key=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    language = models.CharField(max_length=10, choices=LANGUAGE)
-    lesson_time = models.TimeField()
-    lesson_day = models.CharField(max_length=3, choices=DAYS)
-    lesson_length = models.IntegerField()
-    lesson_frequency = models.IntegerField(choices=FREQUENCY)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    time = models.TimeField()
+    day = models.CharField(max_length=3, choices=DaysOfWeek)
+    duration = models.DurationField(default=timedelta(hours=1))
+    frequency = models.CharField(max_length=10, choices=FREQUENCY)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['request_id']
+
+    @property
+    def not_cancelled(self):
+        return self.status != Status.CANCELLED
+
+    @property
+    def not_confirmed(self):
+        return self.status != Status.CONFIRMED
 
 class Invoice(models.Model):
     PAYMENT_STATUS = [
@@ -370,3 +382,4 @@ class InvoiceLessonLink(models.Model):
     class Meta:
         # Add a unique constraint to prevent duplicate entries
         unique_together = ('invoice', 'lesson')
+

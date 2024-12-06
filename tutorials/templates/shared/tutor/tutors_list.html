@@ -72,6 +72,10 @@
                     {% endif %}
                 </td>
             </tr>
+            {% empty %}   
+            <tr>
+                <td class="align-middle" colspan="8">No tutors found.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

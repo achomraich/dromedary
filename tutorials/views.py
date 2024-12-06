@@ -10,24 +10,24 @@ from django.db import IntegrityError
 
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, LessonRequestForm, TutorForm, InvoiceForm
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, \
+    UpdateLessonRequestForm, LessonRequestForm, TutorForm, AssignTutorForm, TutorAvailabilityForm, InvoiceForm
 
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from datetime import timedelta, datetime
 import calendar
+from .models import Invoice, Status, TutorAvailability
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 
 from django.db.models import Q, Exists, OuterRef
 import datetime
-from django.utils.timezone import now
 from dateutil.relativedelta import relativedelta
 
 from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status, Invoice, LessonStatus
@@ -207,18 +207,6 @@ class SignUpView(LoginProhibitedMixin, FormView):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
 
-def requests(request):
-    lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'requests.html', {'requests': lesson_requests})
-
-
-class StudentsView(View):
-
-    def get(self, request, student_id=None):
-        if student_id:
-            return self.student_details(request, student_id)
-
-
 class EntityView(View):
     model = None
     list_admin = None
@@ -313,7 +301,6 @@ class EntityView(View):
         if isinstance(entity, Student):
             lessons = Lesson.objects.filter(student=entity).select_related(
                 'tutor', 'subject_id', 'term_id'
-            )
 
             tutors = set(lesson.tutor for lesson in lessons)
 
@@ -497,11 +484,6 @@ class SubjectView(View):
             elif request.path.endswith('delete/'):
                 subject = get_object_or_404(Subject, pk=subject_id)
                 return self.delete_subject(request, subject)
-
-        # Fetch existing invoices to display
-        invoices = Invoice.objects.all()
-        return render(request, 'invoices/invoice_management.html', {'invoices': invoices})
-
 
         return redirect('subjects_list')
 
@@ -706,12 +688,104 @@ def invoice_list(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-def requests(request):
-    lesson_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'requests.html', {'lesson_requests': lesson_requests})
+class RequestView(View):
+    status = None
+    requests_list = None
 
-def create_lesson_request(request):
-    if request.method == 'POST':
+    def get(self, request, request_id=None):
+        current_user = request.user
+
+        if request_id:
+            return self.request_assign(request, request_id)
+
+        if hasattr(current_user, 'admin_profile'):
+            self.requests_list = LessonRequest.objects.all().order_by('-created')
+            self.status = 'admin'
+        elif hasattr(request.user, 'student_profile'):
+            self.requests_list = LessonRequest.objects.filter(student=current_user.id)
+            self.status = 'student'
+        return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
+
+    def post(self, request, *args, **kwargs):
+        lrequest_id = request.POST.get('request_id')
+        if not lrequest_id:
+            messages.error(request, "No entity ID provided for the operation.")
+            return redirect('requests')
+
+        lrequest = get_object_or_404(LessonRequest, request_id=lrequest_id)
+
+        if 'edit' in request.POST:
+            return self.assign_tutor(request, lrequest)
+        elif 'reject' in request.POST:
+            return self.reject_request(request, lrequest)
+        elif 'cancel' in request.POST:
+            return self.cancel_request(request, lrequest)
+
+        messages.error(request, "Invalid operation.")
+        return redirect('requests')
+
+    def request_assign(self, request, request_id, form=None):
+        lrequest = get_object_or_404(LessonRequest, request_id=request_id)
+        lrequest.refresh_from_db()
+
+        if not form:
+            form = AssignTutorForm()
+
+        return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
+
+    def assign_tutor(self, request, lrequest):
+
+        form = AssignTutorForm(request.POST)
+
+        if form.is_valid():
+            tutor = form.cleaned_data['tutor']
+            start_date = form.cleaned_data['start_date']
+            price_per_lesson = form.cleaned_data['price_per_lesson']
+
+            # Create a new Lesson based on the form data and LessonRequest details
+            Lesson.objects.create(
+                tutor=tutor,
+                student=lrequest.student,
+                subject_id=lrequest.subject,
+                term_id=lrequest.term,
+                frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
+                duration=lrequest.duration,  # Duration from the LessonRequest
+                start_date=start_date,
+                price_per_lesson=price_per_lesson,
+            )
+
+            lrequest.status = Status.CONFIRMED
+            lrequest.save()
+
+            messages.success(request, "Request assigned successfully.")
+
+            return redirect('requests')
+        else:
+            print("Form errors:", form.errors.as_data())
+            messages.error(request, "Failed to update details. Please correct the errors and try again.")
+            lrequest.refresh_from_db()
+            return self.request_assign(request, lrequest.request_id, form)
+
+    def reject_request(self, request, lrequest):
+        lrequest.status = Status.REJECTED
+        lrequest.save()
+        messages.success(request, "Request rejected.")
+        return redirect('requests')
+
+    def cancel_request(self, request, lrequest):
+        lrequest.status = Status.CANCELLED
+        lrequest.save()
+        messages.success(request, "Request cancelled.")
+        return redirect('requests')
+
+class MakeRequestView(View):
+
+    def get(self, request, *args, **kwargs):
+        form = LessonRequestForm()
+        return render(request, 'student/requests/lesson_request_form.html', {'form': form})
+
+
+    def post(self, request, *args, **kwargs):
         form = LessonRequestForm(request.POST)
         if form.is_valid():
             # Create lesson request but don't save it yet
@@ -722,31 +796,13 @@ def create_lesson_request(request):
 
             # Save the lesson request to the database
             lesson_request.save()
-
+            messages.success(request, "Request submitted successfully.")
             # Redirect to a success page or another page after form submission
-            return redirect('lesson_request_success')
-    else:
-        form = LessonRequestForm()
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
-    return render(request, 'lesson_request_form.html', {'form': form})
-
-def lesson_request_success(request):
-    return render(request, 'lesson_request_success.html')
-
-def my_requests(request):
-    my_requests = LessonRequest.objects.all().order_by('-created')
-    return render(request, 'my_requests.html', {'my_requests': my_requests})
-
-def delete_request(request, request_id):
-    request = get_object_or_404(LessonRequest, pk=request_id)
-    request.delete()
-    return redirect('my_requests')
-
-class StudentsView(View):
-
-    def get(self, request, student_id=None):
-        if student_id:
-            return self.student_details(request, student_id)
+        return render(request, 'student/requests/lesson_request_form.html', {'form': form})
 
 class EntityView(View):
     model = None
@@ -786,8 +842,8 @@ class EntityView(View):
 
         profile_map = {
             'admin_profile': lambda: self.model.objects.all().order_by('user__username'),
-            'tutor_profile': lambda: self._get_entities_for_tutor(user),
-            'student_profile': lambda: self._get_entities_for_student(user),
+            'tutor_profile': lambda: self.get_entities_for_tutor(user),
+            'student_profile': lambda: self.get_entities_for_student(user),
         }
 
         entity_list = None
@@ -795,11 +851,6 @@ class EntityView(View):
             if hasattr(user, profile):
                 entity_list = entity_filter()
                 break
-
-        if not entity_list:
-            #messages.error(request, "No valid profile for this operation.")
-            print('got there')
-            raise PermissionDenied("No valid profile for this operation.")
 
         if search:
             query = reduce(lambda q1, q2: q1 | q2, [
@@ -824,11 +875,11 @@ class EntityView(View):
             'subjects': subjects
         })
 
-    def _get_entities_for_tutor(self, user):
+    def get_entities_for_tutor(self, user):
         lessons = Lesson.objects.filter(tutor_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('student_id')).order_by('user__username').distinct()
 
-    def _get_entities_for_student(self, user):
+    def get_entities_for_student(self, user):
         lessons = Lesson.objects.filter(student_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('tutor_id')).order_by('user__username').distinct()
 
@@ -886,9 +937,8 @@ class EntityView(View):
         entity.user.delete()
         messages.success(request, "Deleted successfully.")
         return redirect(self.redirect_url)
-    
-    
-    
+
+
 class StudentsView(EntityView):
     model = Student
 
@@ -912,6 +962,7 @@ class StudentsView(EntityView):
             entity_list = entity_list.filter(user_id__in=filtered_lessons.values('student_id')).distinct() 
         return entity_list
 
+
 class TutorsView(EntityView):
     model = Tutor
 
@@ -933,7 +984,7 @@ class TutorsView(EntityView):
             filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
             entity_list = entity_list.filter(user_id__in=filtered_lessons.values('tutor_id')).distinct()
         return entity_list
-    
+
 '''
 This class is to gather lessons information to present them as a calendar
 '''
@@ -950,7 +1001,7 @@ class Calendar(View):
             lessons = Lesson.objects.filter(tutor__user=user)
         elif hasattr(user, 'student_profile'):
             lessons = Lesson.objects.filter(student__user=user)
-        
+
         first_day = datetime(year, month, 1).date()
         last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
@@ -967,7 +1018,7 @@ class Calendar(View):
             'next_month': next_month,
         }
         return render(request, 'shared/calendar.html', content)
-        
+
     '''
     Counts the lesson prequency to present each lesson in a schedule for the user
     '''
@@ -979,7 +1030,7 @@ class Calendar(View):
             while current_date <= end_lesson:
                 if start <= current_date <= end_lesson:
                     lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
-                    time = lesson_status.time 
+                    time = lesson_status.time
                     freq.append({
                         'student': lesson.student,
                         'tutor': lesson.tutor,
@@ -994,10 +1045,10 @@ class Calendar(View):
                     current_date += timedelta(days=1)
                 elif lesson.frequency == 'M':
                     current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=lesson.start_date.day)
-                else : 
+                else :
                     current_date += timedelta(weeks=1)
         return freq
-            
+
 
     def weekly_schedule(self, frquency_lessons, start, end):
         weekly_lessons = {}
@@ -1018,7 +1069,7 @@ class Calendar(View):
 
         return weekly_lessons
 
-    
+
 class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
@@ -1517,3 +1568,50 @@ class UpdateLesson(View):
             )
 
         return form
+
+class AvailabilityView(ListView):
+    model = TutorAvailability
+    template_name = 'tutor/my_availability/availabilities.html'
+    context_object_name = 'availabilities'
+
+    def get_queryset(self):
+        # Filter availabilities for the logged-in tutor
+        return TutorAvailability.objects.filter(tutor=self.request.user.tutor_profile)
+
+    def post(self, request, *args, **kwargs):
+        if 'remove' in request.POST:
+            availability_id = request.POST.get('availability')
+            try:
+                availability = TutorAvailability.objects.get(id=availability_id)
+                availability.delete()
+                messages.success(request, "Deleted successfully.")
+            except TutorAvailability.DoesNotExist:
+                messages.error(request, "The selected availability does not exist.")
+            return redirect('availability')
+
+
+class AddEditAvailabilityView(View):
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            availability = get_object_or_404(TutorAvailability, pk=pk)
+            form = TutorAvailabilityForm(instance=availability)
+        else:
+            form = TutorAvailabilityForm()
+        return render(request, 'tutor/my_availability/add_edit_availability.html', {'form': form, 'pk': pk})
+
+    def post(self, request, pk=None, *args, **kwargs):
+        if pk:
+            availability = get_object_or_404(TutorAvailability, pk=pk)
+            form = TutorAvailabilityForm(request.POST, instance=availability)
+        else:
+            form = TutorAvailabilityForm(request.POST)
+
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.tutor = request.user.tutor_profile
+            availability.save()
+            messages.success(request, "Availability saved successfully.")
+            return redirect('availability')
+        else:
+            messages.error(request, "Failed to save availability. Please correct the errors and try again.")
+        return render(request, 'tutor/my_availability/add_edit_availability.html', {'form': form, 'pk': pk})

@@ -1,0 +1,19 @@
+{% extends 'base_content.html' %}
+{% load lesson_filters %}
+{% block content %}
+
+    <div class="container mt-5">
+    <h1>Update Lesson: {{ form.instance.subject }} </h1>
+
+    <div class="card mb-4 shadow-sm">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{% url 'update_requests' %}" class="btn btn-secondary ml-2">Cancel</a>
+        </form>
+    </div>
+    </div>
+{% endblock %}

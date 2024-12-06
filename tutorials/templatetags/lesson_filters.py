@@ -22,3 +22,15 @@ def format_frequency(value):
     elif value == 'D':
         return 'Day'
     return value
+
+
+@register.filter
+def get(dictionary: dict, key):
+    return dictionary.get(key)
+
+@register.filter
+def dict_get(dictionary, key):
+    try:
+        return dictionary.get(key)
+    except AttributeError:
+        return None

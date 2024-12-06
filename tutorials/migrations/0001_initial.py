@@ -43,6 +43,17 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Invoice',
+            fields=[
+                ('id', models.AutoField(primary_key=True, serialize=False)),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
+                ('status', models.CharField(choices=[('UNPAID', 'Unpaid'), ('PAID', 'Paid'), ('OVERDUE', 'Overdue')], default='UNPAID', max_length=10)),
+                ('due_date', models.DateField()),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+        ),
+        migrations.CreateModel(
             name='Lesson',
             fields=[
                 ('lesson_id', models.BigAutoField(primary_key=True, serialize=False)),
@@ -112,6 +123,22 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='InvoiceLessonLink',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('invoice', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.invoice')),
+                ('lesson', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.lessonstatus')),
+            ],
+            options={
+                'unique_together': {('invoice', 'lesson')},
+            },
+        ),
+        migrations.AddField(
+            model_name='invoice',
+            name='lessons',
+            field=models.ManyToManyField(through='tutorials.InvoiceLessonLink', to='tutorials.lessonstatus'),
+        ),
+        migrations.CreateModel(
             name='LessonUpdateRequest',
             fields=[
                 ('lesson_update_id', models.BigAutoField(primary_key=True, serialize=False)),
@@ -156,6 +183,11 @@ class Migration(migrations.Migration):
             model_name='lesson',
             name='student',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.student'),
+        ),
+        migrations.AddField(
+            model_name='invoice',
+            name='student',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='student_invoices', to='tutorials.student'),
         ),
         migrations.CreateModel(
             name='Invoices',

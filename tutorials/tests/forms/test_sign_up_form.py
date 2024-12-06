@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import check_password
 from django import forms
 from django.test import TestCase
 from tutorials.forms import SignUpForm
-from tutorials.models import User
+from tutorials.models import User, Student, Tutor
 
 class SignUpFormTestCase(TestCase):
     """Unit tests of the sign up form."""
@@ -15,7 +15,8 @@ class SignUpFormTestCase(TestCase):
             'username': '@janedoe',
             'email': 'janedoe@example.org',
             'new_password': 'Password123',
-            'password_confirmation': 'Password123'
+            'password_confirmation': 'Password123',
+            'role': 'Admin'
         }
 
     def test_valid_sign_up_form(self):
@@ -68,6 +69,7 @@ class SignUpFormTestCase(TestCase):
     def test_form_must_save_correctly(self):
         form = SignUpForm(data=self.form_input)
         before_count = User.objects.count()
+        self.assertTrue(form.is_valid())
         form.save()
         after_count = User.objects.count()
         self.assertEqual(after_count, before_count+1)
@@ -77,3 +79,95 @@ class SignUpFormTestCase(TestCase):
         self.assertEqual(user.email, 'janedoe@example.org')
         is_password_correct = check_password('Password123', user.password)
         self.assertTrue(is_password_correct)
+
+    def test_email_already_in_use(self):
+        form_data1 = {
+            'first_name': 'Name1',
+            'last_name': 'Surname1',
+            'username': '@username1',
+            'email': 'email@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Admin'
+        }
+        form = SignUpForm(data=form_data1)
+        form.is_valid()
+        form.save()
+
+        form_data2 = {
+            'first_name': 'Name2',
+            'last_name': 'Surname2',
+            'username': '@username2',
+            'email': 'email@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Admin'
+        }
+        form = SignUpForm(data=form_data2)
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+        self.assertEqual(form.errors['email'][0], "This email is already in use.")
+
+    def test_username_already_in_use(self):
+        form_data1 = {
+            'first_name': 'Name1',
+            'last_name': 'Surname1',
+            'username': '@username',
+            'email': 'email1@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Admin'
+        }
+        form = SignUpForm(data=form_data1)
+        form.is_valid()
+        form.save()
+
+        form_data2 = {
+            'first_name': 'Name2',
+            'last_name': 'Surname2',
+            'username': '@username',
+            'email': 'email2@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Admin'
+        }
+        form = SignUpForm(data=form_data2)
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+        self.assertEqual(form.errors['username'][0], "This username is already in use.")
+
+    def test_tutor_is_saved(self):
+        form_data = {
+            'first_name': 'Name1',
+            'last_name': 'Surname1',
+            'username': '@username',
+            'email': 'email1@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Tutor'
+        }
+        form = SignUpForm(data=form_data)
+        before_count = Tutor.objects.count()
+        self.assertTrue(form.is_valid())
+        form.save()
+        after_count = Tutor.objects.count()
+        self.assertEqual(after_count, before_count+1)
+
+    def test_student_is_saved(self):
+        form_data = {
+            'first_name': 'Name1',
+            'last_name': 'Surname1',
+            'username': '@username',
+            'email': 'email1@example.org',
+            'new_password': 'Password123',
+            'password_confirmation': 'Password123',
+            'role': 'Student'
+        }
+        form = SignUpForm(data=form_data)
+        before_count = Student.objects.count()
+        self.assertTrue(form.is_valid())
+        form.save()
+        after_count = Student.objects.count()
+        self.assertEqual(after_count, before_count+1)

@@ -31,9 +31,6 @@ urlpatterns = [
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
 
-    path('invoices/', views.invoice_management, name='invoice_management'),
-    path('invoices/create/', views.create_invoice, name='create_invoice'),  # URL pattern for creating invoices
-
     path('dashboard/students/', views.StudentsView.as_view(), name='students_list'),
     path('dashboard/students/<int:student_id>/', views.StudentsView.as_view(), name='student_details'),
     path('dashboard/students/<int:student_id>/edit/', views.StudentsView.as_view(), name='student_edit'),
@@ -48,11 +45,17 @@ urlpatterns = [
     path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
     path('dashboard/lessons/<int:lesson_id>/update_feedback', views.ViewLessons.as_view(), name='update_feedback'),
     path('dashboard/lessons/<int:lesson_id>/request_changes/', views.UpdateLessonRequest.as_view(), name='request_changes'),
+    path('dashboard/lessons/<int:lesson_id>/cancel_lesson', views.ViewLessons.as_view(), name='cancel_lesson'),
 
     path('dashboard/subjects/', views.SubjectView.as_view(), name='subjects_list'),
     path('dashboard/subjects/<int:subject_id>/edit/', views.SubjectView.as_view(), name='subject_edit'),
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
-    path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
+    path('dashboard/subjects/create', views.SubjectView.as_view(), name='new_subject'),
+    path('dashboard/update_requests/', views.UpdateLessonRequest.as_view(), name='update_requests'),
+    path('dashboard/update_requests/<int:lesson_id>/', views.UpdateLesson.as_view(), name='update_lesson'),
+
+    path('dashboard/calendar/', views.Calendar.as_view(), name='calendar'),
+    path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),
 
     path('dashboard/requests/', views.RequestView.as_view(), name='requests'),
     path('dashboard/request/', views.MakeRequestView.as_view(), name='lesson_request'),
@@ -61,5 +64,13 @@ urlpatterns = [
     path('availability/', views.AvailabilityView.as_view(), name='availability'),
     path('availability/add/', views.AddEditAvailabilityView.as_view(), name='availability_add'),
     path('availability/edit/<int:pk>/', views.AddEditAvailabilityView.as_view(), name='availability_edit'),
+
+    path('invoices/', InvoiceListView.as_view(), name='invoice_list'),
+    path('invoices/create/', CreateInvoiceView.as_view(), name='create_invoice'),
+    path('invoices/<int:invoice_id>/', InvoiceDetailView.as_view(), name='invoice_detail'),
+    path('invoices/', views.invoice_management, name='invoice_management'),
+    path('invoices/create/', views.create_invoice, name='create_invoice'),
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+

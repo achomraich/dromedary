@@ -7,30 +7,31 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError
-from django.db.models import Q
-from django.shortcuts import redirect, render, get_object_or_404
+
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, LessonRequestForm, TutorForm
+
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, UpdateLessonRequestForm, LessonRequestForm, TutorForm, InvoiceForm
+
 from tutorials.helpers import login_prohibited
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from datetime import timedelta, datetime
 import calendar
-from .models import Invoice
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest
-from tutorials.forms import InvoiceForm
-from tutorials.models import Invoice, LessonStatus
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from .models import Invoice, Student, LessonStatus
-from django.contrib import messages
+
+from django.db.models import Q, Exists, OuterRef
+import datetime
+from django.utils.timezone import now
+from dateutil.relativedelta import relativedelta
+
+from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status, Invoice, LessonStatus
+
 
 @login_required
 def dashboard(request):
@@ -1022,6 +1023,7 @@ class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
         current_user = request.user
+        self.can_be_updated = []
         if lesson_id:
             return self.lesson_detail(request, lesson_id)
 
@@ -1031,17 +1033,40 @@ class ViewLessons(View):
         elif hasattr(request.user, 'student_profile'):
             self.list_of_lessons = Lesson.objects.filter(student=current_user.id)
             self.status = 'student'
+
         else:
             self.list_of_lessons = Lesson.objects.filter(tutor=current_user.id)
             self.status = 'tutor'
-        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons})
+
+        self.can_be_updated = self.list_of_lessons.filter(
+            Exists(
+                LessonStatus.objects.filter(
+                    lesson_id=OuterRef('pk'),
+                    status=Status.BOOKED
+                )
+            )
+        )
+        print(self.can_be_updated)
+
+        lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons, is_handled="N")
+        lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
+
+        '''message = {
+            request.lesson_id: {
+                "update_option": request.get_update_option_display(),
+                "made_by": request.made_by
+            }
+            for request in lessons_requests
+        }'''
+        return render(request, f'{self.status}/manage_lessons/lessons_list.html', {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests, 'can_handle_request': self.can_be_updated})
 
     def post(self, request, lesson_id=None):
 
         if lesson_id:
             if 'update_feedback' in request.path:
                 return self.update_feedback(request, lesson_id)
-        #return redirect('lessons_details')
+            elif 'cancel_lesson' in request.path:
+                return self.cancel_lesson(request, lesson_id)
 
     def handle_lessons_form(self, request, lesson=None):
         form = LessonFeedbackForm(request.POST or None, instance=lesson)
@@ -1069,11 +1094,31 @@ class ViewLessons(View):
 
         return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
 
+    def cancel_lesson(self, request, status_id=None):
+
+        lesson = get_object_or_404(LessonStatus, pk=status_id)
+        if lesson.status == Status.BOOKED:
+            lesson.status = Status.CANCELLED
+            lesson.save()
+        lesson.feedback = f'Lesson was cancelled by {self.status}'
+        lesson.save()
+
+        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.lesson_id)
+
     def lesson_detail(self, request, lessonStatus_id):
-        """Display each lesson status for admin"""
+
+        if hasattr(request.user, 'admin_profile'):
+            self.status = 'admin'
+        elif hasattr(request.user, 'student_profile'):
+            self.status = 'student'
+        else:
+            self.status = 'tutor'
+
         if lessonStatus_id:
             if 'update_feedback'in request.path:
                 return self.update_feedback(request, lessonStatus_id)
+            if 'cancel_lesson'in request.path:
+                return self.cancel_lesson(request, lessonStatus_id)
 
         try:
             lessonStatus = LessonStatus.objects.filter(lesson_id=lessonStatus_id)
@@ -1092,9 +1137,9 @@ class SubjectView(View):
         if hasattr(request.user, 'admin_profile'):
             self.list_of_subjects = Subject.objects.all()
 
-        paginator = Paginator(self.list_of_subjects, 20)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+            paginator = Paginator(self.list_of_subjects, 20)
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
 
         return render(request, 'admin/manage_subjects/subjects_list.html', {'page_obj': page_obj})
 
@@ -1148,8 +1193,16 @@ class SubjectView(View):
 
 class UpdateLessonRequest(View):
 
+    def get(self, request):
+        current_user = request.user
+        if hasattr(current_user, 'admin_profile'):
+            list_of_requests = LessonUpdateRequest.objects.all()
+        else:
+            return HttpResponseRedirect('dashboard')
+
+        return render(request, 'admin/manage_update_requests/update_lesson_request_list.html', {'list_of_requests': list_of_requests})
+
     def post(self, request, lesson_id=None):
-        print(f"POST request received for lesson_id: {lesson_id}")  # Debug
         if lesson_id:
             if request.path.endswith('request_changes/'):
                 return self.request_change(request, lesson_id)
@@ -1158,10 +1211,9 @@ class UpdateLessonRequest(View):
 
     def request_change(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
-        print(f"Request change for Lesson ID: {lesson_id}")  # Debug
         form = self.handle_subject_form(request, lesson)
 
-        if isinstance(form, HttpResponseRedirect):  # Check for redirection
+        if isinstance(form, HttpResponseRedirect):
             return form
 
         return render(
@@ -1174,20 +1226,294 @@ class UpdateLessonRequest(View):
         )
 
     def handle_subject_form(self, request, lesson=None):
-
-        lesson_update_instance, _ = LessonUpdateRequest.objects.get_or_create(lesson=lesson)
-
-        form = UpdateLessonRequestForm(
-            data=request.POST or None,
-            instance=lesson_update_instance
-        )
-
         if request.method == "POST":
+            try:
+                lesson_update_instance = LessonUpdateRequest.objects.get(lesson=lesson)
+            except LessonUpdateRequest.DoesNotExist:
+                lesson_update_instance = LessonUpdateRequest(lesson=lesson)
+
+            form = UpdateLessonRequestForm(
+                data=request.POST,
+                instance=lesson_update_instance,
+                user_role=request.user
+            )
+
             if form.is_valid():
                 try:
-                    form.save()
-                    return HttpResponseRedirect(reverse('lessons_list'))
+                    saved_instance = form.save()
+                    if hasattr(request.user, 'tutor_profile'):
+                        saved_instance.made_by = 'Tutor'
+                    elif hasattr(request.user, 'student_profile'):
+                        saved_instance.made_by = 'Student'
+
+                    Lesson.objects.filter(lesson_id=lesson.lesson_id).update(notes=f'Requested by {saved_instance.made_by}: {saved_instance.get_update_option_display()}')
+                    saved_instance.save()
+                    self.change_status(saved_instance)
                 except Exception as e:
                     form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
+
+        return form
+
+    def change_status(self, saved_instance):
+        """
+        Update the lesson's status
+        """
+        if saved_instance and saved_instance.lesson:
+            try:
+                lesson = saved_instance.lesson
+                print(f"Changing status for lesson {lesson.lesson_id} to 'Pending Update'")
+
+                LessonStatus.objects.filter(
+                    status=Status.BOOKED,
+                    lesson_id=lesson
+                ).update(status=Status.PENDING)
+            except Exception as e:
+                print(f"Error in changing status: {e}")
+
+class UpdateLesson(View):
+
+    def get(self, request, lesson_id=None):
+        print(lesson_id)
+        return self.update_lesson(request, lesson_id)
+
+    def post(self, request, lesson_id=None):
+        print('Y')
+        if lesson_id:
+            if request.path.endswith(f'update_requests/{lesson_id}/'):
+                print('Y')
+                return self.update_lesson(request, lesson_id)
+
+        return redirect('update_requests')
+
+    def update_lesson(self, request, lesson_id):
+        option = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").update_option
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        print(option)
+        if option == '3':
+            return self.cancell_lesson(request, lesson_id=lesson_id)
+        elif option == '2':
+            print('Y')
+            form = self.update_day_or_time(request, lesson_id=lesson_id)
+        else:
+            form = self.handle_update_lesson_form(request, option, lesson)
+
+            if isinstance(form, HttpResponseRedirect):
+                return form
+
+        return render(
+            request,
+            'admin/manage_update_requests/update_lesson.html',
+            {
+                'form': form
+            }
+        )
+
+    def cancell_lesson(self, request, lesson_id=None):
+        current_datetime = now()
+
+        planned_lessons = LessonStatus.objects.filter(
+            Q(date__gt=current_datetime.date()) |
+            Q(date=current_datetime.date(), time__gte=current_datetime.time()),
+            lesson_id=lesson_id
+        )
+        for lesson in planned_lessons:
+            lesson.status = Status.CANCELLED
+            lesson.save()
+
+        Lesson.objects.filter(
+            lesson_id=lesson_id
+        ).update(notes=f"All the lessons were cancelled on {current_datetime.date()}.")
+
+        messages.success(request, "Lesson cancelled successfully.")
+
+        LessonUpdateRequest.objects.filter(lesson_id=lesson_id, is_handled="N").update(is_handled="Y")
+        return redirect('lessons_list')
+
+    def get_closest_day(self, lesson_id=None):
+
+        current_datetime = now()
+        last_date = LessonStatus.objects.filter(date__lt=current_datetime, lesson_id=lesson_id).order_by('-date').first()
+
+        if last_date:
+            print("Last date before the given day:", last_date.date)
+        else:
+            print("No dates found before the given day.")
+        day_name = last_date.date.strftime("%A")
+
+        # Output the name of the day
+        print("Day of the week (name):", day_name)
+        return day_name
+
+    def update_day_or_time(self, request,  lesson_id=None):
+        if request.method == "POST":
+            try:
+                lesson_update_instance = Lesson.objects.get(lesson_id=lesson_id)
+            except Lesson.DoesNotExist:
+                raise Http404()
+            #print(lesson_update_instance.subject_id.name)
+            details = LessonUpdateRequest.objects.get(lesson_id=lesson_id).details
+            update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id).get_update_option_display()
+            print(update_option_display)
+            lesson_time = LessonStatus.objects.filter(lesson_id=lesson_id, date__gt=now())
+            print(lesson_time)
+            if len(lesson_time) == 0:
+                return Http404("No future lessons!!!")
+            print(lesson_time[0].time)
+
+            form = UpdateLessonForm(
+                data=request.POST if request.method == "POST" else None,
+                instance=lesson_update_instance,
+                update_option=update_option_display,
+                details=details,
+                regular_lesson_time=lesson_time[0].time,
+                day_of_week=self.get_closest_day(lesson_id=lesson_id)  # You can set this dynamically based on the lesson
+            )
+
+            if form.is_valid():
+                try:
+                    print("Form is valid!")
+                    saved_instance = form.save()
+                    print(saved_instance)
+                    #saved_instance.save()
+
+                    new_day_of_week = datetime.datetime.strptime(request.POST.get('new_day_of_week'), '%Y-%m-%d').date()
+                    new_lesson_time = request.POST.get('new_lesson_time')
+                    print(type(new_day_of_week))
+                    #self.update_lesson_statuses(request, new_day_of_week, new_lesson_time,saved_instance.frequency,saved_instance.term_id.end_date, lesson_id)
+
+                    # Additional processing if required
+                except Exception as e:
+                    form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
+
+
+        else:
+            # For GET requests, initialize the form without POST data
+            form = UpdateLessonForm(
+                data=request.POST if request.method == "POST" else None,
+                instance=lesson_update_instance,
+                update_option=update_option_display,
+                details=details,
+                regular_lesson_time=lesson_time,
+                day_of_week="Monday"  # You can set this dynamically based on the lesson
+            )
+
+        return form
+
+    def update_lesson_statuses(self, request, next_lesson_date, time, frequency, end_date, lesson_id=None):
+        #LessonStatus.objects.filter(date__gt=now()).delete()
+        current_date=next_lesson_date
+        while current_date < end_date:
+            # Create a new lesson entry for the current date
+            lesson = LessonStatus(lesson_id=Lesson.objects.get(pk=lesson_id), date=current_date, time=time, status='Booked', feedback="")
+            lesson.save()
+            print(lesson)
+
+            # Increment the date based on the frequency
+            if frequency == 'W':
+                current_date += datetime.timedelta(weeks=1)
+            elif frequency == 'M':
+                current_date += relativedelta(months=1)
+            else:
+                raise ValueError("Frequency should be 'month' or 'week'.")
+
+    '''def handle_update_lesson_form(self, request, update_option, lesson=None):
+        if request.method == "POST":
+            try:
+                lesson_update_instance = Lesson.objects.get(lesson_id=lesson.lesson_id)
+            except LessonUpdateRequest.DoesNotExist:
+                Http404()
+
+            details = LessonUpdateRequest.objects.get(lesson_id=lesson.lesson_id).details
+            update_option = LessonUpdateRequest.objects.get(lesson_id=lesson).get_update_option_display()
+            request_instance = get_object_or_404(LessonUpdateRequest, lesson=lesson)
+            lesson_time=LessonStatus.objects.filter(lesson_id=lesson)[0].time
+            #print(str(lesson_time)) #return <class 'str'>
+            if isinstance(lesson_time, datetime.timedelta):
+                total_seconds = int(lesson_time.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                lesson_time_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+            else:
+                lesson_time_str = str(lesson_time)
+
+            #print(type(lesson_time_str))
+
+            form = UpdateLessonForm(
+                data=request.POST,
+                instance=lesson_update_instance,
+                update_option=update_option,
+                details=details,
+                regular_lesson_time=lesson_time_str,
+                day_of_week='Monday'
+            )
+
+            if form.is_valid():
+                try:
+                    print('is_valid')
+                    #saved_instance = form.save()
+                    #self.change_status(saved_instance)
+                except Exception as e:
+                    form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
+
+        return form'''
+
+    def handle_update_lesson_form(self, request, update_option, lesson=None):
+        if request.method == "POST":
+            try:
+                lesson_update_instance = Lesson.objects.get(lesson_id=lesson.lesson_id)
+            except Lesson.DoesNotExist:
+                raise Http404()
+
+            details = LessonUpdateRequest.objects.get(lesson_id=lesson.lesson_id).details
+            update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson).get_update_option_display()
+            lesson_time = LessonStatus.objects.filter(lesson_id=lesson)[0].time
+
+            # Convert lesson_time to string if it's a timedelta
+            if isinstance(lesson_time, datetime.timedelta):
+                total_seconds = int(lesson_time.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                lesson_time_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+            else:
+                lesson_time_str = str(lesson_time)
+
+            # Create the form with the appropriate data
+            form = UpdateLessonForm(
+                data=request.POST if request.method == "POST" else None,
+                instance=lesson_update_instance,
+                update_option=update_option_display,
+                details=details,
+                regular_lesson_time=lesson_time_str,
+                day_of_week="Monday"  # You can set this dynamically based on the lesson
+            )
+
+            if form.is_valid():
+                try:
+                    print("Form is valid!")
+                    saved_instance = form.save()
+                    saved_instance.save()
+                    # Additional processing if required
+                    new_day_of_week = request.POST.get('new_day_of_week')
+                    print(new_day_of_week)
+                except Exception as e:
+                    form.add_error(None, f"An error occurred: {str(e)}")
+                else:
+                    return HttpResponseRedirect(reverse('lessons_list'))
+
+        else:
+            # For GET requests, initialize the form without POST data
+            form = UpdateLessonForm(
+                instance=lesson,
+                update_option=update_option,
+                details=details,
+                regular_lesson_time=lesson_time_str,
+                day_of_week="Monday"  # You can set this dynamically based on the lesson
+            )
 
         return form

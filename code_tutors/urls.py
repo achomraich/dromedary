@@ -49,11 +49,14 @@ urlpatterns = [
     path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
     path('dashboard/lessons/<int:lesson_id>/update_feedback', views.ViewLessons.as_view(), name='update_feedback'),
     path('dashboard/lessons/<int:lesson_id>/request_changes/', views.UpdateLessonRequest.as_view(), name='request_changes'),
+    path('dashboard/lessons/<int:lesson_id>/cancel_lesson', views.ViewLessons.as_view(), name='cancel_lesson'),
 
     path('dashboard/subjects/', views.SubjectView.as_view(), name='subjects_list'),
     path('dashboard/subjects/<int:subject_id>/edit/', views.SubjectView.as_view(), name='subject_edit'),
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
-    path('dashboard/subject/create', views.SubjectView.as_view(), name='new_subject'),
+    path('dashboard/subjects/create', views.SubjectView.as_view(), name='new_subject'),
+    path('dashboard/update_requests/', views.UpdateLessonRequest.as_view(), name='update_requests'),
+    path('dashboard/update_requests/<int:lesson_id>/', views.UpdateLesson.as_view(), name='update_lesson'),
 
     path('dashboard/calendar/', views.Calendar.as_view(), name='calendar'),
     path('dashboard/calendar/<int:year>/<int:month>/', views.Calendar.as_view(), name='calendar'),

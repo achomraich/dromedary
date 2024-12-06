@@ -2,10 +2,14 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
+from django.core.exceptions import ValidationError
+from datetime import timedelta, date
+
 from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 
+# tested
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
     id = models.BigAutoField(primary_key=True)
@@ -73,15 +77,18 @@ class Subject(models.Model):
             # Helper method to check if the invoice is overdue
             return not self.is_paid and self.due_date < timezone.now().date()
 
+# tested
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
+
+
     subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
     experience = models.TextField(blank=True)
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
-
+# tested
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
@@ -110,6 +117,7 @@ class TutorAvailability(models.Model):
     # available or booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='a')
 
+
 class Subject(models.Model):
 
     subject_id = models.BigAutoField(primary_key=True)
@@ -122,6 +130,7 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
+
 class Term(models.Model):
     """TERM_NAME = {
         1: "Sept-Jan",
@@ -132,7 +141,15 @@ class Term(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
 
+    def clean(self):
+        if self.start_date >= self.end_date:
+            raise ValidationError("The start date must be before the end date.")
 
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+#tested
 class Lesson(models.Model):
     LESSON_FREQUENCY = [
         ("D", "day"),
@@ -150,7 +167,21 @@ class Lesson(models.Model):
     duration = models.DurationField()
     start_date = models.DateField()
     price_per_lesson = models.IntegerField()
+    notes = models.CharField(max_length=50, default="—")
 
+    def clean(self):
+        """Custom validation logic for the Lesson model."""
+        super().clean()
+        if not isinstance(self.duration, timedelta):
+            raise ValidationError("Duration must be a valid timedelta object.")
+
+        if self.duration <= timedelta(0):
+            raise ValidationError({"duration": "Duration must be a positive value."})
+
+        if self.price_per_lesson <= 0:
+            raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
+
+# tested
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
     BOOKED = 'Booked', 'Booked'
@@ -165,17 +196,29 @@ class LessonUpdateRequest(models.Model):
         ('4', 'Change Frequency'),
         ('5', 'Change Duration of the Lesson')
     ]
+
+    MADE_BY_CHOICES = [
+        ('Tutor', 'Tutor'),
+        ('Student', 'Student'),
+    ]
+
+    IS_HANDLED_CHOICES = [
+        ('N', 'Not done'),
+        ('Y', 'Done'),
+    ]
+
     lesson_update_id = models.BigAutoField(primary_key=True)
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)
     update_option = models.CharField(max_length=50, choices=UPDATE_CHOICES, default="1")
     details = models.CharField(max_length=255, default="")
+    made_by = models.CharField(max_length=10, choices=MADE_BY_CHOICES, default="Tutor")
+    is_handled = models.CharField(max_length=10, choices=IS_HANDLED_CHOICES, default="N")
 
     def __str__(self):
         return f"Update Request for Lesson {self.lesson.lesson_id} - {self.get_update_option_display()}"
 
-
+#tested
 class LessonStatus(models.Model):
-    # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
 
     status_id = models.BigAutoField(primary_key=True)
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE, default=0)
@@ -185,8 +228,29 @@ class LessonStatus(models.Model):
         max_length=10,
         choices=Status.choices,
         default=Status.BOOKED)
-    feedback = models.CharField(max_length=255)
+    feedback = models.CharField(max_length=255, default="")
     invoiced = models.BooleanField(default=False)
+
+    def clean(self):
+        if self.date is None:
+            raise ValidationError("Date cannot be null.")
+
+        if self.date > date.today() and self.feedback != "":
+            self.feedback = ""
+
+    def save(self, *args, **kwargs):
+        today = date.today()
+
+        if self.date > today:
+            self.feedback = ""
+
+        elif self.date < today:
+            if self.status == Status.PENDING:
+                self.status = Status.CANCELLED
+            elif self.status == Status.BOOKED:
+                self.status = Status.COMPLETED
+
+        super().save(*args, **kwargs)
 
 '''class Booking(models.Model):
     booking_id = models.BigAutoField(primary_key=True)
@@ -210,7 +274,7 @@ class Invoices(models.Model):
     status = models.CharField(max_length=1, choices=PAYMENT_CHOICES, default="U")
 
 class Requests(models.Model):
-    # STATUS = ["Pending", "Confirmed", "Cancelled", "Completed"]
+
     request_id = models.BigAutoField(primary_key=True)
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)

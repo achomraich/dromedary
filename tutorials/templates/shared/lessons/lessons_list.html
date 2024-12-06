@@ -1,5 +1,7 @@
 {% extends 'base_content.html' %}
+{% load lesson_filters %}
 {% block content %}
+
     <div class="container">
     <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
 
@@ -14,7 +16,10 @@
                     <th>Term Start Date</th>
                     <th>Duration</th>
                     <th>Frequency</th>
-                    <th>Action</th>
+                    <th>Notes</th>
+                    {% if user.student_profile or user.tutor_profile %}
+                        <th>Action</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -26,14 +31,27 @@
                         <td>{{ lesson.term_id.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>
                         <td>{{ lesson.frequency|format_frequency }}</td>
-                    <td>
-                            {% if user.is_authenticated and user.student_profile %}
-                                <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary mb-3">Update Lesson</button>
-                                </form>
-                            {% endif %}
-                        </td>
+                        <td>{{lesson.notes}}</td>
+                        {% if user.student_profile or user.tutor_profile %}
+                            <td>
+
+                                {% if lesson in can_handle_request %}
+                                    <form action="{% url 'request_changes' lesson.lesson_id%}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary mb-3"
+                                            {% if lesson.lesson_id in lessons_with_requests %}disabled{% endif %}>
+                                            Update Lesson</button>
+                                    </form>
+                                {% else %}
+                                    {% if lesson.lesson_id in lessons_with_requests %}
+                                        <p>Request already made</p>
+                                    {% else %}
+                                        <p>No Booked Lessons</p>
+                                    {% endif %}
+                                {% endif %}
+
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>

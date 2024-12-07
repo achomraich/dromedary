@@ -27,8 +27,36 @@
                         <h5 class="mt-3"><strong>Other details:</strong></h5>
                         <p>(Students related and modules)</p>
                     </div>
-                    
-                    <h5 class="mt-4"><strong>Lessons</strong></h5>
+                    <h5 class="mt-4"><strong>Availability:</strong></h5>
+                    {% if availabilities %}
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">Day</th>
+                                    <th scope="col">Start time</th>
+                                    <th scope="col">End time</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for availability in availabilities %}
+                                <tr>
+                                    <td class="align-middle">{{ availability.day }}</td>
+                                    <td class="align-middle">{{ availability.start_time }}</td>
+                                    <td class="align-middle">{{ availability.end_time }}</td>
+                                    <td class="align-middle">{{ availability.status }}</td>
+                                </tr>
+                                {% empty %}   
+                                    <tr>
+                                        <td colspan="9">No timeslots found.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No timeslots found for this tutor.</p>
+                    {% endif %}
+                    <h5 class="mt-4"><strong>Lessons:</strong></h5>
                     {% if lessons %}
                         <table class="table table-bordered table-striped">
                             <thead>

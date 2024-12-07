@@ -291,6 +291,7 @@ class EntityView(View):
         entity = get_object_or_404(self.model, user__id=entity_id)
 
         lessons = None
+        availability = None
         tutors = None
         students = None
 
@@ -302,14 +303,16 @@ class EntityView(View):
 
         else:
             lessons = Lesson.objects.filter(tutor=entity)
-
             students = set(lesson.student for lesson in lessons)
+            availability = TutorAvailability.objects.filter(tutor=entity)
+            print(availability)
 
         content = {
             self.model.__name__.lower(): entity,
             'lessons': lessons,
             'tutors': tutors,
             'students': students,
+            'availabilities': availability
         }
         if request.path.endswith('edit/'):
             print("i'm here")

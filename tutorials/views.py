@@ -546,6 +546,10 @@ class RequestView(View):
         lrequest = get_object_or_404(LessonRequest, request_id=request_id)
         lrequest.refresh_from_db()
 
+        warning_message = None
+        if (lrequest.term.start_date - lrequest.created.date()).days < 14:
+            warning_message = "This lesson request was made less than two weeks before the start of the term."
+
         if not form:
             form = AssignTutorForm()
 

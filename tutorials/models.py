@@ -301,11 +301,6 @@ class LessonRequest(models.Model):
     @property
     def not_confirmed(self):
         return self.status != Status.CONFIRMED
-    
-    def proximity_warning(self):
-        if self.term.start_date - self.created.date() < timedelta(weeks=2):
-            return True
-        return False
 
 class Invoice(models.Model):
     PAYMENT_STATUS = [

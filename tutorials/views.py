@@ -298,13 +298,13 @@ class EntityView(View):
         if isinstance(entity, Student):
             lessons = Lesson.objects.filter(student=entity).select_related(
                 'tutor', 'subject_id', 'term_id'
-            )
-            tutors = set(lesson.tutor for lesson in lessons)
+            ).order_by('subject_id__name')
+            tutors = ', '.join(sorted(tutor.user.full_name() for tutor in set(lesson.tutor for lesson in lessons)))
 
         else:
-            lessons = Lesson.objects.filter(tutor=entity)
-            students = set(lesson.student for lesson in lessons)
-            availability = TutorAvailability.objects.filter(tutor=entity)
+            lessons = Lesson.objects.filter(tutor=entity).order_by('student__user__username')
+            students = ', '.join(sorted(student.user.full_name() for student in set(lesson.student for lesson in lessons)))
+            availability = TutorAvailability.objects.filter(tutor=entity).order_by('day')
             print(availability)
 
         content = {
@@ -314,6 +314,7 @@ class EntityView(View):
             'students': students,
             'availabilities': availability
         }
+
         if request.path.endswith('edit/'):
             print("i'm here")
             return self.edit_form(request, entity)

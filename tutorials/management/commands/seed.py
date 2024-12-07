@@ -4,7 +4,7 @@ from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, 
 
 import pytz
 from faker import Faker
-from random import randint, random, choice
+from random import randint, random, choice, choices
 from datetime import timedelta, datetime, time as pytime
 
 user_fixtures = [
@@ -35,8 +35,8 @@ lesson_status = []
 class Command(BaseCommand):
     """Build automation command to seed the database."""
 
-    USER_COUNT = 100
-    LESSON_COUNT = 300
+    USER_COUNT = 20
+    LESSON_COUNT = 30
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -212,10 +212,15 @@ class Command(BaseCommand):
         while current_date <= end_date:
             if current_date >= today:
                 status = 'Scheduled'
-                feedback = None
             else:
-                status = choice(['Completed', 'Cancelled'])
+                status = choices(['Completed', 'Cancelled'], weights=[0.8,0.2], k=1)[0]
+
+            if status == 'Completed':
                 feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
+            elif status == 'Cancelled':
+                feedback = '-'
+            else:
+                feedback = ''
 
             self.create_lesson_status({
                 'lesson_id': lesson_id,

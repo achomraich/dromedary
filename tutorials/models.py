@@ -114,7 +114,7 @@ class TutorAvailability(models.Model):
     ]
     id = models.BigAutoField(primary_key=True)
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day = models.CharField(max_length=15, choices=DaysOfWeek.choices)
+    day = models.IntegerField(choices=DaysOfWeek.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
     # Mark as Available or Booked

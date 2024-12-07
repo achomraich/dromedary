@@ -62,6 +62,9 @@ class Tutor(models.Model):
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
 
+    def __str__(self):
+        return self.user.full_name()
+
 # tested
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
@@ -95,14 +98,14 @@ class Status(models.TextChoices):
     REJECTED = 'Rejected', 'Rejected'
 
 
-class DaysOfWeek(models.TextChoices):
-    MON = 'Mon', 'Monday'
-    TUE = 'Tue', 'Tuesday'
-    WED = 'Wed', 'Wednesday'
-    THU = 'Thu', 'Thursday'
-    FRI = 'Fri', 'Friday'
-    SAT = 'Sat', 'Saturday'
-    SUN = 'Sun', 'Sunday'
+class DaysOfWeek(models.IntegerChoices):
+    MON = 0, 'Monday'
+    TUE = 1, 'Tuesday'
+    WED = 2, 'Wednesday'
+    THU = 3, 'Thursday'
+    FRI = 4, 'Friday'
+    SAT = 5, 'Saturday'
+    SUN = 6, 'Sunday'
 
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
@@ -114,8 +117,11 @@ class TutorAvailability(models.Model):
     day = models.CharField(max_length=15, choices=DaysOfWeek.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    # available or booked
+    # Mark as Available or Booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    class Meta:
+        unique_together = ('tutor', 'day', 'start_time', 'end_time')
 
 
 class Term(models.Model):
@@ -139,6 +145,39 @@ class Term(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
+class LessonRequest(models.Model):
+
+    FREQUENCY = [
+        ('Weekly', 'Weekly'),
+        ('Biweekly', 'Biweekly'),
+    ]
+
+    request_id = models.BigAutoField(primary_key=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    time = models.TimeField()
+    day = models.CharField(max_length=3, choices=DaysOfWeek)
+    duration = models.DurationField(default=timedelta(hours=1))
+    frequency = models.CharField(max_length=10, choices=FREQUENCY)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['request_id']
+
+    @property
+    def decided(self):
+        return not (self.not_cancelled and self.not_confirmed)
+
+    @property
+    def not_cancelled(self):
+        return self.status != Status.CANCELLED
+
+    @property
+    def not_confirmed(self):
+        return self.status != Status.CONFIRMED
+
 #tested
 class Lesson(models.Model):
     LESSON_FREQUENCY = [
@@ -152,19 +191,21 @@ class Lesson(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term_id = models.ForeignKey(Term, on_delete=models.CASCADE)
-
+    from_request = models.ForeignKey(LessonRequest, on_delete=models.CASCADE, null=True, blank=True)
     frequency = models.CharField(max_length=5, choices=LESSON_FREQUENCY, default="W")
     duration = models.DurationField()
     start_date = models.DateField()
     price_per_lesson = models.IntegerField()
     notes = models.CharField(max_length=50, default="—")
 
+    class Meta:
+        unique_together = ('tutor', 'student', 'subject_id')
+
     def clean(self):
         """Custom validation logic for the Lesson model."""
         super().clean()
         if not isinstance(self.duration, timedelta):
             raise ValidationError("Duration must be a valid timedelta object.")
-
 
         if self.duration <= timedelta(0):
             raise ValidationError({"duration": "Duration must be a positive value."})
@@ -273,34 +314,7 @@ class TutorReviews(models.Model):
     date = models.DateField()
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
 
-class LessonRequest(models.Model):
 
-    FREQUENCY = [
-        ('Weekly', 'Weekly'),
-        ('Biweekly', 'Biweekly'),
-    ]
-
-    request_id = models.BigAutoField(primary_key=True)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    time = models.TimeField()
-    day = models.CharField(max_length=3, choices=DaysOfWeek)
-    duration = models.DurationField(default=timedelta(hours=1))
-    frequency = models.CharField(max_length=10, choices=FREQUENCY)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    created = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['request_id']
-
-    @property
-    def not_cancelled(self):
-        return self.status != Status.CANCELLED
-
-    @property
-    def not_confirmed(self):
-        return self.status != Status.CONFIRMED
 
 class Invoice(models.Model):
     PAYMENT_STATUS = [

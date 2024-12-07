@@ -441,7 +441,6 @@ def invoice_management(request):
     invoices = Invoice.objects.all().order_by('-created_at')
     return render(request, 'invoices/invoice_list.html', {'invoices': invoices})
 
-
 @login_required
 def create_invoice(request):
     # Print debug information about available data
@@ -509,6 +508,7 @@ def invoice_list(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
+
 class RequestView(View):
     status = None
     requests_list = None
@@ -550,29 +550,37 @@ class RequestView(View):
         lrequest.refresh_from_db()
 
         if not form:
-            form = AssignTutorForm()
+            form = AssignTutorForm(existing_request=lrequest)
 
         return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
 
     def assign_tutor(self, request, lrequest):
 
-        form = AssignTutorForm(request.POST)
+        form = AssignTutorForm(request.POST, existing_request=lrequest)
 
         if form.is_valid():
             tutor = form.cleaned_data['tutor']
             start_date = form.cleaned_data['start_date']
             price_per_lesson = form.cleaned_data['price_per_lesson']
-
             # Create a new Lesson based on the form data and LessonRequest details
             Lesson.objects.create(
                 tutor=tutor,
                 student=lrequest.student,
                 subject_id=lrequest.subject,
                 term_id=lrequest.term,
+                from_request=lrequest,
                 frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
                 duration=lrequest.duration,  # Duration from the LessonRequest
                 start_date=start_date,
                 price_per_lesson=price_per_lesson,
+            )
+            # Create a tutor availability after a lesson is made
+            TutorAvailability.objects.create(
+                tutor=tutor,
+                day=lrequest.day,
+                start_time=lrequest.start_time,
+                end_time=lrequest.end_time,
+                status='Booked'
             )
 
             lrequest.status = Status.CONFIRMED
@@ -599,6 +607,7 @@ class RequestView(View):
         messages.success(request, "Request cancelled.")
         return redirect('requests')
 
+
 class MakeRequestView(View):
 
     def get(self, request, *args, **kwargs):
@@ -619,7 +628,7 @@ class MakeRequestView(View):
             lesson_request.save()
             messages.success(request, "Request submitted successfully.")
             # Redirect to a success page or another page after form submission
-            return redirect('dashboard')
+            return redirect('requests')
         else:
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
@@ -712,10 +721,15 @@ class Calendar(View):
 
 class ViewLessons(View):
 
-    def get(self, request, lesson_id=None):
+    def get(self, request, lesson_id=None, request_id=None):
         current_user = request.user
         self.can_be_updated = []
         if lesson_id:
+            return self.lesson_detail(request, lesson_id)
+
+        if request_id:
+            lesson_request = LessonRequest.objects.get(LessonRequest, id=request_id)
+            lesson_id = (Lesson.objects.filter(from_request=lesson_request).first()).lesson_id
             return self.lesson_detail(request, lesson_id)
 
         if hasattr(current_user, 'admin_profile'):
@@ -819,6 +833,7 @@ class ViewLessons(View):
             context = {"lessons": lessonStatus, "user": request.user}
             return render(request, 'shared/lessons/lessons_details.html', context)
 
+
 class SubjectView(View):
 
     def get(self, request, subject_id=None):
@@ -881,6 +896,7 @@ class SubjectView(View):
         form = self.handle_subject_form(request)
 
         return render(request, 'admin/manage_subjects/subject_create.html', {'form': form})
+
 
 class UpdateLessonRequest(View):
 
@@ -962,6 +978,7 @@ class UpdateLessonRequest(View):
                 ).update(status=Status.PENDING)
             except Exception as e:
                 print(f"Error in changing status: {e}")
+
 
 class UpdateLesson(View):
 
@@ -1208,6 +1225,7 @@ class UpdateLesson(View):
             )
 
         return form
+
 
 class AvailabilityView(ListView):
     model = TutorAvailability

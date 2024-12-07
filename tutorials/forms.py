@@ -497,17 +497,30 @@ class LessonRequestForm(forms.ModelForm):
 class AssignTutorForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['tutor', 'start_date', 'price_per_lesson']
+        fields = ['student', 'tutor', 'subject_id','term_id','duration','frequency', 'start_date', 'price_per_lesson']
         widgets = {
             'tutor': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'price_per_lesson': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter price'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, existing_request=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if existing_request:
+            self.fields['student'].initial = existing_request.student
+            self.fields['student'].disabled = True
+            self.fields['subject_id'].initial = existing_request.subject
+            self.fields['subject_id'].disabled = True
+            self.fields['term_id'].initial = existing_request.term
+            self.fields['term_id'].disabled = True
+            self.fields['duration'].initial = existing_request.duration
+            self.fields['duration'].disabled = True
+            self.fields['frequency'].initial = existing_request.frequency
+            self.fields['frequency'].disabled = True
         self.fields['tutor'].empty_label = "Please select"
         self.fields['price_per_lesson'].label = "Price per Lesson (£)"
+
+
 
 class TutorAvailabilityForm(forms.ModelForm):
     class Meta:

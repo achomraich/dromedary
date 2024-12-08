@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term, TutorAvailability
+from tutorials.models import User, Admin, Student, Tutor, Lesson, Subject, Term, Frequency
 
 import pytz
 from faker import Faker
@@ -135,15 +135,15 @@ class Command(BaseCommand):
         students = Student.objects.all()
         all_subjects = Subject.objects.all()
         terms = Term.objects.all()
-        selectedTerm = choice(terms)
+        frequencies = [c[0] for c in Lesson.frequency.field.choices]
 
         tutor = choice(tutors)
         student = choice(students)
         subject_id = choice(all_subjects)
-        term_id = selectedTerm
-        frequency = choice(['W', 'M'])
+        term_id = choice(terms)
+        frequency = choice(frequencies)
         duration = timedelta(hours=choice([1,2]), minutes=choice([00,15,30,45]))
-        start_date = selectedTerm.start_date
+        start_date = term_id.start_date
         price_per_lesson = choice([20, 30, 40, 50])
 
         if not Lesson.objects.filter(tutor=tutor, student=student, subject_id=subject_id).exists():
@@ -172,11 +172,8 @@ class Command(BaseCommand):
                 start_date=data["start_date"],
                 price_per_lesson=data["price_per_lesson"]
             )
-            print("Lesson added")
             tutor = data["tutor"]
             tutor.subjects.add(data["subject_id"])
-            print(tutor.subjects.all())
-            print("Subject added")
         except:
             pass
 

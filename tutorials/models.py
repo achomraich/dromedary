@@ -88,15 +88,14 @@ class Status(models.TextChoices):
     BOOKED = 'Booked', 'Booked'
     CANCELLED = 'Cancelled', 'Cancelled'
     COMPLETED = 'Completed', 'Completed'
-
     CONFIRMED = 'Confirmed', 'Confirmed'
     REJECTED = 'Rejected', 'Rejected'
 
 class Frequency(models.TextChoices):
-    WEEKLY = 'Weekly', 'Weekly'
-    BIWEEKLY = 'Biweekly', 'Biweekly'
-    MONTHLY = 'Monthly', 'Monthly'
-    ONCE = 'Once', 'Once'
+    WEEKLY = 'W', 'Weekly'
+    BIWEEKLY = 'B', 'Biweekly'
+    MONTHLY = 'M', 'Monthly'
+    ONCE = 'O', 'Once'
 
 class DaysOfWeek(models.IntegerChoices):
     MON = 0, 'Monday'

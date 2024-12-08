@@ -15,10 +15,11 @@
           <th>Frequency</th>
           <th>Status</th>
           <th>Date Requested</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        {% for request in lesson_requests %}
+        {% for request in my_requests %}
           <tr>
             <td>{{ request.student.user.username }}</td>
             <td>{{ request.language }}</td>
@@ -28,6 +29,12 @@
             <td>{{ request.get_lesson_frequency_display }}</td>
             <td>{{ request.status }}</td>
             <td>{{ request.created }}</td>
+            <td>
+              <form method="post" action="{% url 'delete_request' request.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary mb-3">Delete Lesson</button>
+              </form>
+            </td>
           </tr>
         {% empty %}
           <tr>

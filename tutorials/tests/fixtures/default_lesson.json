@@ -1,0 +1,30 @@
+[
+  {
+    "model": "tutorials.lesson",
+    "pk": 1,
+    "fields": {
+      "tutor": 3,
+      "student": 2,
+      "subject_id": 1,
+      "term_id": 1,
+      "frequency": "W",
+      "duration": "01:00:00",
+      "start_date": "2024-01-01",
+      "price_per_lesson": 30
+    }
+  },
+  {
+    "model": "tutorials.lesson",
+    "pk": 2,
+    "fields": {
+      "tutor": 4,
+      "student": 5,
+      "subject_id": 2,
+      "term_id": 2,
+      "frequency": "D",
+      "duration": "00:30:00",
+      "start_date": "2024-01-05",
+      "price_per_lesson": 20
+    }
+  }
+]

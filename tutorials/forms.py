@@ -1,9 +1,14 @@
 """Forms for the tutorials app."""
+from cProfile import label
+
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, Lesson
+
+from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest,  Lesson, Invoice, LessonRequest
+from django import forms
+from django.db.models.base import ModelBase
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -30,6 +35,35 @@ class UserForm(forms.ModelForm):
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
+        error_messages = {
+            'username': {
+                'unique': "This username already exists. Please use a different one.",
+            },
+        }
+
+class TutorForm(forms.ModelForm):
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.all(),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-inline'}),
+        required=False,
+        label="Subjects Taught"
+    )
+
+    class Meta:
+        model = Tutor
+        fields = ['experience', 'subjects']
+        widgets = {
+            'experience': forms.Textarea(attrs={'rows': 3,'placeholder': 'Tell us more about your experience in teaching...'}),
+        }
+        labels = {
+            'experience': 'Experience',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tutor = kwargs.get('instance', None)
+        if tutor and hasattr(tutor, 'user') and tutor.user:
+            self.fields['subjects'].queryset = Subject.objects.all()
 
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
@@ -62,7 +96,7 @@ class PasswordForm(NewPasswordMixin):
 
     def __init__(self, user=None, **kwargs):
         """Construct new form instance with a user instance."""
-        
+
         super().__init__(**kwargs)
         self.user = user
 
@@ -412,3 +446,32 @@ class UpdateLessonForm(forms.ModelForm):
             self.fields[field_name].disabled = True
             self.fields[field_name].widget = forms.HiddenInput()
 
+
+class InvoiceForm(forms.ModelForm):
+    subject = forms.ModelChoiceField(
+        queryset=Subject.objects.all(),
+        empty_label="Select a lesson...",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = Invoice
+        fields = ['student', 'amount', 'due_date', 'status']
+        widgets = {
+            'student': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-select'})
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['student'].queryset = Student.objects.select_related('user').all()
+        self.fields['student'].label_from_instance = lambda obj: f"{obj.user.username} ({obj.user.full_name()})"
+        self.fields['subject'].queryset = Subject.objects.all()
+        self.fields['subject'].label_from_instance = lambda obj: f"{obj.name}"
+
+class LessonRequestForm(forms.ModelForm):
+    class Meta:
+        model = LessonRequest
+        fields = ['language','lesson_time','lesson_day','lesson_length','lesson_frequency']

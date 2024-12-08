@@ -20,14 +20,12 @@ term_dates = [
 ]
 
 subjects = [
-    {'name': 'C++'},
-    {'name': 'Java'},
-    {'name': 'Python'},
-    {'name': 'JS'},
-    {'name': 'Python'},
-    {'name': 'TypeScript'},
-    {'name': 'Scala'},
-    {'name': 'Ruby'}
+    {'name': 'Python', 'description': 'Simple Python to introduce beginners to programming.'},
+    {'name': 'Java', 'description': 'Learn object-oriented programming with Java'},
+    {'name': 'C++', 'description': ''},
+    {'name': 'TypeScript', 'description': ''},
+    {'name': 'Functional Programming', 'description': 'Scala/Haskell'},
+    {'name': 'Web Development', 'description': 'Use HTML/CSS with Javascript to create interactive websites.'},
 ]
 
 lessons = []
@@ -125,7 +123,7 @@ class Command(BaseCommand):
     def create_subjects(self):
         for data in subjects:
             try:
-                Subject.objects.create(name=data["name"])
+                Subject.objects.create(name=data["name"], description=data["description"])
             except:
                 pass
 

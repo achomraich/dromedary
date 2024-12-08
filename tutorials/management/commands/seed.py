@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term
+from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term, TutorAvailability
 
 import pytz
 from faker import Faker
-from random import randint, random, choice
-from datetime import timedelta
+from random import randint, random, choice, choices
+from datetime import timedelta, datetime, time as pytime
 
 user_fixtures = [
     {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'Admin'},
@@ -36,7 +36,7 @@ class Command(BaseCommand):
     """Build automation command to seed the database."""
 
     USER_COUNT = 300
-    LESSON_COUNT = 100
+    LESSON_COUNT = 500
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -55,13 +55,8 @@ class Command(BaseCommand):
         self.create_subjects()
         self.subjects = Subject.objects.all()
 
-        self.lessons = Lesson.objects.all()
-
         self.generate_random_lessons()
         self.lessons = Lesson.objects.all()
-
-        self.generate_random_lesson_status()
-        self.lesson_status = LessonStatus.objects.all()
 
     def create_users(self):
         self.generate_user_fixtures()
@@ -126,38 +121,6 @@ class Command(BaseCommand):
                 Subject.objects.create(name=data["name"], description=data["description"])
             except:
                 pass
-
-    def create_lessons(self):
-        for data in lessons:
-            try:
-                Lesson.objects.create(
-                    tutor=data["tutor"],
-                    student=data["student"],
-                    subject_id=data["subject_id"],
-                    term_id=data["term_id"],
-                    frequency=data["frequency"],
-                    duration=data["duration"],
-                    start_date=data["start_date"],
-                    price_per_lesson=data["price_per_lesson"]
-                )
-                print("lesson added.")
-            except:
-                pass
-
-    def create_lesson_status(self):
-        for data in lesson_status:
-            try:
-                LessonStatus.objects.create(
-                    lesson_id=data['lesson_id'],
-                    date=data['date'],
-                    time=data['time'],
-                    status=data['status'],
-                    feedback=data['feedback'],
-                    invoiced=False
-                )
-                print("one lesson_status added.")
-            except:
-                pass
               
     def generate_random_lessons(self):
         lesson_count = Lesson.objects.count()
@@ -182,6 +145,19 @@ class Command(BaseCommand):
         duration = timedelta(hours=choice([1,2]), minutes=choice([00,15,30,45]))
         start_date = selectedTerm.start_date
         price_per_lesson = choice([20, 30, 40, 50])
+
+        if not Lesson.objects.filter(tutor=tutor, student=student, subject_id=subject_id).exists():
+            self.create_lesson({
+                'tutor': tutor,
+                'student': student,
+                'subject_id': subject_id,
+                'term_id': term_id,
+                'frequency': frequency,
+                'duration': duration,
+                'start_date': start_date,
+                'price_per_lesson': price_per_lesson
+            })
+
         self.create_lesson({'tutor': tutor, 'student': student, 'subject_id': subject_id, 'term_id': term_id, 'frequency': frequency, 'duration': duration, 'start_date': start_date, 'price_per_lesson': price_per_lesson})
 
     def create_lesson(self, data):
@@ -196,43 +172,14 @@ class Command(BaseCommand):
                 start_date=data["start_date"],
                 price_per_lesson=data["price_per_lesson"]
             )
+            print("Lesson added")
+            tutor = data["tutor"]
+            tutor.subjects.add(data["subject_id"])
+            print(tutor.subjects.all())
+            print("Subject added")
         except:
             pass
 
-    def generate_random_lesson_status(self):
-        lesson_count = Lesson.objects.count()
-        all_lessons = Lesson.objects.all()
-        lessons_with_status_count = 0
-        while lessons_with_status_count < lesson_count:
-            print(f"Seeding lesson status {lessons_with_status_count}/{lesson_count}", end='\r')
-            self.generate_lesson_status({'lesson_id': all_lessons[lessons_with_status_count]})
-            lessons_with_status_count += 1
-        print("Lesson status seeding complete.      ")
-
-    def generate_lesson_status(self, data):
-        lesson_id = data["lesson_id"]
-
-        term = lesson_id.term_id
-        # Time and date not implemented randomization
-        date = term.start_date
-        time = "15:30:00"
-
-        status = choice(['Scheduled', 'Completed', 'Cancelled'])
-        feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
-        self.create_lesson_status({'lesson_id': lesson_id, 'date': date, 'time': time, 'status': status, 'feedback': feedback})
-
-    def create_lesson_status(self, data):
-        try:
-            LessonStatus.objects.create(
-                lesson_id=data['lesson_id'],
-                date=data['date'],
-                time=data['time'],
-                status=data['status'],
-                feedback=data['feedback'],
-                invoiced=False
-            )
-        except:
-            pass
 
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()

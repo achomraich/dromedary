@@ -42,6 +42,11 @@ def dashboard(request):
     if hasattr(current_user, 'tutor_profile'):
         return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
     else:
+        student = current_user.student_profile
+        if student.has_new_lesson_notification:
+            messages.info(request, 'There has been an update to your lesson requests!')
+            student.has_new_lesson_notification = False
+            student.save()
         return render(request, 'student/student_dashboard.html', {'user': current_user})
 
 @login_prohibited
@@ -509,7 +514,6 @@ def invoice_list(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-
 class RequestView(View):
     status = None
     requests_list = None
@@ -560,32 +564,7 @@ class RequestView(View):
         form = AssignTutorForm(request.POST, existing_request=lrequest)
 
         if form.is_valid():
-            tutor = form.cleaned_data['tutor']
-            start_date = form.cleaned_data['start_date']
-            price_per_lesson = form.cleaned_data['price_per_lesson']
-            # Create a new Lesson based on the form data and LessonRequest details
-            Lesson.objects.create(
-                tutor=tutor,
-                student=lrequest.student,
-                subject_id=lrequest.subject,
-                term_id=lrequest.term,
-                from_request=lrequest,
-                frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
-                duration=lrequest.duration,  # Duration from the LessonRequest
-                start_date=start_date,
-                price_per_lesson=price_per_lesson,
-            )
-            # Create a tutor availability after a lesson is made
-            TutorAvailability.objects.create(
-                tutor=tutor,
-                day=lrequest.day,
-                start_time=lrequest.start_time,
-                end_time=lrequest.end_time,
-                status='Booked'
-            )
-
-            lrequest.status = Status.CONFIRMED
-            lrequest.save()
+            self.create_objects(request, lrequest, form)
 
             messages.success(request, "Request assigned successfully.")
 
@@ -596,11 +575,53 @@ class RequestView(View):
             lrequest.refresh_from_db()
             return self.request_assign(request, lrequest.request_id, form)
 
+    def create_objects(self, request, lrequest, form):
+        tutor = form.cleaned_data['tutor']
+        start_date = form.cleaned_data['start_date']
+        price_per_lesson = form.cleaned_data['price_per_lesson']
+
+        # Create a new Lesson based on the form data and LessonRequest details
+        lesson = Lesson.objects.create(
+            tutor=tutor,
+            student=lrequest.student,
+            subject_id=lrequest.subject,
+            term_id=lrequest.term,
+            frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
+            duration=lrequest.duration,  # Duration from the LessonRequest
+            start_date=start_date,
+            price_per_lesson=price_per_lesson,
+        )
+
+        lrequest.lesson_assigned = lesson
+        lrequest.status = Status.CONFIRMED
+        lrequest.save()
+        self.toggle_notification(request, lrequest)
+
+        start_time = lrequest.time
+        start_datetime = datetime.datetime.combine(datetime.datetime.today(), start_time)
+        end_datetime = start_datetime + lrequest.duration
+        end_time = end_datetime.time()
+
+        # Create a tutor availability after a lesson is made
+        TutorAvailability.objects.create(
+            tutor=tutor,
+            day=lrequest.day,
+            start_time=start_time,
+            end_time=end_time,
+            status='Booked'
+        )
+
     def reject_request(self, request, lrequest):
         lrequest.status = Status.REJECTED
         lrequest.save()
+        self.toggle_notification(request, lrequest)
+
         messages.success(request, "Request rejected.")
         return redirect('requests')
+
+    def toggle_notification(self, request, lrequest):
+        lrequest.student.has_new_lesson_notification = True
+        lrequest.student.save()
 
     def cancel_request(self, request, lrequest):
         lrequest.status = Status.CANCELLED
@@ -722,15 +743,12 @@ class Calendar(View):
 
 class ViewLessons(View):
 
-    def get(self, request, lesson_id=None, request_id=None):
+    def get(self, request, lesson_id=None):
         current_user = request.user
         self.can_be_updated = []
-        if lesson_id:
-            return self.lesson_detail(request, lesson_id)
 
-        if request_id:
-            lesson_request = LessonRequest.objects.get(LessonRequest, id=request_id)
-            lesson_id = (Lesson.objects.filter(from_request=lesson_request).first()).lesson_id
+        if lesson_id:
+            print(lesson_id)
             return self.lesson_detail(request, lesson_id)
 
         if hasattr(current_user, 'admin_profile'):

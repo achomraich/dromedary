@@ -61,6 +61,7 @@ class Tutor(models.Model):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
+    has_new_lesson_notification = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.full_name()
@@ -97,6 +98,11 @@ class Status(models.TextChoices):
     CONFIRMED = 'Confirmed', 'Confirmed'
     REJECTED = 'Rejected', 'Rejected'
 
+class Frequency(models.TextChoices):
+    WEEKLY = 'Weekly', 'Weekly'
+    BIWEEKLY = 'Biweekly', 'Biweekly'
+    MONTHLY = 'Monthly', 'Monthly'
+    ONCE = 'Once', 'Once'
 
 class DaysOfWeek(models.IntegerChoices):
     MON = 0, 'Monday'
@@ -123,7 +129,6 @@ class TutorAvailability(models.Model):
     class Meta:
         unique_together = ('tutor', 'day', 'start_time', 'end_time')
 
-
 class Term(models.Model):
     """TERM_NAME = {
         1: "Sept-Jan",
@@ -145,54 +150,15 @@ class Term(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
-class LessonRequest(models.Model):
-
-    FREQUENCY = [
-        ('Weekly', 'Weekly'),
-        ('Biweekly', 'Biweekly'),
-    ]
-
-    request_id = models.BigAutoField(primary_key=True)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    time = models.TimeField()
-    day = models.CharField(max_length=3, choices=DaysOfWeek)
-    duration = models.DurationField(default=timedelta(hours=1))
-    frequency = models.CharField(max_length=10, choices=FREQUENCY)
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    created = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['request_id']
-
-    @property
-    def decided(self):
-        return not (self.not_cancelled and self.not_confirmed)
-
-    @property
-    def not_cancelled(self):
-        return self.status != Status.CANCELLED
-
-    @property
-    def not_confirmed(self):
-        return self.status != Status.CONFIRMED
-
 #tested
 class Lesson(models.Model):
-    LESSON_FREQUENCY = [
-        ("D", "day"),
-        ("W", "week"),
-        ("M", "month")
-    ]
 
     lesson_id = models.BigAutoField(primary_key=True)
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term_id = models.ForeignKey(Term, on_delete=models.CASCADE)
-    from_request = models.ForeignKey(LessonRequest, on_delete=models.CASCADE, null=True, blank=True)
-    frequency = models.CharField(max_length=5, choices=LESSON_FREQUENCY, default="W")
+    frequency = models.CharField(max_length=10, choices=Frequency.choices)
     duration = models.DurationField()
     start_date = models.DateField()
     price_per_lesson = models.IntegerField()
@@ -212,6 +178,37 @@ class Lesson(models.Model):
 
         if self.price_per_lesson <= 0:
             raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
+
+class LessonRequest(models.Model):
+
+    request_id = models.BigAutoField(primary_key=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    time = models.TimeField()
+    day = models.IntegerField(choices=DaysOfWeek)
+    duration = models.DurationField(default=timedelta(hours=1))
+    frequency = models.CharField(max_length=10, choices=Frequency.choices)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created = models.DateTimeField(auto_now_add=True)
+
+    lesson_assigned = models.ForeignKey(Lesson, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        unique_together = ['request_id']
+
+    @property
+    def decided(self):
+        return not (self.not_cancelled and self.not_confirmed)
+
+    @property
+    def not_cancelled(self):
+        return self.status != Status.CANCELLED
+
+    @property
+    def not_confirmed(self):
+        return self.status != Status.CONFIRMED
+
 
 class LessonUpdateRequest(models.Model):
     UPDATE_CHOICES = [
@@ -314,8 +311,6 @@ class TutorReviews(models.Model):
     date = models.DateField()
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
 
-
-
 class Invoice(models.Model):
     PAYMENT_STATUS = [
         ('UNPAID', 'Unpaid'),
@@ -357,4 +352,5 @@ class InvoiceLessonLink(models.Model):
     class Meta:
         # Add a unique constraint to prevent duplicate entries
         unique_together = ('invoice', 'lesson')
+
 

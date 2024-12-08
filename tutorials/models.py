@@ -5,7 +5,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
 from django.core.exceptions import ValidationError
-from datetime import timedelta, date
+from datetime import date, timedelta, datetime, time as pytime
+from random import randint, choice, choices
+
 
 from django.conf import settings
 from django.utils import timezone
@@ -49,11 +51,22 @@ class User(AbstractUser):
 
         return self.gravatar(size=60)
 
+class Subject(models.Model):
+
+    subject_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=20)
+    description = models.CharField(
+        max_length=255,
+        default=''
+    )
+
+    def __str__(self):
+        return self.name
 
 # tested
 class Tutor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
-    subjects = models.ManyToManyField('Subject', through='TaughtSubjects')
+    subjects = models.ManyToManyField(Subject, blank=True)
     experience = models.TextField(blank=True)
 
     def __str__(self):
@@ -69,25 +82,6 @@ class Student(models.Model):
 # tested
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
-
-class Subject(models.Model):
-
-    subject_id = models.BigAutoField(primary_key=True)
-    name = models.CharField(max_length=20)
-    description = models.CharField(
-        max_length=255,
-        default=''
-    )
-
-    def __str__(self):
-        return self.name
-
-class TaughtSubjects(models.Model):
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('tutor', 'subject_id')
 
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
@@ -160,6 +154,7 @@ class Lesson(models.Model):
     term_id = models.ForeignKey(Term, on_delete=models.CASCADE)
     frequency = models.CharField(max_length=10, choices=Frequency.choices)
     duration = models.DurationField()
+    set_start_time = models.TimeField(null=True, blank=True)
     start_date = models.DateField()
     price_per_lesson = models.IntegerField()
     notes = models.CharField(max_length=50, default="—")
@@ -179,6 +174,70 @@ class Lesson(models.Model):
         if self.price_per_lesson <= 0:
             raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        if is_new:
+            term = self.term_id
+            times = [
+                pytime(hour=h, minute=m)
+                for h in range(9, 19)
+                for m in (0, 30)
+            ]
+            if self.set_start_time is not None:
+                times = [self.set_start_time]
+            start_time = choice(times)
+            start_datetime = datetime.combine(date.today(), start_time)
+            end_datetime = start_datetime + self.duration
+            end_time = end_datetime.time()
+
+            today = date.today()
+
+            start_date = term.start_date
+            end_date = term.end_date
+
+            start_date += timedelta(days=randint(0, 6))
+
+            current_date = start_date
+            while current_date <= end_date:
+                if current_date >= today:
+                    status = 'Scheduled'
+                else:
+                    status = choices(['Completed', 'Cancelled'], weights=[0.8, 0.2], k=1)[0]
+
+                if status == 'Completed':
+                    feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
+                elif status == 'Cancelled':
+                    feedback = '-'
+                else:
+                    feedback = ''
+                try:
+                    LessonStatus.objects.create(
+                        lesson_id=self,
+                        date=current_date,
+                        time=start_time,
+                        status=status,
+                        feedback=feedback,
+                        invoiced=False,
+                    )
+                except Exception as e:
+                    print(f"Error creating LessonStatus: {e}")
+
+                current_date += timedelta(weeks=1)
+
+            try:
+                TutorAvailability.objects.create(
+                    tutor=self.tutor,
+                    day=start_date.weekday(),
+                    start_time=start_time,
+                    end_time=end_time,
+                    status='Booked',
+                )
+            except Exception as e:
+                print(f"Error creating TutorAvailability: {e}")
+
+
 class LessonRequest(models.Model):
 
     request_id = models.BigAutoField(primary_key=True)
@@ -186,7 +245,7 @@ class LessonRequest(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
-    day = models.IntegerField(choices=DaysOfWeek)
+    start_date = models.DateField()
     duration = models.DurationField(default=timedelta(hours=1))
     frequency = models.CharField(max_length=10, choices=Frequency.choices)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
@@ -196,6 +255,18 @@ class LessonRequest(models.Model):
 
     class Meta:
         unique_together = ['request_id']
+
+    def clean(self):
+        if not self.start_date:
+            raise ValidationError("Start date is required.")
+        if self.start_date < date.today():
+            raise ValidationError("Start date must be in the future.")
+
+        if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
+            raise ValidationError("Start date must be within the term.")
+
+        if self.duration <= timedelta(0):
+            raise ValidationError("Duration must be a positive value.")
 
     @property
     def decided(self):

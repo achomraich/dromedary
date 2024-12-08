@@ -474,24 +474,21 @@ class InvoiceForm(forms.ModelForm):
 class LessonRequestForm(forms.ModelForm):
     class Meta:
         model = LessonRequest
-        fields = ['subject','term','day','time','duration','frequency']
+        fields = ['subject','term','start_date','time','duration','frequency']
         widgets = {
             'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-            'day': forms.Select(attrs={'class': 'form-select'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'frequency': forms.Select(attrs={'class': 'form-select'}),
             'term': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['subject'].empty_label = "Select an option"
-        self.fields['day'].choices = [('', 'Select an option')] + [
-            choice for choice in self.fields['day'].choices if choice[0] != ''
-        ]
-        self.fields['frequency'].choices = [('', 'Select an option')] + [
+        self.fields['subject'].empty_label = "Select a subject"
+        self.fields['frequency'].choices = [('', 'Select a frequency')] + [
             choice for choice in self.fields['frequency'].choices if choice[0] != ''
         ]
-        self.fields['term'].empty_label = "Select an option"
+        self.fields['term'].empty_label = "Select an academic term"
 
 
 class AssignTutorForm(forms.ModelForm):
@@ -517,8 +514,10 @@ class AssignTutorForm(forms.ModelForm):
             self.fields['duration'].disabled = True
             self.fields['frequency'].initial = existing_request.frequency
             self.fields['frequency'].disabled = True
-        self.fields['tutor'].empty_label = "Please select"
-        self.fields['price_per_lesson'].label = "Price per Lesson (£)"
+            self.fields['start_date'].initial = existing_request.start_date
+            self.fields['start_date'].disabled = True
+        self.fields['tutor'].empty_label = "Select a tutor"
+        self.fields['price_per_lesson'].label = "Select a price per lesson ($)"
 
 
 

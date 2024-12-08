@@ -25,7 +25,15 @@
                     </div>
                     <div class="mb-3">
                         <h5 class="mt-3"><strong>Other details:</strong></h5>
-                        <p class="mb-1"><strong>Subjects:</strong> {{ tutor.subjects }}</p>
+                        <p class="mb-1"><strong>Subjects:</strong>
+                            {% for subject in tutor.subjects.all %}
+                                {% if subject == tutor.subjects.last %}
+                                    {{ subject.name }}
+                                {% else %}
+                                    {{ subject.name }}, 
+                                {% endif %}
+                            {% endfor %}
+                        </p>
                         <p><strong>Students:</strong> {{ students }}</p>
                     </div>
                     <h5 class="mt-4"><strong>Availability:</strong></h5>

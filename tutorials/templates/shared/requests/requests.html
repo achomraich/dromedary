@@ -20,7 +20,7 @@
                 <th scope="col">Term</th>
                 <th scope="col">Time</th>
                 <th scope="col">Duration</th>
-                <th scope="col">Day</th>
+                <th scope="col">Start Date</th>
                 <th scope="col">Frequency</th>
                 <th scope="col">Date Requested</th>
                 <th scope="col">Status</th>
@@ -35,7 +35,7 @@
                 <td class="align-middle">{{ request.term }}</td>
                 <td class="align-middle">{{ request.time }}</td>
                 <td class="align-middle">{{ request.duration|format_duration }}</td>
-                <td class="align-middle">{{ request.get_day_display }}</td>
+                <td class="align-middle">{{ request.start_date }}</td>
                 <td class="align-middle">{{ request.frequency }}</td>
                 <td class="align-middle">{{ request.created }}</td>
                 <td class="align-middle">{{ request.status }}</td>
@@ -43,7 +43,9 @@
                     {% if user.is_authenticated and user.admin_profile %}
                         {% if request.decided %}
                             <!-- View lesson button -->
-                            <a href="{% url 'lesson_detail' request.lesson_assigned.lesson_id %}" class="btn btn-warning btn-sm">View</a>
+                            {% if request.not_cancelled %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.lesson_id %}" class="btn btn-warning btn-sm">View</a>
+                            {% endif %}
                         {% else %}
                             <!-- Assign request button -->
                             <a href="{% url 'request_assign' request.request_id %}" class="btn btn-warning btn-sm">Assign</a>
@@ -59,7 +61,9 @@
                     {% if user.is_authenticated and user.student_profile %}
                         {% if request.decided %}
                             <!-- View lesson button -->
-                            <a href="{% url 'lesson_detail' request.lesson_assigned.lesson_id %}" class="btn btn-warning btn-sm">View</a>
+                            {% if request.not_cancelled %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.lesson_id %}" class="btn btn-warning btn-sm">View</a>
+                            {% endif %}
                         {% else %}
                             <!-- Cancel request button -->
                             <form action="" method="post" style="display:inline;">

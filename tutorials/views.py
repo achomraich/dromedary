@@ -297,6 +297,7 @@ class EntityView(View):
 
         lessons = None
         availability = None
+        subjects = None
         tutors = None
         students = None
 
@@ -304,6 +305,7 @@ class EntityView(View):
             lessons = Lesson.objects.filter(student=entity).select_related(
                 'tutor', 'subject_id', 'term_id'
             ).order_by('subject_id__name')
+            subjects = lessons.values_list('subject_id__name', flat=True).distinct()
             tutors = ', '.join(sorted(tutor.user.full_name() for tutor in set(lesson.tutor for lesson in lessons)))
 
         else:
@@ -317,7 +319,8 @@ class EntityView(View):
             'lessons': lessons,
             'tutors': tutors,
             'students': students,
-            'availabilities': availability
+            'availabilities': availability,
+            'subjects': subjects
         }
 
         if request.path.endswith('edit/'):
@@ -528,7 +531,7 @@ class RequestView(View):
             self.requests_list = LessonRequest.objects.all().order_by('-created')
             self.status = 'admin'
         elif hasattr(request.user, 'student_profile'):
-            self.requests_list = LessonRequest.objects.filter(student=current_user.id)
+            self.requests_list = LessonRequest.objects.filter(student=current_user.id).order_by('-created')
             self.status = 'student'
         return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
 
@@ -564,7 +567,7 @@ class RequestView(View):
         form = AssignTutorForm(request.POST, existing_request=lrequest)
 
         if form.is_valid():
-            self.create_objects(request, lrequest, form)
+            self.create_lesson(request, lrequest, form)
 
             messages.success(request, "Request assigned successfully.")
 
@@ -575,7 +578,7 @@ class RequestView(View):
             lrequest.refresh_from_db()
             return self.request_assign(request, lrequest.request_id, form)
 
-    def create_objects(self, request, lrequest, form):
+    def create_lesson(self, request, lrequest, form):
         tutor = form.cleaned_data['tutor']
         start_date = form.cleaned_data['start_date']
         price_per_lesson = form.cleaned_data['price_per_lesson']
@@ -588,6 +591,7 @@ class RequestView(View):
             term_id=lrequest.term,
             frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
             duration=lrequest.duration,  # Duration from the LessonRequest
+            set_start_time=lrequest.time,
             start_date=start_date,
             price_per_lesson=price_per_lesson,
         )
@@ -597,19 +601,6 @@ class RequestView(View):
         lrequest.save()
         self.toggle_notification(request, lrequest)
 
-        start_time = lrequest.time
-        start_datetime = datetime.datetime.combine(datetime.datetime.today(), start_time)
-        end_datetime = start_datetime + lrequest.duration
-        end_time = end_datetime.time()
-
-        # Create a tutor availability after a lesson is made
-        TutorAvailability.objects.create(
-            tutor=tutor,
-            day=lrequest.day,
-            start_time=start_time,
-            end_time=end_time,
-            status='Booked'
-        )
 
     def reject_request(self, request, lrequest):
         lrequest.status = Status.REJECTED

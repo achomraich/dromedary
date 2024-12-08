@@ -35,8 +35,8 @@ lesson_status = []
 class Command(BaseCommand):
     """Build automation command to seed the database."""
 
-    USER_COUNT = 20
-    LESSON_COUNT = 30
+    USER_COUNT = 300
+    LESSON_COUNT = 500
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -57,9 +57,6 @@ class Command(BaseCommand):
 
         self.generate_random_lessons()
         self.lessons = Lesson.objects.all()
-
-        self.generate_random_lesson_status()
-        self.lesson_status = LessonStatus.objects.all()
 
     def create_users(self):
         self.generate_user_fixtures()
@@ -175,94 +172,14 @@ class Command(BaseCommand):
                 start_date=data["start_date"],
                 price_per_lesson=data["price_per_lesson"]
             )
+            print("Lesson added")
+            tutor = data["tutor"]
+            tutor.subjects.add(data["subject_id"])
+            print(tutor.subjects.all())
+            print("Subject added")
         except:
             pass
 
-    def generate_random_lesson_status(self):
-        lesson_count = Lesson.objects.count()
-        all_lessons = Lesson.objects.all()
-        lessons_with_status_count = 0
-        while lessons_with_status_count < lesson_count:
-            print(f"Seeding lesson status {lessons_with_status_count}/{lesson_count}", end='\r')
-            self.generate_lesson_status({'lesson_id': all_lessons[lessons_with_status_count]})
-            lessons_with_status_count += 1
-        print("Lesson status seeding complete.      ")
-
-    def generate_lesson_status(self, data):
-        lesson_id = data["lesson_id"]
-        term = lesson_id.term_id
-        times = [
-            pytime(hour=h, minute=m)
-            for h in range(9, 19)
-            for m in (0, 30)
-        ]
-        start_time = choice(times)
-        start_datetime = datetime.combine(datetime.today(), start_time)
-        end_datetime = start_datetime + lesson_id.duration
-        end_time = end_datetime.time()
-
-        today = datetime.today().date()
-
-        start_date = term.start_date
-        end_date = term.end_date
-
-        start_date += timedelta(days=randint(0, 6))
-
-        current_date = start_date
-        while current_date <= end_date:
-            if current_date >= today:
-                status = 'Scheduled'
-            else:
-                status = choices(['Completed', 'Cancelled'], weights=[0.8,0.2], k=1)[0]
-
-            if status == 'Completed':
-                feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
-            elif status == 'Cancelled':
-                feedback = '-'
-            else:
-                feedback = ''
-
-            self.create_lesson_status({
-                'lesson_id': lesson_id,
-                'date': current_date,
-                'time': start_time,
-                'status': status,
-                'feedback': feedback
-            })
-
-            current_date += timedelta(weeks=1)
-
-        self.create_tutor_availability({
-            'tutor': lesson_id.tutor,
-            'day': start_date.weekday(),
-            'start_time': start_time,
-            'end_time': end_time,
-        })
-
-    def create_lesson_status(self, data):
-        try:
-            LessonStatus.objects.create(
-                lesson_id=data['lesson_id'],
-                date=data['date'],
-                time=data['time'],
-                status=data['status'],
-                feedback=data['feedback'],
-                invoiced=False
-            )
-        except:
-            pass
-
-    def create_tutor_availability(self, data):
-        try:
-            TutorAvailability.objects.create(
-                tutor=data['tutor'],
-                day=data['day'],
-                start_time=data['start_time'],
-                end_time=data['end_time'],
-                status='Booked',
-            )
-        except:
-            pass
 
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()

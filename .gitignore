@@ -357,4 +357,5 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/python,django,venv,virtualenv,macos,windows,linux.idea/dataSources.xml
 tutorials/migrations/0001_initial.py
 tutorials/templates/__init__.py
-./idea/dataSources.xml
+.idea/dataSources.xml
+

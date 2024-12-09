@@ -37,6 +37,11 @@ class User(AbstractUser):
 
         return f'{self.first_name} {self.last_name}'
 
+    def __str__(self):
+        """Return a string containing the user's full name."""
+
+        return f'{self.first_name} {self.last_name}'
+
     def gravatar(self, size=120):
         """Return a URL to the user's gravatar."""
 
@@ -61,6 +66,10 @@ class Tutor(models.Model):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
+
+
+    def __str__(self):
+        return self.user.full_name()
 
 # tested
 class Admin(models.Model):
@@ -117,6 +126,8 @@ class TutorAvailability(models.Model):
     # available or booked
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
+    def __str__(self):
+        return f"{self.tutor.user.full_name()} - {self.get_day_display()} - {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')} ({self.get_status_display()})"
 
 class Term(models.Model):
     """TERM_NAME = {
@@ -223,10 +234,9 @@ class LessonStatus(models.Model):
             self.feedback = ""
 
     def save(self, *args, **kwargs):
-        today = date.today()
 
-        if self.date > today:
-            self.feedback = ""
+        if self.status != Status.COMPLETED:
+            self.feedback = ''
 
         elif self.date < today:
             if self.status == Status.PENDING:
@@ -285,7 +295,7 @@ class LessonRequest(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
-    day = models.CharField(max_length=3, choices=DaysOfWeek)
+    day = models.CharField(max_length=3, choices=DaysOfWeek.choices)
     duration = models.DurationField(default=timedelta(hours=1))
     frequency = models.CharField(max_length=10, choices=FREQUENCY)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)

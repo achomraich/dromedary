@@ -1,19 +1,105 @@
 {% extends 'base_content.html' %}
 {% load lesson_filters %}
+
 {% block content %}
+<div class="container mt-5">
+    <h1>Update Lesson:<i> {{ update_option }}</i></h1>
 
-    <div class="container mt-5">
-    <h1>Update Lesson: {{ form.instance.subject }} </h1>
+    <div class="row">
+        <!-- Left Column for Availability -->
+        <div class="col-md-5">
+            <h3>Tutor Availability</h3>
 
-    <div class="card mb-4 shadow-sm">
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                {{ form.as_p }}
+            <div class="container">
+
+                <details>
+                    <summary>Current Tutor Availability</summary>
+                    <div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tutor</th>
+                                    <th>Time</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tutorAvailability in current_tutor_availability %}
+                                <tr>
+                                    <td>{{ tutorAvailability.tutor }}</td>
+                                    <td>{{ tutorAvailability.start_time }} - {{ tutorAvailability.end_time }}</td>
+                                    <td>{{ tutorAvailability.day }}</td>
+                                    <td>{{ tutorAvailability.status }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <a href="{% url 'update_requests' %}" class="btn btn-secondary ml-2">Cancel</a>
-        </form>
+
+            <div class="container">
+
+                <details>
+                    <summary>All Tutors Availability</summary>
+                    <div>
+
+                        {% for day, tutors in all_tutors_availability.items %}
+                            <details>
+                                <summary colspan="4">{{ day }}</summary>
+                                <div>
+
+                                {% for time, data in tutors.items %}
+                                    <details>
+                                        <summary>{{ time }}</summary>
+                                        <div>
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Tutor</th>
+                                                        <th>Time</th>
+                                                        <th>Day</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for tutorAvailability in data %}
+                                                        <tr>
+                                                            <td>{{ tutorAvailability.tutor }}</td>
+                                                            <td>{{ tutorAvailability.start_time }} - {{ tutorAvailability.end_time }}</td>
+                                                            <td>{{ tutorAvailability.day }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </details>
+                                {% endfor %}
+
+                                </div>
+                            </details>
+
+                        {% endfor %}
+                    </div>
+                </details>
+            </div>
+
+        </div>
+
+        <!-- Right Column for the Form -->
+        <div class="col-md-7">
+            <div class="card mb-4 shadow-sm">
+                <h4>Update Lesson Form</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="{% url 'update_requests' %}" class="btn btn-secondary ml-2">Cancel</a>
+                </form>
+            </div>
+        </div>
     </div>
-    </div>
+</div>
 {% endblock %}

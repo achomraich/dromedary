@@ -238,7 +238,7 @@ class LessonStatus(models.Model):
         if self.status != Status.COMPLETED:
             self.feedback = ''
 
-        elif self.date < today:
+        if self.date < date.today():
             if self.status == Status.PENDING:
                 self.status = Status.CANCELLED
             elif self.status == Status.BOOKED:

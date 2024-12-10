@@ -31,18 +31,39 @@ from django.db.models import Q, Exists, OuterRef
 import datetime
 from dateutil.relativedelta import relativedelta
 
-from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status, Invoice, LessonStatus
+from tutorials.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status, Invoice, LessonStatus, Term
+from django.utils import timezone
+
+
 
 
 @login_required
 def dashboard(request):
     current_user = request.user
+
+    # Get current term
+    current_term = Term.objects.filter(
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    ).first()
+
+    context = {
+        'user': current_user,
+        'current_term': current_term
+    }
+
     if hasattr(current_user, 'admin_profile'):
-        return render(request, 'admin/admin_dashboard.html', {'user': current_user})
+        return render(request, 'admin/admin_dashboard.html', context)
     if hasattr(current_user, 'tutor_profile'):
-        return render(request, 'tutor/tutor_dashboard.html', {'user': current_user})
+        return render(request, 'tutor/tutor_dashboard.html', context)
     else:
-        return render(request, 'student/student_dashboard.html', {'user': current_user})
+        student = current_user.student_profile
+        if student.has_new_lesson_notification:
+            messages.info(request, 'There has been an update to your lesson requests!')
+            student.has_new_lesson_notification = False
+            student.save()
+        return render(request, 'student/student_dashboard.html', context)
+
 
 @login_prohibited
 def home(request):

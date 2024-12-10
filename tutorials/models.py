@@ -170,7 +170,7 @@ class Lesson(models.Model):
         if self.duration <= timedelta(0):
             raise ValidationError({"duration": "Duration must be a positive value."})
 
-        if self.price_per_lesson <= 0:
+        if self.price_per_lesson is None or self.price_per_lesson <= 0:
             raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
 
     def save(self, *args, **kwargs):

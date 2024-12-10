@@ -1256,6 +1256,9 @@ class AvailabilityView(ListView):
             except TutorAvailability.DoesNotExist:
                 messages.error(request, "The selected availability does not exist.")
             return redirect('availability')
+        else:
+            messages.error(request, "Invalid request.")
+            return redirect('availability')
 
 
 class AddEditAvailabilityView(View):

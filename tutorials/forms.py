@@ -497,7 +497,7 @@ class AssignTutorForm(forms.ModelForm):
         fields = ['student', 'tutor', 'subject_id','term_id','duration','frequency', 'start_date', 'price_per_lesson']
         widgets = {
             'tutor': forms.Select(attrs={'class': 'form-select'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control'}),
             'price_per_lesson': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter price'}),
         }
 

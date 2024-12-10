@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -7,11 +5,9 @@ from libgravatar import Gravatar
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta, datetime, time as pytime
 from random import randint, choice, choices
-
-
 from django.conf import settings
 from django.utils import timezone
-from django.core.validators import MinValueValidator
+from .choices import Status, Days, Availability, Frequency, PaymentStatus
 
 # tested
 class User(AbstractUser):
@@ -82,29 +78,6 @@ class Student(models.Model):
 # tested
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
-
-class Status(models.TextChoices):
-    PENDING = 'Pending', 'Pending'
-    BOOKED = 'Booked', 'Booked'
-    CANCELLED = 'Cancelled', 'Cancelled'
-    COMPLETED = 'Completed', 'Completed'
-    CONFIRMED = 'Confirmed', 'Confirmed'
-    REJECTED = 'Rejected', 'Rejected'
-
-class Frequency(models.TextChoices):
-    WEEKLY = 'W', 'Weekly'
-    BIWEEKLY = 'B', 'Biweekly'
-    MONTHLY = 'M', 'Monthly'
-    ONCE = 'O', 'Once'
-
-class DaysOfWeek(models.IntegerChoices):
-    MON = 0, 'Monday'
-    TUE = 1, 'Tuesday'
-    WED = 2, 'Wednesday'
-    THU = 3, 'Thursday'
-    FRI = 4, 'Friday'
-    SAT = 5, 'Saturday'
-    SUN = 6, 'Sunday'
 
 class TutorAvailability(models.Model):
     STATUS_CHOICES = [
@@ -382,11 +355,6 @@ class TutorReviews(models.Model):
     rating = models.CharField(max_length=1, choices=RATING_CHOICES, default=5)
 
 class Invoice(models.Model):
-    PAYMENT_STATUS = [
-        ('UNPAID', 'Unpaid'),
-        ('PAID', 'Paid'),
-        ('OVERDUE', 'Overdue')
-    ]
 
     id = models.AutoField(primary_key=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_invoices')

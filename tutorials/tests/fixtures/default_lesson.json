@@ -1,7 +1,7 @@
 [
   {
     "model": "tutorials.lesson",
-    "pk": 1,
+    "pk": 101,
     "fields": {
       "tutor": 3,
       "student": 2,
@@ -15,7 +15,7 @@
   },
   {
     "model": "tutorials.lesson",
-    "pk": 2,
+    "pk": 102,
     "fields": {
       "tutor": 4,
       "student": 5,

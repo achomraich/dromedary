@@ -1,15 +1,15 @@
 {% extends 'base_content.html' %}
 {% block content %}
 
-<div class="container dashboard-container py-4">
+<div class="container py-4">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4 welcome-text">Welcome to your dashboard, {{ user.username }}</h2>
+            <h2 class="mb-4">Welcome to your dashboard, {{ user.username }}</h2>
             
             <!-- Current Term Card -->
-            <div class="card mb-4 term-card">
-                <div class="card-body">
-                    <h5 class="card-title">
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <h5 class="card-title mb-2">
                         <i class="fas fa-calendar-alt me-2"></i>Current Term
                     </h5>
                     {% if current_term %}
@@ -20,7 +20,7 @@
                             </p>
                         </div>
                     {% else %}
-                        <p class="card-text text-muted">
+                        <p class="card-text text-muted mb-0">
                             <i class="fas fa-info-circle me-2"></i>No active term
                         </p>
                     {% endif %}
@@ -30,15 +30,15 @@
             <div class="row g-3">
                 <!-- Management Section -->
                 <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">User Management</h5>
+                    <div class="card">
+                        <div class="card-header py-2 bg-primary text-white">
+                            <h5 class="mb-0">User Management</h5>
                         </div>
-                        <div class="card-body">
-                            <a href="{% url 'students_list' %}" class="btn btn-outline-primary w-100 mb-3 dashboard-button btn-delay-1">
+                        <div class="card-body p-2">
+                            <a href="{% url 'students_list' %}" class="btn btn-outline-primary w-100 mb-2">
                                 <i class="fas fa-users me-2"></i>Manage Students
                             </a>
-                            <a href="{% url 'tutors_list' %}" class="btn btn-outline-primary w-100 mb-3 dashboard-button btn-delay-2">
+                            <a href="{% url 'tutors_list' %}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-chalkboard-teacher me-2"></i>Manage Tutors
                             </a>
                         </div>
@@ -47,15 +47,15 @@
 
                 <!-- Academic Section -->
                 <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="card-title mb-0">Academic Management</h5>
+                    <div class="card">
+                        <div class="card-header py-2 bg-success text-white">
+                            <h5 class="mb-0">Academic Management</h5>
                         </div>
-                        <div class="card-body">
-                            <a href="{% url 'lessons_list' %}" class="btn btn-outline-success w-100 mb-3 dashboard-button btn-delay-3">
+                        <div class="card-body p-2">
+                            <a href="{% url 'lessons_list' %}" class="btn btn-outline-success w-100 mb-2">
                                 <i class="fas fa-book me-2"></i>Manage Lessons
                             </a>
-                            <a href="{% url 'subjects_list' %}" class="btn btn-outline-success w-100 mb-3 dashboard-button btn-delay-4">
+                            <a href="{% url 'subjects_list' %}" class="btn btn-outline-success w-100">
                                 <i class="fas fa-graduation-cap me-2"></i>Manage Subjects
                             </a>
                         </div>
@@ -63,25 +63,25 @@
                 </div>
 
                 <!-- Administrative Section -->
-                <div class="col-md-12">
-                    <div class="card h-100">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="card-title mb-0">Administrative Tasks</h5>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header py-2 bg-info text-white">
+                            <h5 class="mb-0">Administrative Tasks</h5>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
+                        <div class="card-body p-2">
+                            <div class="row g-2">
                                 <div class="col-md-4">
-                                    <a href="{% url 'requests' %}" class="btn btn-outline-info w-100 mb-3 dashboard-button btn-delay-5">
+                                    <a href="{% url 'requests' %}" class="btn btn-outline-info w-100">
                                         <i class="fas fa-clipboard-list me-2"></i>Lesson Requests
                                     </a>
                                 </div>
                                 <div class="col-md-4">
-                                    <a href="{% url 'invoice_list' %}" class="btn btn-outline-info w-100 mb-3 dashboard-button btn-delay-6">
+                                    <a href="{% url 'invoice_list' %}" class="btn btn-outline-info w-100">
                                         <i class="fas fa-file-invoice-dollar me-2"></i>Manage Invoices
                                     </a>
                                 </div>
                                 <div class="col-md-4">
-                                    <a href="{% url 'update_requests' %}" class="btn btn-outline-info w-100 mb-3 dashboard-button btn-delay-7">
+                                    <a href="{% url 'update_requests' %}" class="btn btn-outline-info w-100">
                                         <i class="fas fa-sync me-2"></i>Update Requests
                                     </a>
                                 </div>

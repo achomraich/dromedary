@@ -103,15 +103,28 @@ class Term(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
-class Lesson(models.Model):
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    term_id = models.ForeignKey(Term, on_delete=models.CASCADE)
-    frequency = models.CharField(max_length=5, choices=Frequency.choices)
-    duration = models.DurationField()
-    set_start_time = models.TimeField(null=True, blank=True)
+class BaseLesson(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    duration = models.DurationField(default=timedelta(hours=1))
     start_date = models.DateField()
+
+    class Meta:
+        abstract = True
+
+    def clean(self):
+        if not self.start_date:
+            raise ValidationError("Start date is required.")
+        if self.start_date < date.today():
+            raise ValidationError("Start date must be in the future.")
+        if self.duration <= timedelta(0):
+            raise ValidationError("Duration must be a positive value.")
+
+class Lesson(BaseLesson):
+    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    frequency = models.CharField(max_length=5, choices=Frequency.choices)
+    set_start_time = models.TimeField(null=True, blank=True)
     price_per_lesson = models.DecimalField(max_digits=6, decimal_places=2)
     notes = models.CharField(max_length=50, blank=True)
 
@@ -193,15 +206,11 @@ class Lesson(models.Model):
             except Exception as e:
                 print(f"Error creating TutorAvailability: {e}")
 
-
-class LessonRequest(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+class LessonRequest(BaseLesson):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
     day = models.CharField(max_length=3, choices=Days.choices)
-    start_date = models.DateField()
-    duration = models.DurationField(default=timedelta(hours=1))
     frequency = models.CharField(max_length=10, choices=Frequency.choices)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)
@@ -215,18 +224,6 @@ class LessonRequest(models.Model):
 
     def not_confirmed(self):
         return self.status != Status.CONFIRMED
-    
-    def clean(self):
-        if not self.start_date:
-            raise ValidationError("Start date is required.")
-        if self.start_date < date.today():
-            raise ValidationError("Start date must be in the future.")
-
-        if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
-            raise ValidationError("Start date must be within the term.")
-
-        if self.duration <= timedelta(0):
-            raise ValidationError("Duration must be a positive value.")
 
 class LessonUpdateRequest(models.Model):
     class UpdateOption(models.TextChoices):
@@ -319,4 +316,3 @@ class InvoiceLessonLink(models.Model):
     class Meta:
         # Add a unique constraint to prevent duplicate entries
         unique_together = ('invoice', 'lesson')
-        

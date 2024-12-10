@@ -826,7 +826,8 @@ class SubjectView(View):
             page_number = request.GET.get('page')
             page_obj = paginator.get_page(page_number)
 
-        return render(request, 'admin/manage_subjects/subjects_list.html', {'page_obj': page_obj})
+            return render(request, 'admin/manage_subjects/subjects_list.html', {'page_obj': page_obj})
+        return HttpResponseForbidden("You do not have permission to view this page.")
 
     def post(self, request, subject_id=None):
         if 'create' in request.path:
@@ -848,18 +849,15 @@ class SubjectView(View):
     def handle_subject_form(self, request, subject=None):
         form = SubjectForm(request.POST or None, instance=subject)
 
-        if request.method == "POST":
-            if form.is_valid():
-                try:
-                    form.save()
-                except:
-                    form.add_error(None, "It was not possible to update this subject")
-                else:
-                    path = reverse('subjects_list')
-                    return HttpResponseRedirect(path)
+        if form.is_valid():
+            try:
+                form.save()
+                return HttpResponseRedirect(reverse('subjects_list'))
+            except:
+                form.add_error(None, "It was not possible to update this subject")
             else:
-                form = SubjectForm()
-
+                # Ensure redirect after form is saved
+                return HttpResponseRedirect(reverse('subjects_list'))
         return form
 
     def edit_subject(self, request, subject_id):
@@ -873,7 +871,8 @@ class SubjectView(View):
 
     def create_subject(self, request):
         form = self.handle_subject_form(request)
-
+        if isinstance(form, HttpResponseRedirect):  # Redirect if the form is valid
+            return form
         return render(request, 'admin/manage_subjects/subject_create.html', {'form': form})
 
 class UpdateLessonRequest(View):

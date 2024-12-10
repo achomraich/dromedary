@@ -878,12 +878,12 @@ class SubjectView(View):
 
 class UpdateLessonRequest(View):
 
-    def get(self, request):
+    def get(self, request, lesson_id=None):
         current_user = request.user
         if hasattr(current_user, 'admin_profile'):
             list_of_requests = LessonUpdateRequest.objects.all()
         else:
-            return HttpResponseRedirect('dashboard')
+            return self.request_change(request, lesson_id)
 
         return render(request, 'admin/manage_update_requests/update_lesson_request_list.html', {'list_of_requests': list_of_requests})
 
@@ -911,14 +911,12 @@ class UpdateLessonRequest(View):
         )
 
     def handle_subject_form(self, request, lesson=None):
-        if request.method == "POST":
-            try:
-                lesson_update_instance = LessonUpdateRequest.objects.get(lesson=lesson)
-            except LessonUpdateRequest.DoesNotExist:
-                lesson_update_instance = LessonUpdateRequest(lesson=lesson)
+        #if request.method == "POST":
+
+            lesson_update_instance = LessonUpdateRequest(lesson=lesson)
 
             form = UpdateLessonRequestForm(
-                data=request.POST,
+                data=request.POST if request.method == "POST" else None,
                 instance=lesson_update_instance,
                 user_role=request.user
             )
@@ -939,12 +937,9 @@ class UpdateLessonRequest(View):
                 else:
                     return HttpResponseRedirect(reverse('lessons_list'))
 
-        return form
+            return form
 
     def change_status(self, saved_instance):
-        """
-        Update the lesson's status
-        """
         if saved_instance and saved_instance.lesson:
             try:
                 lesson = saved_instance.lesson
@@ -961,6 +956,7 @@ class UpdateLesson(View):
 
     def get(self, request, lesson_id=None):
         print(lesson_id)
+
         return self.update_lesson(request, lesson_id)
 
     def post(self, request, lesson_id=None):
@@ -968,25 +964,21 @@ class UpdateLesson(View):
         if lesson_id:
             if request.path.endswith(f'update_requests/{lesson_id}/'):
                 print('Y')
-                return self.update_lesson(request, lesson_id)
+                self.update_lesson(request, lesson_id)
+                return redirect('update_requests')
 
         return redirect('update_requests')
 
     def update_lesson(self, request, lesson_id):
-        option = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").update_option
+        option = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N")
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         print("option:")
         print(option)
-        if option == '3':
+        if option.update_option == '3':
             return self.cancell_lesson(request, lesson_id=lesson_id)
-        elif option == '2':
+        elif option.update_option == '1' or option.update_option == '2':
             print('Y')
-            form = self.update_day_or_time(request, lesson_id=lesson_id)
-        else:
-            form = self.handle_update_lesson_form(request, option, lesson)
-
-            if isinstance(form, HttpResponseRedirect):
-                return form
+            form = self.update_tutor_day_time(request, lesson_id=lesson_id)
 
         return render(
             request,
@@ -995,17 +987,15 @@ class UpdateLesson(View):
                 'form': form,
                 'current_tutor_availability': self.current_tutor_availability(lesson_id=lesson_id),
                 'all_tutors_availability': self.all_tutor_availability(),
-                'update_option': self.update_option(lesson_id)
+                'update_option': option.get_update_option_display()
             }
         )
 
     def update_option(self, lesson_id):
-        return LessonUpdateRequest.objects.get(lesson_id=lesson_id).get_update_option_display()
+        return LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").get_update_option_display()
 
     def current_tutor_availability(self,lesson_id=None):
-        #print(lesson_id)
         current_tutor = Lesson.objects.get(pk=lesson_id).tutor
-        #print(TutorAvailability.objects.filter(tutor=current_tutor, status='Available')[0])
         return TutorAvailability.objects.filter(tutor=current_tutor)
 
     def all_tutor_availability(self):
@@ -1016,24 +1006,19 @@ class UpdateLesson(View):
             day = tutor.get_day_display()
             time_range = f"{tutor.start_time} - {tutor.end_time}"
 
-            # Ensure the day exists in the dictionary
             if day not in grouped_all_availability:
                 grouped_all_availability[day] = {}
 
-            # Ensure the time range exists within the day's dictionary
             if time_range not in grouped_all_availability[day]:
                 grouped_all_availability[day][time_range] = []
 
-            # Append the tutor to the appropriate time range
             grouped_all_availability[day][time_range].append(tutor)
         day_order = {day: i for i, day in enumerate([day[1] for day in DaysOfWeek.choices])}
 
-        # Sort grouped availability by the defined order of days
         sorted_grouped_all_availability = {
             day: grouped_all_availability[day]
             for day in sorted(grouped_all_availability.keys(), key=lambda d: day_order[d])
         }
-        #print(sorted_grouped_all_availability)
 
         return sorted_grouped_all_availability
 
@@ -1069,29 +1054,24 @@ class UpdateLesson(View):
             print("No dates found before the given day.")
         day_name = last_date.date.strftime("%A")
 
-        # Output the name of the day
-        print("Day of the week (name):", day_name)
         return day_name
 
-    def update_day_or_time(self, request,  lesson_id=None):
+    def update_tutor_day_time(self, request,  lesson_id=None):
         #if request.method == "POST":
-            print("post")
             try:
                 lesson_update_instance = Lesson.objects.get(lesson_id=lesson_id)
             except Lesson.DoesNotExist:
                 raise Http404()
 
-            details = LessonUpdateRequest.objects.get(lesson_id=lesson_id).details
-            update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id).get_update_option_display()
+            details = LessonUpdateRequest.objects.get(lesson_id=lesson_id , is_handled="N").details
+            update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").get_update_option_display()
             lesson_time = LessonStatus.objects.filter(lesson_id=Lesson.objects.get(pk=lesson_id), date__gt=now())
             next_lesson_date=LessonStatus.objects.filter(lesson_id=lesson_update_instance, status=Status.PENDING)
 
             if len(lesson_time) == 0:
-                return Http404("No future lessons!!!")
-            print("yes!")
+                return messages.error(request, "No future lessons!!!")
             if next_lesson_date:
                 next_lesson_date=next_lesson_date[0]
-            print(next_lesson_date.date)
 
             form = UpdateLessonForm(
                 data=request.POST if request.method == "POST" else None,
@@ -1106,52 +1086,125 @@ class UpdateLesson(View):
             if form.is_valid():
                 try:
                     saved_instance = form.save()
+                    print(saved_instance.tutor)
                     new_tutor=request.POST.get('new_tutor')
                     Lesson.objects.filter(pk=lesson_id).update(tutor=new_tutor)
 
                     new_day_of_week = datetime.datetime.strptime(request.POST.get('new_day_of_week'), '%Y-%m-%d').date()
                     new_lesson_time = request.POST.get('new_lesson_time')
-                    print(saved_instance.duration)
-                    #self.update_tutor_availability(new_lesson_time, new_day_of_week, saved_instance.duration, new_tutor)
+                    print('1')
+                    self.update_new_tutor_availability(new_lesson_time, new_day_of_week, saved_instance.duration, new_tutor)
+                    self.restore_old_tutor_availability(saved_instance.tutor, next_lesson_date.date, lesson_time[0].time, saved_instance.duration)
 
                     self.update_lesson_statuses(next_lesson_date.date, new_day_of_week, new_lesson_time,saved_instance.frequency,saved_instance.term_id.end_date, lesson_id)
 
+                    LessonUpdateRequest.objects.filter(lesson_id=Lesson.objects.get(pk=lesson_id),
+                                                       is_handled='N').update(is_handled='Y')
+                    Lesson.objects.filter(lesson_id=lesson_id).update(notes='—')
                 except Exception as e:
                     form.add_error(None, f"An error occurred: {str(e)}")
                 else:
                     return HttpResponseRedirect(reverse('lessons_list'))
 
-
             return form
 
-    def update_new_tutor_availability(self, new_tutor, new_time, duration):
+    def update_new_tutor_availability(self, new_start_time, new_day, duration, new_tutor):
 
-        print(y)
-        end_time = (new_time) + timedelta(minutes=duration).time()
-        print(end_time)
+        start_datetime = datetime.datetime.strptime(new_start_time, "%H:%M")
+        end_time = (start_datetime + duration).time()
+
         availability = TutorAvailability.objects.filter(
-            tutor=new_tutor,
-            day=start_time,
-            start_time=start_time.time(),
-            end_time=end_time,
+            tutor=Tutor.objects.get(pk=new_tutor),
+            day=new_day.strftime('%a'),
+            start_time__lte=start_datetime.time(),
+            end_time__gte=end_time,
             status='Available'
         ).first()
 
-        if availability:
-            availability.status = 'Booked'
-            availability.save()
-        else:
-            TutorAvailability.objects.create(
-                tutor=new_tutor,
-                day=start_time,
-                start_time=start_time.time(),
-                end_time=end_time,
-                status='Booked'
-            )
+        if not availability:
+            print("No matching availability found.")
+            return None
+
+        leftover_slots = []
+        if availability.start_time < start_datetime.time():
+            leftover_slots.append(TutorAvailability(
+            tutor=availability.tutor,
+            day=availability.day,
+            start_time=availability.start_time,
+            end_time=start_datetime.time(),
+            status='Available'
+            ))
+        if availability.end_time > end_time:
+            leftover_slots.append(TutorAvailability(
+                tutor=availability.tutor,
+                day=availability.day,
+                start_time=end_time,
+                end_time=availability.end_time,
+                status='Available'
+            ))
+
+        TutorAvailability.objects.bulk_create(leftover_slots)
+
+        availability.status = 'Booked'
+        availability.start_time = start_datetime.time()
+        availability.end_time = end_time
+        availability.save()
+
+        print(f"Lesson booked from {start_datetime.time()} to {end_time} for {availability.tutor.user.full_name()}.")
+        '''for slot in leftover_slots:
+            print(f"New availability: {slot.start_time} - {slot.end_time}")'''
+
+        return availability
+
+    def restore_old_tutor_availability(self, old_tutor, day, lesson_start_time, lesson_duration):
+
+        start_datetime = datetime.datetime.strptime(str(lesson_start_time), "%H:%M:%S")
+        end_time = (start_datetime + lesson_duration).time()
+
+        existing_availabilities = TutorAvailability.objects.filter(
+            tutor=old_tutor,
+            day=day.strftime('%a'),
+            status='Available'
+        ).order_by('start_time')
+
+        TutorAvailability.objects.filter(
+            tutor=old_tutor,
+            day=day.strftime('%a'),
+            start_time=start_datetime.time(),
+            end_time=end_time
+        ).update(status='Available')
+
+        all_availabilities = TutorAvailability.objects.filter(
+            tutor=old_tutor,
+            day=day.strftime('%a'),
+            status='Available'
+        ).order_by('start_time')
+
+        merged_availabilities = []
+        current_slot = None
+
+        for availability in all_availabilities:
+            if current_slot is None:
+                current_slot = availability
+            elif availability.start_time <= current_slot.end_time:
+                current_slot.end_time = max(current_slot.end_time, availability.end_time)
+                current_slot.save()
+                availability.delete()
+            else:
+                merged_availabilities.append(current_slot)
+                current_slot = availability
+
+        if current_slot:
+            merged_availabilities.append(current_slot)
+
+
 
     def update_lesson_statuses(self, old_lesson_date, next_lesson_date, time, frequency, end_date, lesson_id=None):
         current_date=next_lesson_date
-        print(end_date)
+
+        LessonStatus.objects.filter(lesson_id=Lesson.objects.get(pk=lesson_id), date__gte=old_lesson_date).delete()
+        print(l.status for l in LessonStatus.objects.filter(lesson_id=Lesson.objects.get(pk=lesson_id), date__gte=old_lesson_date))
+        print(l.status for l in LessonStatus.objects.filter(lesson_id=Lesson.objects.get(pk=lesson_id)))
         while current_date < end_date:
             lesson = LessonStatus(lesson_id=Lesson.objects.get(pk=lesson_id), date=current_date, time=time, status='Booked', feedback="")
             lesson.save()
@@ -1160,65 +1213,9 @@ class UpdateLesson(View):
             if frequency == 'W':
                 current_date += datetime.timedelta(weeks=1)
             elif frequency == 'M':
-                current_date += relativedelta(months=1)
+                current_date += datetime.timedelta(weeks=4)
             else:
                 raise ValueError("Frequency should be 'month' or 'week'.")
-
-
-    def handle_update_lesson_form(self, request, update_option, lesson=None):
-        if request.method == "POST":
-            try:
-                lesson_update_instance = Lesson.objects.get(lesson_id=lesson.lesson_id)
-            except Lesson.DoesNotExist:
-                raise Http404()
-
-            details = LessonUpdateRequest.objects.get(lesson_id=lesson.lesson_id).details
-            update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson).get_update_option_display()
-            lesson_time = LessonStatus.objects.filter(lesson_id=lesson)[0].time
-
-            # Convert lesson_time to string if it's a timedelta
-            if isinstance(lesson_time, datetime.timedelta):
-                total_seconds = int(lesson_time.total_seconds())
-                hours, remainder = divmod(total_seconds, 3600)
-                minutes, seconds = divmod(remainder, 60)
-                lesson_time_str = f"{hours:02}:{minutes:02}:{seconds:02}"
-            else:
-                lesson_time_str = str(lesson_time)
-
-            # Create the form with the appropriate data
-            form = UpdateLessonForm(
-                data=request.POST if request.method == "POST" else None,
-                instance=lesson_update_instance,
-                update_option=update_option_display,
-                details=details,
-                regular_lesson_time=lesson_time_str,
-                day_of_week="Monday"  # You can set this dynamically based on the lesson
-            )
-
-            if form.is_valid():
-                try:
-                    print("Form is valid!")
-                    saved_instance = form.save()
-                    saved_instance.save()
-                    # Additional processing if required
-                    new_day_of_week = request.POST.get('new_day_of_week')
-                    print(new_day_of_week)
-                except Exception as e:
-                    form.add_error(None, f"An error occurred: {str(e)}")
-                else:
-                    return HttpResponseRedirect(reverse('lessons_list'))
-
-        else:
-            # For GET requests, initialize the form without POST data
-            form = UpdateLessonForm(
-                instance=lesson,
-                update_option=update_option,
-                details=details,
-                regular_lesson_time=lesson_time_str,
-                day_of_week="Monday"  # You can set this dynamically based on the lesson
-            )
-
-        return form
 
 class AvailabilityView(ListView):
     model = TutorAvailability

@@ -54,3 +54,12 @@ def group_by_day(tutor_availability_list):
     for tutor in tutor_availability_list:
         grouped[tutor.day].append(tutor)
     return grouped
+
+@register.filter(name='add_class')
+def add_class(value, css_class):
+    """
+    Adds a CSS class to a form field's widget.
+    """
+    if hasattr(value, 'as_widget'):
+        return value.as_widget(attrs={"class": css_class})
+    return value

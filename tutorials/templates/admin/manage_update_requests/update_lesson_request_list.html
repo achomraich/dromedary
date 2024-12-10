@@ -35,8 +35,7 @@
                         <td>
 
                             {% if user.is_authenticated and user.admin_profile and lesson.is_handled == "N" %}
-                            <form action="{% url 'update_lesson' lesson.lesson_id %}" method="post">
-                                {% csrf_token %}
+                            <form action="{% url 'update_lesson' lesson.lesson_id %}" method="get">
                                 <button type="submit" class="btn btn-primary" >Handle the Request</button>
                             </form>
                             {% elif lesson.is_handled == "Y" %}

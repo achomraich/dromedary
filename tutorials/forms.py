@@ -241,10 +241,7 @@ class UpdateLessonRequestForm(forms.ModelForm):
 
 class UpdateLessonForm(forms.ModelForm):
 
-    #tutor_name = forms.CharField(label='Tutor', required=False, disabled=True)
-    #student = forms.CharField(label='Student', required=False, disabled=True)
     frequency = forms.CharField(label='Lesson frequency', required=False, disabled=True)
-    #update_option = forms.CharField(label='Request', required=False, disabled=True)
     details = forms.CharField(
         label='Request details',
         disabled=True
@@ -255,7 +252,6 @@ class UpdateLessonForm(forms.ModelForm):
     lesson_time = forms.TimeField(label='Current lesson\'s time', required=False,  disabled=True)
 
     new_day_of_week = forms.DateField(label='Choose date for the next lesson', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    new_frequency = forms.CharField(label='New Frequency', required=False)
     new_tutor = forms.ModelChoiceField(
         queryset=Tutor.objects.all(),
 
@@ -268,10 +264,9 @@ class UpdateLessonForm(forms.ModelForm):
 
     class Meta:
         model = Lesson
-        fields = ['tutor', 'student', 'new_tutor', 'new_frequency', 'new_day_of_week', 'new_lesson_time']
+        fields = ['tutor', 'student', 'new_tutor', 'new_day_of_week', 'new_lesson_time']
 
     def __init__(self, *args, **kwargs):
-        # Extract extra parameters passed to the form
         lesson_update_instance = kwargs.get('instance', None)
         option = kwargs.pop('update_option', None)
         day_of_week = kwargs.pop('day_of_week', None)
@@ -283,9 +278,6 @@ class UpdateLessonForm(forms.ModelForm):
 
         if lesson_update_instance:
             kwargs['initial'].update({
-                #'student': lesson_update_instance.student.user.full_name() if lesson_update_instance.student else '',
-                #'tutor_name': lesson_update_instance.tutor.user.full_name() if lesson_update_instance.tutor else '',
-                #'update_option': option,
                 'details': details,
                 'duration': str(lesson_update_instance.duration),
                 'frequency': lesson_update_instance.frequency,
@@ -304,26 +296,21 @@ class UpdateLessonForm(forms.ModelForm):
             self.fields['duration'].disabled = True
             self.fields['student'].disabled = True
 
-        # Fields common to all options
-        common_fields = ['tutor', 'student', 'details', 'subject', 'next_lesson', 'duration']
+        '''common_fields = ['tutor', 'student', 'details', 'subject', 'next_lesson', 'duration', 'frequency']
 
-        # Define fields for each option
         fields_for_option = {
-            'Change Tutor': common_fields + ['new_tutor'],
+            'Change Tutor': common_fields + ['new_day_of_week', 'new_lesson_time', 'day_of_week', 'lesson_time', 'new_tutor'],
             'Change Day/Time': common_fields + ['new_day_of_week', 'new_lesson_time', 'day_of_week', 'lesson_time', 'new_tutor'],
-            'Cancel Lessons': common_fields + ['day_of_week', 'lesson_time', 'duration'],
-            'Change Frequency': common_fields + ['new_frequency'],
-            'Change Duration of the Lesson': common_fields + ['duration']
+            'Cancel Lessons': common_fields + ['day_of_week', 'lesson_time', 'duration']
         }
 
-        # Set default to hide all fields
         all_fields = set(self.fields.keys())
         displayed_fields = set(fields_for_option.get(option, common_fields))
         hidden_fields = all_fields - displayed_fields
 
         for field_name in hidden_fields:
             self.fields[field_name].disabled = True
-            self.fields[field_name].widget = forms.HiddenInput()
+            self.fields[field_name].widget = forms.HiddenInput()'''
 
 
 class InvoiceForm(forms.ModelForm):

@@ -429,8 +429,20 @@ class CreateInvoiceView(LoginRequiredMixin, View):
 
 class InvoiceDetailView(LoginRequiredMixin, View):
     def get(self, request, invoice_id):
-        invoice = get_object_or_404(Invoice, invoice_id=invoice_id)
+        invoice = get_object_or_404(Invoice, id=invoice_id)  # Changed from invoice_id to id
         return render(request, 'invoices/invoice_detail.html', {'invoice': invoice})
+
+    def post(self, request, invoice_id):
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+        if 'delete' in request.POST:
+            invoice.delete()
+            messages.success(request, f'Invoice #{invoice_id} deleted successfully')
+            return redirect('invoice_list')
+        elif 'mark_paid' in request.POST:
+            invoice.mark_as_paid()
+            messages.success(request, f'Invoice #{invoice_id} marked as paid')
+            return redirect('invoice_list')
+        return redirect('invoice_detail', invoice_id=invoice_id)
 
 
 @login_required

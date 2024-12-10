@@ -1,27 +1,105 @@
 {% extends 'base_content.html' %}
 {% block content %}
+
 <div class="container">
-  <div class="row">
-    <div class="col-12">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back</a>
-        <h1 class="mt-2 mb-3">Edit profile</h1>
-        <form action="{% url 'profile' %}" method="post">
-            {% csrf_token %}
-            {% include 'partials/bootstrap_form.html' with form=user_form %}
-            {% if tutor_form %}
-                {% include 'partials/bootstrap_form.html' with form=tutor_form %}
-                <label for="id_subjects" class="form-label">Subjects Taught:</label>
-                <div class="d-flex flex-wrap">
-                {% for subject in tutor_form.subjects %}
-                    <div class="me-5">
-                        {{ subject }}
-                    </div>
-                {% endfor %}
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back</a>
+
+            <h2 class="mt-2 mb-3">Edit profile</h2>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ user_form.first_name.id_for_label }}" class="form-label">First Name</label>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="text-danger">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                            {{ user_form.last_name }}
+                            {% if user_form.last_name.errors %}
+                                <div class="text-danger">{{ user_form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ user_form.username.id_for_label }}" class="form-label">Username</label>
+                            {{ user_form.username }}
+                            {% if user_form.username.errors %}
+                                <div class="text-danger">{{ user_form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ user_form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}
+                                <div class="text-danger">{{ user_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ user_form.about_me.id_for_label }}" class="form-label">About Me</label>
+                            {{ user_form.about_me }}
+                            <div class="form-text" id="char-count">
+                                <span id="current-count">0</span>/2000 characters
+                            </div>
+                            {% if user_form.about_me.errors %}
+                                <div class="text-danger">{{ user_form.about_me.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if tutor_form %}
+                            {% include 'partials/bootstrap_form.html' with form=tutor_form %}
+                            <div class="mb-3">
+                                <label class="form-label">Subjects Taught:</label>
+                                <div class="d-flex flex-wrap">
+                                    {% for subject in tutor_form.subjects %}
+                                        <div class="me-5">
+                                            {{ subject }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
                 </div>
-            {% endif %}
-            <input type="submit" value="Update" class="btn btn-primary mt-3">
-        </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const aboutMeField = document.getElementById('id_about_me');
+        const charCount = document.getElementById('current-count');
+
+        function updateCharCount() {
+            const currentLength = aboutMeField.value.length;
+            charCount.textContent = currentLength;
+            
+            if (currentLength > 2000) {
+                charCount.style.color = 'red';
+            } else {
+                charCount.style.color = 'inherit';
+            }
+        }
+
+        // Initial count
+        updateCharCount();
+
+        // Update count on input
+        aboutMeField.addEventListener('input', updateCharCount);
+    });
+</script>
+
 {% endblock %}

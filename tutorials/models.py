@@ -26,6 +26,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=50, blank=False)
     last_name = models.CharField(max_length=50, blank=False)
     email = models.EmailField(unique=True, blank=False)
+    about_me = models.TextField(max_length=2000, blank=True, default='')
 
     class Meta:
         """Model options."""
@@ -242,20 +243,6 @@ class LessonStatus(models.Model):
     admin_id = models.ForeignKey(PlatformAdmin.admin_id, on_delete=models.CASCADE)
     booking_date = models.DateField()'''
 
-class Invoices(models.Model):
-    PAYMENT_CHOICES = [
-        ("P", "Paid"),
-        ("U", "Unpaid"),
-        ("O", "Overdue")
-    ]
-    invoice_id = models.BigAutoField(primary_key=True)
-    lesson_count = models.IntegerField(default=0)
-    lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
-    issue_date = models.DateField()
-    due_date = models.DateField()
-    total_amount = models.IntegerField()
-    status = models.CharField(max_length=1, choices=PAYMENT_CHOICES, default="U")
 
 class TutorReviews(models.Model):
     RATING_CHOICES = [
@@ -333,6 +320,14 @@ class Invoice(models.Model):
 
     def get_total_hours(self):
         return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
+
+    def mark_as_paid(self):
+        self.status = 'PAID'
+        self.save()
+        # Update all associated lessons to mark them as invoiced
+        for lesson_status in self.lessons.all():
+            lesson_status.invoiced = True
+            lesson_status.save()
 
 
 # Changed the model name to avoid conflicts

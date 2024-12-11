@@ -350,29 +350,22 @@ class EntityView(LoginRequiredMixin ,View):
         """
         entity = get_object_or_404(self.model, user__id=entity_id)
         today = now().date()
-        #entity = get_object_or_404(self.model, user__id=entity_id)
         year = int(request.GET.get('year', today.year))
         month = int(request.GET.get('month', today.month))
         LessonStatus.objects.filter(date__lt=today, status='Pending').update(status='Completed')
 
-
-        # Fetch lessons based on entity type
-
         if isinstance(entity, Student):
             lessons = Lesson.objects.filter(student=entity)
-        else:  # Tutor
+        elif isinstance(entity, Tutor):
             lessons = Lesson.objects.filter(tutor=entity)
 
-        # Get the first and last day of the month
         first_day = datetime.date(year, month, 1)
         last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
-        # Use Calendar methods to process lessons
         calendar = Calendar()
         frequency_lessons = calendar.lessons_frequency(lessons, first_day)
         schedule = calendar.weekly_schedule(frequency_lessons, first_day, last_day)
 
-        # Calculate previous and next months for navigation
         next_month = (last_day + timedelta(days=1)).replace(day=1)
         prev_month = (first_day - timedelta(days=1)).replace(day=1)
 
@@ -664,20 +657,22 @@ class MakeRequestView(LoginRequiredMixin, View):
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
         return render(request, 'student/requests/lesson_request_form.html', {'form': form})
-
+    
 '''
 This class is to gather lessons information to present them as a calendar
 '''
-class Calendar(LoginRequiredMixin, View):
+class Calendar(View):
     def get(self, request, year=None, month=None):
         user = request.user
         today = now().date()
-
+    
         if not year or not month:
             year, month = today.year, today.month
 
+        year = int(request.GET.get('year', year))
+        month = int(request.GET.get('month', month))
+
         LessonStatus.objects.filter(date__lt=today, status='Pending').update(status='Completed')
-        lessons = Lesson.objects.none()
         if hasattr(user, 'tutor_profile'):
             lessons = Lesson.objects.filter(tutor__user=user)
         elif hasattr(user, 'student_profile'):
@@ -705,36 +700,31 @@ class Calendar(LoginRequiredMixin, View):
     '''
     def lessons_frequency(self, lessons, start):
         freq = []
-
         for lesson in lessons:
             current_date = lesson.start_date
             end_lesson = lesson.term_id.end_date
-
-            lesson_statuses = LessonStatus.objects.filter(lesson_id=lesson).order_by('date')            
-
             while current_date <= end_lesson:
                 if start <= current_date <= end_lesson:
-                    lesson_status = lesson_statuses.filter(date=current_date).first()
-
+                    lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
+                    time = lesson_status.time
                     if lesson_status:
                         freq.append({
                             'student': lesson.student,
                             'tutor': lesson.tutor,
                             'subject': lesson.subject_id,
                             'date': current_date,
-                            'time': lesson_status.time,
+                            'time': time,
                             'status': lesson_status.status,
                         })
 
+                # modify the date based on lesson frequency
                 if lesson.frequency == 'D':
                     current_date += timedelta(days=1)
                 elif lesson.frequency == 'M':
                     current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=lesson.start_date.day)
-                else:
+                else :
                     current_date += timedelta(weeks=1)
-
         return freq
-
 
 
     def weekly_schedule(self, frquency_lessons, start, end):

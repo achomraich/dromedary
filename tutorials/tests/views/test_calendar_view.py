@@ -1,59 +1,106 @@
 from django.test import TestCase
 from django.urls import reverse
-from tutorials.models import Lesson, LessonStatus
-from datetime import date, time
+from datetime import datetime, timedelta, date
+from random import choice
+from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term
 
-class CalendarTestCase(TestCase):
+class StudentsTestCase(TestCase):
 
     fixtures = [
         'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
         'tutorials/tests/fixtures/default_tutor.json',
         'tutorials/tests/fixtures/default_student.json',
         'tutorials/tests/fixtures/default_lesson.json',
-        'tutorials/tests/fixtures/default_lessonstatus.json'
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_lesson_status.json',
     ]
 
     def setUp(self):
-        self.url = reverse('calendar')
-        self.lesson101 = Lesson.objects.get(pk=101)
-        self.lesson102 = Lesson.objects.get(pk=102)
+        self.admin_user = User.objects.get(username='@johndoe')
+        self.admin = Admin.objects.create(user=self.admin_user)
 
-    def test_lesson101_statuses(self):
-        """Test LessonStatus records for lesson with pk=101."""
-        lesson101_statuses = LessonStatus.objects.filter(lesson_id=self.lesson101)
-        self.assertEqual(lesson101_statuses.count(), 3)
+        self.tutor = Tutor.objects.get(user__username='@petrapickles')
 
-        # Verify individual statuses
-        scheduled_status = lesson101_statuses.get(pk=101)
-        self.assertEqual(scheduled_status.date, date(2025, 2, 1))
-        self.assertEqual(scheduled_status.time, time(15, 30))
-        self.assertEqual(scheduled_status.status, "Scheduled")
-        self.assertEqual(scheduled_status.feedback, "Excellent")
-        self.assertFalse(scheduled_status.invoiced)
+        self.student = Student.objects.get(user__username='@janedoe')
 
-        pending_status = lesson101_statuses.get(pk=201)
-        self.assertEqual(pending_status.date, date(2024, 12, 6))
-        self.assertEqual(pending_status.time, time(10, 0))
-        self.assertEqual(pending_status.status, "Pending")
-        self.assertEqual(pending_status.feedback, "Feedback for pending lesson")
-        self.assertFalse(pending_status.invoiced)
+        
+        self.year = 2024
+        self.month = 12
+        self.term = Term.objects.create(
+            start_date=date(self.year, self.month, 1),
+            end_date=date(self.year, self.month, 31)
+        )
+        subject = Subject.objects.create(pk=3, name='Python')
+        self.lesson = Lesson.objects.create(
+            tutor=self.tutor,
+            student=self.student,
+            subject_id=subject,
+            start_date=date(self.year, self.month, 4),
+            frequency='W',
+            duration=timedelta(minutes=60),
+            price_per_lesson=50.00,
+            term_id=self.term
+        )
+        self.lesson_status = LessonStatus.objects.create(
+            lesson_id=self.lesson,
+            date=self.lesson.start_date,
+            time='10:00',
+            status='Scheduled'
+        )
 
-        completed_status = lesson101_statuses.get(pk=202)
-        self.assertEqual(completed_status.date, date(2024, 12, 5))
-        self.assertEqual(completed_status.time, time(14, 0))
-        self.assertEqual(completed_status.status, "Completed")
-        self.assertEqual(completed_status.feedback, "Feedback for completed lesson")
-        self.assertTrue(completed_status.invoiced)
 
-    def test_lesson102_statuses(self):
-        """Test LessonStatus records for lesson with pk=102."""
-        lesson102_statuses = LessonStatus.objects.filter(lesson_id=self.lesson102)
-        self.assertEqual(lesson102_statuses.count(), 1)
+    def test_student_calendar_access(self):
+        self.client.login(username='@janedoe', password='Password123')
+        response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shared/calendar.html')
+        self.assertContains(response, self.student.user.username)
+        self.assertContains(response, self.tutor.user.username)
+        self.assertContains(response, self.lesson.subject_id.name)
+        self.assertContains(response, 'Dec. 4, 2024')
+        self.assertContains(response, 'Dec. 11, 2024')
+        self.assertContains(response, 'Dec. 18, 2024')
+        self.assertContains(response, 'Dec. 25, 2024')
+        self.assertContains(response, self.lesson_status.status)
 
-        # Verify the single status
-        completed_status = lesson102_statuses.get(pk=102)
-        self.assertEqual(completed_status.date, date(2025, 5, 1))
-        self.assertEqual(completed_status.time, time(15, 30))
-        self.assertEqual(completed_status.status, "Completed")
-        self.assertEqual(completed_status.feedback, "Good progress")
-        self.assertFalse(completed_status.invoiced)
+    
+    def test_no_lessons_for_empty_calendar(self):
+        self.client.login(username='@janedoe', password='Password123')
+        response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month-1}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shared/calendar.html')
+        self.assertContains(response, "No lessons during this week")
+    
+    def test_calendar_navigation_next_month(self):
+        self.client.login(username='@janedoe', password='Password123')
+        next_month_url = reverse('calendar', kwargs={'year': 2024, 'month': 1})
+        response = self.client.get(next_month_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shared/calendar.html')
+        self.assertContains(response, 'January 2024')
+
+    def test_calendar_navigation_previous_month(self):
+        self.client.login(username='@janedoe', password='Password123')
+        prev_month_url = reverse('calendar', kwargs={'year': 2023, 'month': 12})
+        response = self.client.get(prev_month_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shared/calendar.html')
+        self.assertContains(response, 'December 2023')
+
+    def test_tutor_calendar_access(self):
+        self.client.login(username='@petrapickles', password='Password123')
+        response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'shared/calendar.html')
+        
+        self.assertContains(response, self.student.user.username)
+        self.assertContains(response, self.tutor.user.username)
+        self.assertContains(response, self.lesson.subject_id.name)
+        self.assertContains(response, 'Dec. 4, 2024')
+        self.assertContains(response, 'Dec. 11, 2024')
+        self.assertContains(response, 'Dec. 18, 2024')
+        self.assertContains(response, 'Dec. 25, 2024')
+        self.assertContains(response, self.lesson_status.status)

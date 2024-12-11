@@ -53,7 +53,7 @@
                             <tbody>
                                 {% for lesson in lessons %}
                                     <tr>
-                                        <td>{{ lesson.subject_id.name }}</td>
+                                        <td>{{ lesson.subject }}</td>
                                         <td>{{ lesson.tutor.user.full_name }}</td>
                                         <td>{{ lesson.tutor.user.email }}</td>
                                         <td>{{ lesson.term_id.start_date }} - {{ lesson.term_id.end_date }}</td>

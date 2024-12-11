@@ -303,9 +303,9 @@ class EntityView(View):
 
         if isinstance(entity, Student):
             lessons = Lesson.objects.filter(student=entity).select_related(
-                'tutor', 'subject_id', 'term_id'
-            ).order_by('subject_id__name')
-            subjects = lessons.values_list('subject_id__name', flat=True).distinct()
+                'tutor', 'subject', 'term'
+            ).order_by('subject__name')
+            subjects = lessons.values_list('subject__name', flat=True).distinct()
             tutors = ', '.join(sorted(tutor.user.full_name() for tutor in set(lesson.tutor for lesson in lessons)))
 
         else:
@@ -324,7 +324,6 @@ class EntityView(View):
         }
 
         if request.path.endswith('edit/'):
-            print("i'm here")
             return self.edit_form(request, entity)
         else:
             return render(request, self.details, content)
@@ -343,7 +342,6 @@ class EntityView(View):
             messages.success(request, "Details updated successfully.")
             return redirect(self.redirect_url)
         else:
-            print("Form errors:", form.errors.as_data())
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
         return self.edit_form(request, entity, form)
@@ -372,7 +370,7 @@ class StudentsView(EntityView):
     def apply_filters(self, request, entity_list):
         subject_filter = request.GET.get('subject', '')
         if subject_filter:
-            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            filtered_lessons = Lesson.objects.filter(subject__name=subject_filter)
             entity_list = entity_list.filter(user_id__in=filtered_lessons.values('student_id')).distinct()
         return entity_list
 
@@ -395,7 +393,7 @@ class TutorsView(EntityView):
     def apply_filters(self, request, entity_list):
         subject_filter = request.GET.get('subject', '')
         if subject_filter:
-            filtered_lessons = Lesson.objects.filter(subject_id__name=subject_filter)
+            filtered_lessons = Lesson.objects.filter(subject__name=subject_filter)
             entity_list = entity_list.filter(user_id__in=filtered_lessons.values('tutor_id')).distinct()
         return entity_list
 
@@ -441,7 +439,7 @@ class CreateInvoiceView(LoginRequiredMixin, View):
 
 class InvoiceDetailView(LoginRequiredMixin, View):
     def get(self, request, invoice_id):
-        invoice = get_object_or_404(Invoice, invoice_id=invoice_id)
+        invoice = get_object_or_404(Invoice, id=invoice_id)
         return render(request, 'invoices/invoice_detail.html', {'invoice': invoice})
 
 
@@ -541,7 +539,7 @@ class RequestView(View):
             messages.error(request, "No entity ID provided for the operation.")
             return redirect('requests')
 
-        lrequest = get_object_or_404(LessonRequest, request_id=lrequest_id)
+        lrequest = get_object_or_404(LessonRequest, id=lrequest_id)
 
         if 'edit' in request.POST:
             return self.assign_tutor(request, lrequest)
@@ -554,7 +552,7 @@ class RequestView(View):
         return redirect('requests')
 
     def request_assign(self, request, request_id, form=None):
-        lrequest = get_object_or_404(LessonRequest, request_id=request_id)
+        lrequest = get_object_or_404(LessonRequest, id=request_id)
         lrequest.refresh_from_db()
 
         if not form:
@@ -576,7 +574,7 @@ class RequestView(View):
             print("Form errors:", form.errors.as_data())
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
             lrequest.refresh_from_db()
-            return self.request_assign(request, lrequest.request_id, form)
+            return self.request_assign(request, lrequest.id, form)
 
     def create_lesson(self, request, lrequest, form):
         tutor = form.cleaned_data['tutor']
@@ -587,8 +585,8 @@ class RequestView(View):
         lesson = Lesson.objects.create(
             tutor=tutor,
             student=lrequest.student,
-            subject_id=lrequest.subject,
-            term_id=lrequest.term,
+            subject=lrequest.subject,
+            term=lrequest.term,
             frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
             duration=lrequest.duration,  # Duration from the LessonRequest
             set_start_time=lrequest.time,
@@ -688,7 +686,7 @@ class Calendar(View):
         freq = []
         for lesson in lessons:
             current_date = lesson.start_date
-            end_lesson = lesson.term_id.end_date
+            end_lesson = lesson.term.end_date
             while current_date <= end_lesson:
                 if start <= current_date <= end_lesson:
                     lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
@@ -696,7 +694,7 @@ class Calendar(View):
                     freq.append({
                         'student': lesson.student,
                         'tutor': lesson.tutor,
-                        'subject': lesson.subject_id,
+                        'subject': lesson.subject,
                         'date': current_date,
                         'time': time,
                         'status': lesson_status.status,

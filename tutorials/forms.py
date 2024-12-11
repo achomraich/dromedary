@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models.base import ModelBase
 from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson, \
-    TutorAvailability, Invoice
+    TutorAvailability, Invoice, BaseInvoice
+
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -494,7 +495,7 @@ class LessonRequestForm(forms.ModelForm):
 class AssignTutorForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['student', 'tutor', 'subject_id','term_id','duration','frequency', 'start_date', 'price_per_lesson']
+        fields = ['student', 'tutor', 'subject','term','duration','frequency', 'start_date', 'price_per_lesson']
         widgets = {
             'tutor': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateInput(attrs={'class': 'form-control'}),
@@ -506,10 +507,10 @@ class AssignTutorForm(forms.ModelForm):
         if existing_request:
             self.fields['student'].initial = existing_request.student
             self.fields['student'].disabled = True
-            self.fields['subject_id'].initial = existing_request.subject
-            self.fields['subject_id'].disabled = True
-            self.fields['term_id'].initial = existing_request.term
-            self.fields['term_id'].disabled = True
+            self.fields['subject'].initial = existing_request.subject
+            self.fields['subject'].disabled = True
+            self.fields['term'].initial = existing_request.term
+            self.fields['term'].disabled = True
             self.fields['duration'].initial = existing_request.duration
             self.fields['duration'].disabled = True
             self.fields['frequency'].initial = existing_request.frequency

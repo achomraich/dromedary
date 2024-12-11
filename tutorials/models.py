@@ -7,7 +7,7 @@ from datetime import date, timedelta, datetime, time as pytime
 from random import randint, choice, choices
 from django.conf import settings
 from django.utils import timezone
-from .choices import Status, Days, Availability, Frequency, PaymentStatus
+from .choices import Status, Days, Frequency, PaymentStatus
 
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
@@ -46,9 +46,16 @@ class Tutor(models.Model):
     subjects = models.ManyToManyField('Subject', blank=True)
     experience = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.user.full_name()
+
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
     has_new_lesson_notification = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.full_name()
+
 
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
@@ -56,6 +63,9 @@ class Admin(models.Model):
 class Subject(models.Model):
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class TutorAvailability(models.Model):
     class Availability(models.TextChoices):
@@ -66,7 +76,7 @@ class TutorAvailability(models.Model):
     day = models.IntegerField(choices=Days.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    status = models.CharField(max_length=10, choices=Availability.choices)
+    status = models.CharField(max_length=11, choices=Availability.choices)
 
     class Meta:
         unique_together = ('tutor', 'day', 'start_time', 'end_time')
@@ -94,6 +104,9 @@ class Term(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     term_name = models.IntegerField(choices=Term.choices, null=True, blank=True)
+
+    def __str__(self):
+        return self.get_term_name_display() if self.term_name else "Undefined Term"
 
     def clean(self):
         if self.start_date >= self.end_date:
@@ -148,7 +161,8 @@ class Lesson(BaseLesson):
         super().save(*args, **kwargs)
 
         if is_new:
-            term = self.term_id
+            print("New Lesson detected")
+            term = self.term
             times = [
                 pytime(hour=h, minute=m)
                 for h in range(9, 19)
@@ -190,6 +204,7 @@ class Lesson(BaseLesson):
                         feedback=feedback,
                         invoiced=False,
                     )
+                    print("LessonStatus created")
                 except Exception as e:
                     print(f"Error creating LessonStatus: {e}")
 
@@ -203,6 +218,7 @@ class Lesson(BaseLesson):
                     end_time=end_time,
                     status='Booked',
                 )
+                print("TutorAvailability created")
             except Exception as e:
                 print(f"Error creating TutorAvailability: {e}")
 
@@ -210,20 +226,30 @@ class LessonRequest(BaseLesson):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
-    day = models.CharField(max_length=3, choices=Days.choices)
+    start_date = models.DateField()
     frequency = models.CharField(max_length=10, choices=Frequency.choices)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created = models.DateTimeField(auto_now_add=True)
     lesson_assigned = models.ForeignKey(Lesson, on_delete=models.CASCADE, null=True, blank=True)
 
+    def clean(self):
+        if not self.start_date:
+            raise ValidationError("Start date is required.")
+        if self.start_date < date.today():
+            raise ValidationError("Start date must be in the future.")
+        if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
+            raise ValidationError("Start date must be within the term.")
+        if self.duration <= timedelta(0):
+            raise ValidationError("Duration must be a positive value.")
+
     def decided(self):
-        return not (self.not_cancelled and self.not_confirmed)
+        return self.cancelled() or self.confirmed()
 
-    def not_cancelled(self):
-        return self.status != Status.CANCELLED
+    def cancelled(self):
+        return self.status == Status.CANCELLED
 
-    def not_confirmed(self):
-        return self.status != Status.CONFIRMED
+    def confirmed(self):
+        return self.status == Status.CONFIRMED
 
 class LessonUpdateRequest(models.Model):
     class UpdateOption(models.TextChoices):
@@ -277,7 +303,7 @@ class LessonStatus(models.Model):
         super().save(*args, **kwargs)
 
 class BaseInvoice(models.Model):
-    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='invoices')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -297,9 +323,10 @@ class BaseInvoice(models.Model):
     def clean(self):
         """Shared validation logic for invoices."""
         if self.due_date < date.today():
+            print("Error")
             raise ValidationError("Due date cannot be in the past.")
 
-class Invoice(models.Model):
+class Invoice(BaseInvoice):
     lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
 
     def mark_as_paid(self):

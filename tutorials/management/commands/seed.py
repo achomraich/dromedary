@@ -35,8 +35,8 @@ lesson_status = []
 class Command(BaseCommand):
     """Build automation command to seed the database."""
 
-    USER_COUNT = 300
-    LESSON_COUNT = 500
+    USER_COUNT = 30
+    LESSON_COUNT = 50
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -106,12 +106,17 @@ class Command(BaseCommand):
             Student.objects.create(user=user)
 
     def create_terms(self):
+        counter = 1
         for data in term_dates:
             try:
                 Term.objects.create(
                     start_date=data["start_date"],
-                    end_date=data["end_date"]
+                    end_date=data["end_date"],
+                    term_name=counter
                 )
+                counter += 1
+                if counter > 3:
+                    counter = 1
             except:
                 pass
 
@@ -139,41 +144,39 @@ class Command(BaseCommand):
 
         tutor = choice(tutors)
         student = choice(students)
-        subject_id = choice(all_subjects)
-        term_id = choice(terms)
+        subject = choice(all_subjects)
+        term = choice(terms)
         frequency = choice(frequencies)
         duration = timedelta(hours=choice([1,2]), minutes=choice([00,15,30,45]))
-        start_date = term_id.start_date
+        start_date = term.start_date
         price_per_lesson = choice([20, 30, 40, 50])
 
-        if not Lesson.objects.filter(tutor=tutor, student=student, subject_id=subject_id).exists():
+        if not Lesson.objects.filter(tutor=tutor, student=student, subject=subject).exists():
             self.create_lesson({
                 'tutor': tutor,
                 'student': student,
-                'subject_id': subject_id,
-                'term_id': term_id,
+                'subject': subject,
+                'term': term,
                 'frequency': frequency,
                 'duration': duration,
                 'start_date': start_date,
                 'price_per_lesson': price_per_lesson
             })
 
-        self.create_lesson({'tutor': tutor, 'student': student, 'subject_id': subject_id, 'term_id': term_id, 'frequency': frequency, 'duration': duration, 'start_date': start_date, 'price_per_lesson': price_per_lesson})
-
     def create_lesson(self, data):
         try:
             Lesson.objects.create(
                 tutor=data["tutor"],
                 student=data["student"],
-                subject_id=data["subject_id"],
-                term_id=data["term_id"],
+                subject=data["subject"],
+                term=data["term"],
                 frequency=data["frequency"],
                 duration=data["duration"],
                 start_date=data["start_date"],
                 price_per_lesson=data["price_per_lesson"]
             )
             tutor = data["tutor"]
-            tutor.subjects.add(data["subject_id"])
+            tutor.subjects.add(data["subject"])
         except:
             pass
 

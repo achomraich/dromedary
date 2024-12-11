@@ -79,6 +79,7 @@ class UpdateLessonViewTest(TestCase):
             is_handled='N'
         )
         self.manager = TutorAvailabilityManager()
+
         TutorAvailability.objects.create(
             tutor=self.tutor,
             day=0,  # Monday

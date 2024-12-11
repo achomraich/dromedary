@@ -59,6 +59,7 @@
                 <td class="align-middle">{{ tutor.user.email }}</td>
                 <td class="align-middle">
                     <a href="{% url 'tutor_details' tutor.user.id %}" class="btn btn-info btn-sm">View</a>
+                    <a href="{% url 'tutor_calendar' tutor.user.id %}" class="btn btn-primary btn-sm">Calendar</a>
                     {% if user.is_authenticated and user.admin_profile %}
 
                         <a href="{% url 'tutor_edit' tutor.user.id %}" class="btn btn-warning btn-sm">Edit</a>

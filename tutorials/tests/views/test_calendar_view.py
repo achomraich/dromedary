@@ -36,12 +36,12 @@ class StudentsTestCase(TestCase):
         self.lesson = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=subject,
+            subject=subject,
             start_date=date(self.year, self.month, 4),
             frequency='W',
             duration=timedelta(minutes=60),
             price_per_lesson=50.00,
-            term_id=self.term
+            term=self.term
         )
         self.lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
@@ -58,7 +58,7 @@ class StudentsTestCase(TestCase):
         self.assertTemplateUsed(response, 'shared/calendar.html')
         self.assertContains(response, self.student.user.username)
         self.assertContains(response, self.tutor.user.username)
-        self.assertContains(response, self.lesson.subject_id.name)
+        self.assertContains(response, self.lesson.subject)
         self.assertContains(response, 'Dec. 4, 2024')
         self.assertContains(response, 'Dec. 11, 2024')
         self.assertContains(response, 'Dec. 18, 2024')
@@ -98,7 +98,7 @@ class StudentsTestCase(TestCase):
         
         self.assertContains(response, self.student.user.username)
         self.assertContains(response, self.tutor.user.username)
-        self.assertContains(response, self.lesson.subject_id.name)
+        self.assertContains(response, self.lesson.subject.name)
         self.assertContains(response, 'Dec. 4, 2024')
         self.assertContains(response, 'Dec. 11, 2024')
         self.assertContains(response, 'Dec. 18, 2024')

@@ -92,7 +92,7 @@ class TutorsTestCase(TestCase):
             'email': updated_email,
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.url)
+        self.assertRedirects(response, reverse('tutors_list'))
         self.tutor1.refresh_from_db()
         self.assertEqual(self.tutor1.user.username, updated_username)
         self.assertEqual(self.tutor1.user.first_name, updated_first_name)
@@ -145,7 +145,7 @@ class TutorsTestCase(TestCase):
             'delete': 'delete',
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.url)
+        self.assertRedirects(response, reverse('tutors_list'))
         self.assertFalse(Tutor.objects.filter(user__username='@petrapickles').exists())
         self.assertFalse(Student.objects.filter(user__username="@petrap").exists())
 
@@ -156,7 +156,7 @@ class TutorsTestCase(TestCase):
             'username': 'newusername',
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.url)
+        self.assertRedirects(response, reverse('tutors_list'))
 
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any(msg.message == "No entity ID provided for the operation." for msg in messages))
@@ -170,7 +170,7 @@ class TutorsTestCase(TestCase):
             'test': 'test',
         })
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, self.url)
+        self.assertRedirects(response, reverse('tutors_list'))
 
         messages = list(get_messages(response.wsgi_request))
         self.assertTrue(any(msg.message == "Invalid operation." for msg in messages))

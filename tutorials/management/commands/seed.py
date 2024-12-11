@@ -5,7 +5,7 @@ from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, 
 import pytz
 from faker import Faker
 from random import randint, random, choice
-from datetime import timedelta, date
+from datetime import timedelta
 
 user_fixtures = [
     {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'Admin'},
@@ -123,17 +123,9 @@ class Command(BaseCommand):
     def create_subjects(self):
         for data in subjects:
             try:
-                # Check for existing subject by name
-                existing_subject = Subject.objects.filter(name=data["name"]).first()
-                if existing_subject:
-                    print(f"Subject '{data['name']}' already exists.")
-                else:
-                    Subject.objects.create(name=data["name"], description=data["description"])
-                    print(f"Subject '{data['name']}' added.")
-            except Exception as e:
-                print(f"Error creating subject '{data['name']}': {e}")
-
-
+                Subject.objects.create(name=data["name"], description=data["description"])
+            except:
+                pass
 
     def create_lessons(self):
         for data in lessons:
@@ -224,36 +216,10 @@ class Command(BaseCommand):
         # Time and date not implemented randomization
         date = term.start_date
         time = "15:30:00"
-        
-        current_date = lesson_id.start_date
-        end_date = term.end_date
 
-        while current_date <= end_date:
-            if current_date > date.today():
-            # If the date is in the future, ensure feedback is empty and status is 'Scheduled'
-                status = 'Scheduled'
-                feedback = ''
-            else:
-                # For past or current dates, randomize status and feedback
-                status = choice(['Scheduled', 'Completed', 'Cancelled'])
-                feedback = choice(['Good progress', 'Needs improvement', 'Excellent']) if status == 'Completed' else ''
-
-            self.create_lesson_status({
-                'lesson_id': lesson_id,
-                'date': current_date,
-                'time': time,
-                'status': status,
-                'feedback': feedback
-            })
-
-            # Update date based on frequency
-            if lesson_id.frequency == 'D':  # Daily
-                current_date += timedelta(days=1)
-            elif lesson_id.frequency == 'W':  # Weekly
-                current_date += timedelta(weeks=1)
-            elif lesson_id.frequency == 'M':  # Monthly
-                current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=lesson_id.start_date.day)
-            #self.create_lesson_status({'lesson_id': lesson_id, 'date': date, 'time': time, 'status': status, 'feedback': feedback})
+        status = choice(['Scheduled', 'Completed', 'Cancelled'])
+        feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
+        self.create_lesson_status({'lesson_id': lesson_id, 'date': date, 'time': time, 'status': status, 'feedback': feedback})
 
     def create_lesson_status(self, data):
         try:

@@ -208,7 +208,7 @@ class SignUpView(LoginProhibitedMixin, FormView):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
 
-class EntityView(LoginRequiredMixin ,View):
+class EntityView(View):
     model = None
     list_admin = None
     list_user = None
@@ -219,12 +219,9 @@ class EntityView(LoginRequiredMixin ,View):
     def get(self, request, *args, **kwargs):
         entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
         if entity_id:
-            if request.resolver_match.url_name == 'student_calendar' or request.resolver_match.url_name == 'tutor_calendar':
-                return self.get_calendar(request, entity_id)
-            elif request.resolver_match.url_name == 'student_details' or request.resolver_match.url_name == 'tutor_details':
-                return self.entity_details(request, entity_id)
-        
-        return self.get_entities(request)
+            return self.entity_details(request, entity_id)
+        else:
+            return self.get_entities(request)
 
     def post(self, request, *args, **kwargs):
         entity_id = request.POST.get('entity_id')
@@ -343,42 +340,9 @@ class EntityView(LoginRequiredMixin ,View):
         entity.user.delete()
         messages.success(request, "Deleted successfully.")
         return redirect(self.redirect_url)
-    
-    def get_calendar(self, request, entity_id):
-        """
-        Generates a calendar view for the given entity.
-        """
-        entity = get_object_or_404(self.model, user__id=entity_id)
-        today = now().date()
-        year = int(request.GET.get('year', today.year))
-        month = int(request.GET.get('month', today.month))
-        LessonStatus.objects.filter(date__lt=today, status='Pending').update(status='Completed')
-
-        if isinstance(entity, Student):
-            lessons = Lesson.objects.filter(student=entity)
-        elif isinstance(entity, Tutor):
-            lessons = Lesson.objects.filter(tutor=entity)
-
-        first_day = datetime.date(year, month, 1)
-        last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-
-        calendar = Calendar()
-        frequency_lessons = calendar.lessons_frequency(lessons, first_day)
-        schedule = calendar.weekly_schedule(frequency_lessons, first_day, last_day)
-
-        next_month = (last_day + timedelta(days=1)).replace(day=1)
-        prev_month = (first_day - timedelta(days=1)).replace(day=1)
-
-        content = {
-            'schedule': schedule,
-            'current_month': first_day.strftime('%B %Y'),
-            'previous_month': prev_month,
-            'next_month': next_month,
-        }
-        return render(request, 'shared/calendar.html', content)
 
 
-class StudentsView(EntityView, LoginRequiredMixin):
+class StudentsView(EntityView):
     model = Student
 
     list_admin = 'admin/manage_students/students_list.html'
@@ -401,7 +365,7 @@ class StudentsView(EntityView, LoginRequiredMixin):
         return entity_list
 
 
-class TutorsView(EntityView, LoginRequiredMixin):
+class TutorsView(EntityView):
     model = Tutor
 
     list_admin = 'admin/manage_tutors/tutors_list.html'
@@ -542,7 +506,7 @@ def invoice_list(request):
     # Redirect back to the invoice management page
     return redirect('invoice_management')
 
-class RequestView(LoginRequiredMixin, View):
+class RequestView(View):
     status = None
     requests_list = None
 
@@ -632,7 +596,7 @@ class RequestView(LoginRequiredMixin, View):
         messages.success(request, "Request cancelled.")
         return redirect('requests')
 
-class MakeRequestView(LoginRequiredMixin, View):
+class MakeRequestView(View):
 
     def get(self, request, *args, **kwargs):
         form = LessonRequestForm()
@@ -657,7 +621,7 @@ class MakeRequestView(LoginRequiredMixin, View):
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
         return render(request, 'student/requests/lesson_request_form.html', {'form': form})
-    
+
 '''
 This class is to gather lessons information to present them as a calendar
 '''
@@ -665,12 +629,9 @@ class Calendar(View):
     def get(self, request, year=None, month=None):
         user = request.user
         today = now().date()
-    
+
         if not year or not month:
             year, month = today.year, today.month
-
-        year = int(request.GET.get('year', year))
-        month = int(request.GET.get('month', month))
 
         LessonStatus.objects.filter(date__lt=today, status='Pending').update(status='Completed')
         if hasattr(user, 'tutor_profile'):
@@ -707,15 +668,14 @@ class Calendar(View):
                 if start <= current_date <= end_lesson:
                     lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
                     time = lesson_status.time
-                    if lesson_status:
-                        freq.append({
-                            'student': lesson.student,
-                            'tutor': lesson.tutor,
-                            'subject': lesson.subject_id,
-                            'date': current_date,
-                            'time': time,
-                            'status': lesson_status.status,
-                        })
+                    freq.append({
+                        'student': lesson.student,
+                        'tutor': lesson.tutor,
+                        'subject': lesson.subject_id,
+                        'date': current_date,
+                        'time': time,
+                        'status': lesson_status.status,
+                    })
 
                 # modify the date based on lesson frequency
                 if lesson.frequency == 'D':
@@ -747,7 +707,7 @@ class Calendar(View):
         return weekly_lessons
 
 
-class ViewLessons(LoginRequiredMixin, View):
+class ViewLessons(View):
 
     def get(self, request, lesson_id=None):
         current_user = request.user
@@ -841,7 +801,7 @@ class ViewLessons(LoginRequiredMixin, View):
             self.status = 'student'
         else:
             self.status = 'tutor'
-        
+
         if lessonStatus_id:
             if 'update_feedback'in request.path:
                 return self.update_feedback(request, lessonStatus_id)
@@ -919,7 +879,7 @@ class SubjectView(View):
 
         return render(request, 'admin/manage_subjects/subject_create.html', {'form': form})
 
-class UpdateLessonRequest(LoginRequiredMixin, View):
+class UpdateLessonRequest(View):
 
     def get(self, request):
         current_user = request.user
@@ -1000,7 +960,7 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
             except Exception as e:
                 print(f"Error in changing status: {e}")
 
-class UpdateLesson(LoginRequiredMixin, View):
+class UpdateLesson(View):
 
     def get(self, request, lesson_id=None):
         print(lesson_id)
@@ -1246,7 +1206,7 @@ class UpdateLesson(LoginRequiredMixin, View):
 
         return form
 
-class AvailabilityView(ListView, LoginRequiredMixin):
+class AvailabilityView(ListView):
     model = TutorAvailability
     template_name = 'tutor/my_availability/availabilities.html'
     context_object_name = 'availabilities'
@@ -1267,7 +1227,7 @@ class AvailabilityView(ListView, LoginRequiredMixin):
             return redirect('availability')
 
 
-class AddEditAvailabilityView(LoginRequiredMixin, View):
+class AddEditAvailabilityView(View):
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
             availability = get_object_or_404(TutorAvailability, pk=pk)

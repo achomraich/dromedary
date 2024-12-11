@@ -130,7 +130,7 @@ class Command(BaseCommand):
     def create_subjects(self):
         for data in subjects:
             try:
-                # Check for existing subject by name
+                # Check for existing subject.py by name
                 existing_subject = Subject.objects.filter(name=data["name"]).first()
                 if existing_subject:
                     print(f"Subject '{data['name']}' already exists.")
@@ -170,7 +170,7 @@ class Command(BaseCommand):
             self.create_lesson({
                 'tutor': tutor,
                 'student': student,
-                'subject': subject,
+                'subject.py': subject,
                 'term': term,
                 'frequency': frequency,
                 'duration': duration,
@@ -183,7 +183,7 @@ class Command(BaseCommand):
             Lesson.objects.create(
                 tutor=data["tutor"],
                 student=data["student"],
-                subject=data["subject"],
+                subject=data["subject.py"],
                 term=data["term"],
                 frequency=data["frequency"],
                 duration=data["duration"],
@@ -191,7 +191,7 @@ class Command(BaseCommand):
                 price_per_lesson=data["price_per_lesson"]
             )
             tutor = data["tutor"]
-            tutor.subjects.add(data["subject"])
+            tutor.subjects.add(data["subject.py"])
         except:
             pass
 

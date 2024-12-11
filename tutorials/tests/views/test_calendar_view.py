@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from datetime import datetime, timedelta, date
 from random import choice
-from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term
+from tutorials.models.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term
 
 class StudentsTestCase(TestCase):
 

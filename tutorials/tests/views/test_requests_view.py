@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from tutorials.models import LessonRequest, Student, User
+from tutorials.models.models import LessonRequest, Student, User
 
 class AdminLessonRequestsViewTest(TestCase):
     def setUp(self):

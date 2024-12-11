@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.models import Subject
+from tutorials.models.models import Subject
 
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError

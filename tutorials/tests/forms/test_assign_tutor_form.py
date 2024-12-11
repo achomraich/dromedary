@@ -3,7 +3,7 @@ import datetime
 
 from django.test import TestCase
 from tutorials.forms import AssignTutorForm
-from tutorials.models import Lesson, Tutor, Subject, Term, Student, LessonRequest
+from tutorials.models.models import Lesson, Tutor, Subject, Term, Student, LessonRequest
 
 class AssignTutorFormTestCase(TestCase):
     """Unit tests of the tutor assigning form."""

@@ -2,10 +2,10 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.utils.timezone import now
 
-from tutorials.models import Tutor, Lesson, LessonStatus, Status, LessonStatus, TutorAvailability
+from tutorials.models.models import Tutor, Lesson, LessonStatus, Status, LessonStatus, TutorAvailability
 from datetime import timedelta, datetime
 import datetime
-from tutorials.choices import Days
+from tutorials.models.choices import Days
 
 def login_prohibited(view_function):
     """Decorator for view functions that redirect users away if they are logged in."""

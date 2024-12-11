@@ -2,7 +2,7 @@
 from django import forms
 from django.test import TestCase
 from tutorials.forms import UserForm
-from tutorials.models import User
+from tutorials.models.models import User
 
 class UserFormTestCase(TestCase):
     """Unit tests of the user form."""

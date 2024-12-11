@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist  # Add this import at the 
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
-from tutorials.models import *
+from tutorials.models.models import *
 from datetime import datetime, date
 from django.test import TransactionTestCase
 from django.test import TestCase

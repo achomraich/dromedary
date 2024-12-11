@@ -61,12 +61,12 @@ class BaseSeleniumTest(TestCase):
             )
 
     def seed_subject_model(self):
-        subjects = [{'subject_id': 1, "name": "C++"},
-                    {'subject_id': 2, "name": "Java"},
-                    {'subject_id': 3, "name": "Python"}]
+        subjects = [{'subject_id': 1, "name": "C++", "description": "C++ course"},
+                    {'subject_id': 2, "name": "Java", "description": "Java course"},
+                    {'subject_id': 3, "name": "Python", "description": "Python course"}]
 
         for s in subjects:
-            Subject.objects.create(subject_id=s['subject_id'], name=s["name"])
+            Subject.objects.create(subject_id=s['subject_id'], name=s["name"], description=s["description"])
 
     def seed_lessons_model(self):
         lessons = [

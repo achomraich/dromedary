@@ -11,6 +11,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 
+from tutorials.choices import Status, Days, Frequency, PaymentStatus
+
 # tested
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
@@ -114,17 +116,18 @@ class DaysOfWeek(models.TextChoices):
     SUN = 'Sun', 'Sunday'
 
 class TutorAvailability(models.Model):
-    STATUS_CHOICES = [
-        ('Available', 'Available'),
-        ('Booked', 'Booked'),
-    ]
-    id = models.BigAutoField(primary_key=True)
+    class Availability(models.TextChoices):
+        AVAILABLE = 'Available', 'Available'
+        BOOKED = 'Unavailable', 'Unavailable'
+
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day = models.CharField(max_length=15, choices=DaysOfWeek.choices)
+    day = models.IntegerField(choices=Days.choices)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    # available or booked
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    status = models.CharField(max_length=12, choices=Availability.choices)
+
+    class Meta:
+        unique_together = ('tutor', 'day', 'start_time', 'end_time')
 
     def __str__(self):
         return f"{self.tutor.user.full_name()} - {self.get_day_display()} - {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')} ({self.get_status_display()})"

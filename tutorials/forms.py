@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models.base import ModelBase
 from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson, \
-    TutorAvailability, Invoice, DaysOfWeek
+    TutorAvailability, Invoice, Days
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -216,7 +216,7 @@ class UpdateLessonRequestForm(forms.ModelForm):
         model = LessonUpdateRequest
         fields = ['update_option', 'details']
         widgets = {
-            'details': forms.Textarea(attrs={'rows': 4, 'cols': 50, 'placeholder': 'Enter additional details here...'}),
+            'details': forms.Textarea(attrs={'rows': 4, 'cols': 50, 'placeholder': 'Enter additional details here...'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -260,7 +260,7 @@ class UpdateLessonForm(forms.ModelForm):
     )
     new_lesson_time = forms.TimeField(label='New lesson time', required=True,
         widget=forms.TimeInput(attrs={'type': 'time'}))
-    next_lesson=forms.DateField(label='Next lesson on', required=False, disabled=True)
+    next_lesson=forms.DateField(label='Next lesson planned on', required=False, disabled=True)
 
     class Meta:
         model = Lesson
@@ -277,13 +277,16 @@ class UpdateLessonForm(forms.ModelForm):
         kwargs.setdefault('initial', {})
 
         if lesson_update_instance:
+            if day_of_week is not None:
+                day_of_week_display = dict(Days.choices).get(day_of_week, "Unknown Day")
+
             kwargs['initial'].update({
                 'details': details,
                 'duration': str(lesson_update_instance.duration),
-                'frequency': lesson_update_instance.frequency,
+                'frequency': lesson_update_instance.get_frequency_display(),
                 'lesson_time': lesson_time,
                 'subject': lesson_update_instance.subject_id.name,
-                'day_of_week': day_of_week,
+                'day_of_week': day_of_week_display,
                 'new_lesson_time': None,
                 'next_lesson': next_lesson_date
             })

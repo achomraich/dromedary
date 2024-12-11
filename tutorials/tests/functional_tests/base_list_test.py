@@ -67,10 +67,8 @@ class BaseListTests(ListSeleniumTest, BaseSeleniumTest):
         self.assertEqual(len(rows), models_len)
 
     def verify_row_content(self, row_data_list=None):
-        #print('row_data_list ', row_data_list)
         rows = self.table.find_elements(By.TAG_NAME, "tr")[1:]
 
-        #print('row_data_list ', row_data_list)
         if not rows or not row_data_list:
             self.assertEqual(None, row_data_list)
         else:

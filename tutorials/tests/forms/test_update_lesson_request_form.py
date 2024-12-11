@@ -1,7 +1,7 @@
 from django.test import TestCase
 from tutorials.forms import UpdateLessonRequestForm
 from django import forms
-from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject, LessonUpdateRequest
+from tutorials.models.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject, LessonUpdateRequest
 import datetime
 
 

@@ -1,11 +1,11 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
-from tutorials.models import Lesson, LessonUpdateRequest, LessonStatus, Tutor, Student, Subject, Term, User, Admin, Status, TutorAvailability
+from tutorials.models.models import Lesson, LessonUpdateRequest, LessonStatus, Tutor, Student, Subject, Term, User, Admin, Status, TutorAvailability
 from datetime import date, time, timedelta
 from tutorials.views import TutorAvailabilityManager
 from django.utils.timezone import now
-from tutorials.choices import Days
+from tutorials.models.choices import Days
 
 class UpdateLessonViewTest(TestCase):
 

@@ -1,6 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from tutorials.models import User, Admin, Student, Tutor, Lesson, Subject, Term, Frequency
+from tutorials.models.shared import *
+from tutorials.models.users import *
+from tutorials.models.lessons import *
+from tutorials.models.invoices import *
+from tutorials.models.choices import *
 
 import pytz
 from faker import Faker

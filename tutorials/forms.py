@@ -7,13 +7,15 @@ from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models.base import ModelBase
-from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson, \
-    TutorAvailability, Invoice, Days
+from .models.shared import *
+from .models.users import *
+from .models.lessons import *
+from .models.invoices import *
+from .models.choices import *
 
 
 from django import forms
 from datetime import date
-from .models import Invoice, Subject, Student
 
 
 

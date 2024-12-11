@@ -735,7 +735,7 @@ class Calendar(View):
                         freq.append({
                             'student': lesson.student,
                             'tutor': lesson.tutor,
-                            'subject': lesson.subject_id,
+                            'subject': lesson.subject,
                             'date': current_date,
                             'time': time,
                             'status': lesson_status.status,

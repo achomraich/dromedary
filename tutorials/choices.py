@@ -19,7 +19,7 @@ class Days(models.IntegerChoices):
 
 class Frequency(models.TextChoices):
     WEEKLY = 'W', 'Weekly'
-    BIWEEKLY = 'B', 'Biweekly'
+    BIWEEKLY = 'F', 'Fortnightly'
     MONTHLY = 'M', 'Monthly'
     ONCE = 'O', 'Once'   
 

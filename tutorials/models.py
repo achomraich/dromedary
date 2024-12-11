@@ -184,9 +184,12 @@ class Lesson(BaseLesson):
 
             current_date = start_date
             while current_date <= end_date:
+                
                 if current_date >= today:
+                    # If the date is in the future, ensure feedback is empty and status is 'Scheduled'
                     status = 'Scheduled'
                 else:
+                    # For past or current dates, randomize status and feedback
                     status = choices(['Completed', 'Cancelled'], weights=[0.8, 0.2], k=1)[0]
 
                 if status == 'Completed':
@@ -204,11 +207,19 @@ class Lesson(BaseLesson):
                         feedback=feedback,
                         invoiced=False,
                     )
+
+                    # Update date based on frequency
+                    if self.frequency == 'O':  # Daily
+                        break
+                    elif self.frequency == 'W':  # Weekly
+                        current_date += timedelta(weeks=1)
+                    elif self.frequency == 'M':  # Monthly
+                        current_date += timedelta(weeks=4)
+                    elif self.frequency == 'F':  # Biweekly
+                        current_date += timedelta(weeks=2)
                     print("LessonStatus created")
                 except Exception as e:
                     print(f"Error creating LessonStatus: {e}")
-
-                current_date += timedelta(weeks=1)
 
             try:
                 TutorAvailability.objects.create(

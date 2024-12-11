@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models.base import ModelBase
 from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateRequest, LessonRequest, Lesson, \
-    TutorAvailability, Invoice, BaseInvoice
+    TutorAvailability, Invoice
 
 
 from django import forms

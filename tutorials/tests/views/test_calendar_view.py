@@ -43,12 +43,7 @@ class StudentsTestCase(TestCase):
             price_per_lesson=50.00,
             term=self.term
         )
-        self.lesson_status = LessonStatus.objects.create(
-            lesson_id=self.lesson,
-            date=self.lesson.start_date,
-            time='10:00',
-            status='Scheduled'
-        )
+        self.lesson_status = LessonStatus.objects.filter(lesson_id=self.lesson)
 
 
     def test_student_calendar_access(self):
@@ -63,7 +58,7 @@ class StudentsTestCase(TestCase):
         self.assertContains(response, 'Dec. 11, 2024')
         self.assertContains(response, 'Dec. 18, 2024')
         self.assertContains(response, 'Dec. 25, 2024')
-        self.assertContains(response, self.lesson_status.status)
+        self.assertContains(response, self.lesson_status[0].status)
 
     
     def test_no_lessons_for_empty_calendar(self):
@@ -103,4 +98,4 @@ class StudentsTestCase(TestCase):
         self.assertContains(response, 'Dec. 11, 2024')
         self.assertContains(response, 'Dec. 18, 2024')
         self.assertContains(response, 'Dec. 25, 2024')
-        self.assertContains(response, self.lesson_status.status)
+        self.assertContains(response, self.lesson_status[0].status)

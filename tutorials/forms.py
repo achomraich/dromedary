@@ -11,6 +11,12 @@ from .models import User, Tutor, Student, Subject, LessonStatus, LessonUpdateReq
     TutorAvailability, Invoice, BaseInvoice
 
 
+from django import forms
+from datetime import date
+from .models import Invoice, Subject, Student
+
+
+
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
 
@@ -33,9 +39,17 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         """Form options."""
-
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ['first_name', 'last_name', 'username', 'email', 'about_me']
+        widgets = {
+            'about_me': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 5,
+                    'placeholder': 'Tell us about yourself (max 2000 characters)'
+                }
+            )
+        }
         error_messages = {
             'username': {
                 'unique': "This username already exists. Please use a different one.",
@@ -471,6 +485,18 @@ class InvoiceForm(forms.ModelForm):
         self.fields['student'].label_from_instance = lambda obj: f"{obj.user.username} ({obj.user.full_name()})"
         self.fields['subject'].queryset = Subject.objects.all()
         self.fields['subject'].label_from_instance = lambda obj: f"{obj.name}"
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount and amount <= 0:
+            raise forms.ValidationError("Amount must be greater than zero")
+        return amount
+
+    def clean_due_date(self):
+        due_date = self.cleaned_data.get('due_date')
+        if due_date and due_date < date.today():
+            raise forms.ValidationError("Due date cannot be in the past")
+        return due_date
 
 class LessonRequestForm(forms.ModelForm):
     class Meta:

@@ -22,6 +22,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=50, blank=False)
     last_name = models.CharField(max_length=50, blank=False)
     email = models.EmailField(unique=True, blank=False)
+    about_me = models.TextField(max_length=2000, blank=True, default='')
 
     class Meta:
         """Model options."""
@@ -332,16 +333,17 @@ class Invoice(models.Model):
                 self.status = PaymentStatus.OVERDUE
                 self.save()
 
-    def mark_as_paid(self):
-        """Mark the invoice as paid and update associated lessons."""
-        if self.status != 'PAID':
-            self.status = 'PAID'
-            self.save()
-            self.lessons.all().update(invoiced=True)
-
     def get_total_hours(self):
         """Calculate total hours for all associated lessons."""
         return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
+
+    def mark_as_paid(self):
+        self.status = 'PAID'
+        self.save()
+        # Update all associated lessons to mark them as invoiced
+        for lesson_status in self.lessons.all():
+            lesson_status.invoiced = True
+            lesson_status.save()
 
     def clean(self):
         """Shared validation logic for invoices."""

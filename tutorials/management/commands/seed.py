@@ -36,8 +36,10 @@ lesson_status = []
 class Command(BaseCommand):
     """Build automation command to seed the database."""
 
-    USER_COUNT = 10
-    LESSON_COUNT =15
+
+    USER_COUNT = 30
+    LESSON_COUNT = 50
+
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 

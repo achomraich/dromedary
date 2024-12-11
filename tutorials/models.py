@@ -323,9 +323,6 @@ class Invoice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     amount = models.DecimalField(max_digits=6, decimal_places=2)
 
-    class Meta:
-        abstract = True
-
     def check_if_overdue(self):
         """Mark invoice as overdue if unpaid and past due date."""
         if self.status == PaymentStatus.UNPAID and self.due_date < date.today():

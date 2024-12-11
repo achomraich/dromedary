@@ -8,6 +8,15 @@
     <div class="card p-4 shadow-sm">
         <form method="post">
             {% csrf_token %}
+        
+            <div class="mb-4">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-2">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+            </div>
+        
             <div class="mb-3">
                 <label for="id_first_name" class="form-label">First Name: </label>
                 {{ form.first_name|add_class:"form-control" }}
@@ -52,16 +61,7 @@
                     </div>
                 {% endif %}
             </div>
-
-
-            <div class="mb-4">
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger mt-2">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-            </div>
-
+        
             <button type="submit" class="btn btn-primary me-2">Update</button>
             <input type="hidden" name="edit" value="edit" />
             <input type="hidden" name="entity_id" value="{{ form.instance.id }}" />

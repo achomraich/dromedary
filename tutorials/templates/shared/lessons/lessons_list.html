@@ -3,7 +3,7 @@
 {% block content %}
 
     <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back to dashboard</a>
 
         <h1 class="mb-2">Lessons</h1>
         {% load lesson_filters %}
@@ -24,17 +24,16 @@
             </thead>
             <tbody>
                 {% for lesson in list_of_lessons %}
-                    <tr onclick="window.location.href='{% url 'lesson_detail' lesson.lesson_id %}'" style="cursor: pointer;">
+                    <tr onclick="window.location.href='{% url 'lesson_detail' lesson.id %}'" style="cursor: pointer;">
                         <td>{{ lesson.student.user.full_name }}</td>
                         <td>{{ lesson.tutor.user.full_name }}</td>
-                        <td>{{ lesson.subject_id.name }}</td>
-                        <td>{{ lesson.term_id.start_date }}</td>
+                        <td>{{ lesson.subject.name }}</td>
+                        <td>{{ lesson.term.start_date }}</td>
                         <td>{{ lesson.duration|format_duration }}</td>
-                        <td>{{ lesson.frequency|format_frequency }}</td>
-                        <td>{{lesson.notes}}</td>
+                        <td>{{ lesson.get_frequency_display }}</td>
+                        <td>{{ lesson.notes }}</td>
                         {% if user.student_profile or user.tutor_profile %}
                             <td>
-
                                 {% if lesson in can_handle_request %}
                                     <form action="{% url 'request_changes' lesson.lesson_id%}" method="get">
                                         {% csrf_token %}

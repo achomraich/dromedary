@@ -17,13 +17,16 @@ from django.urls import reverse
 from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, SubjectForm, LessonFeedbackForm, \
     UpdateLessonRequestForm, LessonRequestForm, TutorForm, AssignTutorForm, TutorAvailabilityForm, InvoiceForm, \
     UpdateLessonForm, TutorAvailabilityList
-from tutorials.models.choices import Days
+from .models.shared import *
+from .models.users import *
+from .models.lessons import *
+from .models.invoices import *
+from .models.choices import *
 from tutorials.helpers import login_prohibited, TutorAvailabilityManager
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from datetime import timedelta, datetime
 import calendar
-from .models.models import Invoice, Status, TutorAvailability
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
@@ -34,9 +37,6 @@ from dateutil.relativedelta import relativedelta
 
 from collections import defaultdict
 from django.utils import timezone
-
-from tutorials.models.models import Student, Admin, Tutor, Subject, Lesson, LessonStatus, LessonRequest, LessonUpdateRequest, Status, Invoice, LessonStatus, Term
-
 from collections import OrderedDict
 
 @login_required

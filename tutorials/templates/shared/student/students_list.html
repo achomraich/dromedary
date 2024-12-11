@@ -59,7 +59,6 @@
                 <td class="align-middle">{{ student.user.email }}</td>
                 <td class="align-middle">
                     <a href="{% url 'student_details' student.user.id %}" class="btn btn-info btn-sm">View</a>
-                    <a href="{% url 'student_calendar' student.user.id %}" class="btn btn-primary btn-sm">Calendar</a>
                     {% if user.is_authenticated and user.admin_profile %}
                         <a href="{% url 'student_edit' student.user.id %}" class="btn btn-warning btn-sm">Edit</a>
                         <form action="{% url 'student_delete' student.user.id %}" method="post" style="display:inline;">

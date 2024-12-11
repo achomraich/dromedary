@@ -4,7 +4,7 @@ from datetime import date
 from random import choices
 from tutorials.models.users import Student
 from tutorials.models.lessons import LessonStatus
-from tutorials.models.invoices import PaymentStatus
+from tutorials.models.choices import PaymentStatus
 
 class Invoice(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')

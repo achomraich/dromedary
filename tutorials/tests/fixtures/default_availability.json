@@ -1,0 +1,24 @@
+[
+  {
+    "model": "tutorials.tutoravailability",
+    "pk": 1,
+    "fields": {
+      "tutor": 3,
+      "day": 0,
+      "start_time": "15:00:00",
+      "end_time": "17:00:00",
+      "status": "Available"
+    }
+  },
+  {
+    "model": "tutorials.tutoravailability",
+    "pk": 2,
+    "fields": {
+      "tutor": 3,
+      "day": 1,
+      "start_time": "16:00:00",
+      "end_time": "17:00:00",
+      "status": "Available"
+    }
+  }
+]

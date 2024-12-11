@@ -67,6 +67,7 @@ class Student(models.Model):
     def __str__(self):
         return self.user.full_name()
 
+
 # tested
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')

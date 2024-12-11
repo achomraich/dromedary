@@ -44,7 +44,8 @@ urlpatterns = [
     path('dashboard/tutors/<int:tutor_id>/', views.TutorsView.as_view(), name='tutor_details'),
     path('dashboard/tutors/<int:tutor_id>/edit/', views.TutorsView.as_view(), name='tutor_edit'),
     path('dashboard/tutors/<int:tutor_id>/delete/', views.TutorsView.as_view(), name='tutor_delete'),
-    path('dashboard/tutors/<int:tutor_id>/calendar/<int:year>/<int:month>/', views.TutorsView.as_view(), name='tutor_calendar'),        path('dashboard/tutors/<int:tutor_id>/calendar/', views.TutorsView.as_view(), name='tutor_calendar'),
+    path('dashboard/tutors/<int:tutor_id>/calendar/<int:year>/<int:month>/', views.TutorsView.as_view(), name='tutor_calendar'),
+    path('dashboard/tutors/<int:tutor_id>/calendar/', views.TutorsView.as_view(), name='tutor_calendar'),
 
 
     path('dashboard/lessons/', views.ViewLessons.as_view(), name='lessons_list'),

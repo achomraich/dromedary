@@ -313,8 +313,9 @@ class LessonStatus(models.Model):
 
         super().save(*args, **kwargs)
 
-class BaseInvoice(models.Model):
+class Invoice(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
+    lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -331,15 +332,6 @@ class BaseInvoice(models.Model):
                 self.status = PaymentStatus.OVERDUE
                 self.save()
 
-    def clean(self):
-        """Shared validation logic for invoices."""
-        if self.due_date < date.today():
-            print("Error")
-            raise ValidationError("Due date cannot be in the past.")
-
-class Invoice(BaseInvoice):
-    lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
-
     def mark_as_paid(self):
         """Mark the invoice as paid and update associated lessons."""
         if self.status != 'PAID':
@@ -351,9 +343,11 @@ class Invoice(BaseInvoice):
         """Calculate total hours for all associated lessons."""
         return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
 
-class Invoices(models.Model):
-    lesson_count = models.IntegerField(default=0)
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    def clean(self):
+        """Shared validation logic for invoices."""
+        if self.due_date < date.today():
+            print("Error")
+            raise ValidationError("Due date cannot be in the past.")
 
 class InvoiceLessonLink(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)

@@ -8,3 +8,4 @@ class Migration(migrations.Migration):
 
     operations = [
     ]
+

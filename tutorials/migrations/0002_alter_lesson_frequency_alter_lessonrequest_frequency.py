@@ -17,3 +17,4 @@ class Migration(migrations.Migration):
             field=models.CharField(choices=[('W', 'Weekly'), ('B', 'Biweekly'), ('M', 'Monthly'), ('O', 'Once')], max_length=10),
         ),
     ]
+

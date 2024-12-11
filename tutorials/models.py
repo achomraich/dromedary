@@ -11,6 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 
+
 # tested
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""

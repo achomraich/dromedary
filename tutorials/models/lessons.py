@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 from tutorials.models.users import Tutor, TutorAvailability
 from tutorials.models.shared import Subject, Term
-from tutorials.models.choices import Frequency, Status
+from tutorials.models.choices import Frequency, Status, Days
 
 class BaseLesson(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE)

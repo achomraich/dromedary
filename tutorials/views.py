@@ -64,7 +64,7 @@ def dashboard(request):
             messages.info(request, 'There has been an update to your lesson requests!')
             student.has_new_lesson_notification = False
             student.save()
-        return render(request, 'student/student_dashboard.html', {'user': current_user})
+        return render(request, 'student/student_dashboard.html', context)
 
 @login_prohibited
 def home(request):
@@ -832,7 +832,7 @@ class ViewLessons(LoginRequiredMixin, View):
             )
         )
         #print(self.can_be_updated)
-
+        self.list_of_lessons = self.list_of_lessons.order_by('student__user__first_name')
         lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons, is_handled="N")
         lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
 

@@ -18,12 +18,12 @@ class InvoiceFormTest(TestCase):
         # Create student
         self.student = Student.objects.create(user=self.user)
 
-        # Create subject
+        # Create subject.py
         self.subject = Subject.objects.create(name='Test Subject')
 
         self.valid_form_data = {
             'student': self.student.pk,
-            'subject': self.subject.pk,
+            'subject.py': self.subject.pk,
             'amount': 100.00,
             'due_date': (date.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
             'status': 'UNPAID'

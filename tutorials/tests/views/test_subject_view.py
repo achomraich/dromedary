@@ -39,7 +39,7 @@ class SubjectViewTest(TestCase):
         response = self.client.get(reverse('subject_edit', args=[self.subject1.subject_id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_subjects/subject_edit.html')
-        self.assertEqual(response.context['subject'], self.subject1)
+        self.assertEqual(response.context['subject.py'], self.subject1)
 
     def test_subject_edit_view_post(self):
         self.client.login(username="@admin", password="admin123")
@@ -106,7 +106,7 @@ class SubjectViewTest(TestCase):
         response = self.client.get(reverse('subject_edit', args=[self.subject1.subject_id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_subjects/subject_edit.html')
-        self.assertEqual(response.context['subject'], self.subject1)
+        self.assertEqual(response.context['subject.py'], self.subject1)
 
     def test_get_subjects_list_with_admin(self):
         self.client.login(username="@admin", password="admin123")
@@ -131,7 +131,7 @@ class SubjectViewTest(TestCase):
 
     def test_handle_subject_form_valid(self):
         self.client.login(username="@admin", password="admin123")
-        response = self.client.post(reverse('new_subject'), {'name': 'JavaScript', 'description': 'A subject about historical events.'}, follow=False)
+        response = self.client.post(reverse('new_subject'), {'name': 'JavaScript', 'description': 'A subject.py about historical events.'}, follow=False)
         self.assertEqual(response.status_code, 302)  # Expecting redirect
         self.assertRedirects(response, reverse('subjects_list'))
         self.assertTrue(Subject.objects.filter(name='JavaScript').exists())

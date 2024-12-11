@@ -16,7 +16,7 @@ class SubjectModelTest(TestCase):
         try:
             self.subject.full_clean()
         except ValidationError:
-            self.fail("Default test subject should be deemed valid!")
+            self.fail("Default test subject.py should be deemed valid!")
 
     def test_subject_creation(self):
         subject = Subject.objects.get(name="Python")

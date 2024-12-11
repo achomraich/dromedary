@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='tutor_profile', serialize=False, to=settings.AUTH_USER_MODEL)),
                 ('experience', models.TextField(blank=True)),
-                ('subjects', models.ManyToManyField(blank=True, to='tutorials.subject')),
+                ('subjects', models.ManyToManyField(blank=True, to='tutorials.subject.py')),
             ],
         ),
         migrations.CreateModel(
@@ -145,8 +145,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='lesson',
-            name='subject',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.subject'),
+            name='subject.py',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.subject.py'),
         ),
         migrations.AddField(
             model_name='lesson',
@@ -164,7 +164,7 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('Pending', 'Pending'), ('Booked', 'Booked'), ('Cancelled', 'Cancelled'), ('Completed', 'Completed'), ('Confirmed', 'Confirmed'), ('Rejected', 'Rejected')], default='Pending', max_length=10)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('lesson_assigned', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='tutorials.lesson')),
-                ('subject', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.subject')),
+                ('subject.py', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.subject.py')),
                 ('term', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.term')),
                 ('student', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tutorials.student')),
             ],

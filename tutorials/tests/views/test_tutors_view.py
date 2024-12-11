@@ -187,7 +187,7 @@ class TutorsTestCase(TestCase):
 
     def test_get_search_subject(self):
         self.client.login(username='@johndoe', password='Password123')
-        response = self.client.get(self.url, {'subject': 'Python'})
+        response = self.client.get(self.url, {'subject.py': 'Python'})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_tutors/tutors_list.html')
         self.assertContains(response, self.tutor1.user.username)

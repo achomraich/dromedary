@@ -23,6 +23,16 @@ def format_frequency(value):
         return 'Day'
     return value
 
+@register.filter
+def format_day(value):
+    """Format frequency value ('W', 'M', 'D') as ('Week', 'Month' and 'Day'))"""
+    if value == 'Tue':
+        return 'Tuest'
+    elif value == 'M':
+        return 'Month'
+    elif value == 'D':
+        return 'Day'
+    return value
 
 @register.filter
 def get(dictionary: dict, key):
@@ -34,3 +44,22 @@ def dict_get(dictionary, key):
         return dictionary.get(key)
     except AttributeError:
         return None
+
+from collections import defaultdict
+
+
+@register.filter
+def group_by_day(tutor_availability_list):
+    grouped = defaultdict(list)
+    for tutor in tutor_availability_list:
+        grouped[tutor.day].append(tutor)
+    return grouped
+
+@register.filter(name='add_class')
+def add_class(value, css_class):
+    """
+    Adds a CSS class to a form field's widget.
+    """
+    if hasattr(value, 'as_widget'):
+        return value.as_widget(attrs={"class": css_class})
+    return value

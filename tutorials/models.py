@@ -9,6 +9,9 @@ from django.conf import settings
 from django.utils import timezone
 from .choices import Status, Days, Frequency, PaymentStatus
 
+
+from tutorials.choices import Status, Days, Frequency, PaymentStatus
+
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""
     username = models.CharField(
@@ -30,6 +33,11 @@ class User(AbstractUser):
 
     def full_name(self):
         """Return a string containing the user's full name."""
+        return f'{self.first_name} {self.last_name}'
+
+    def __str__(self):
+        """Return a string containing the user's full name."""
+
         return f'{self.first_name} {self.last_name}'
 
     def gravatar(self, size=120):
@@ -57,7 +65,6 @@ class Student(models.Model):
     def __str__(self):
         return self.user.full_name()
 
-
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
@@ -81,6 +88,9 @@ class TutorAvailability(models.Model):
 
     class Meta:
         unique_together = ('tutor', 'day', 'start_time', 'end_time')
+        
+    def __str__(self):
+        return f"{self.tutor.user.full_name()} - {self.get_day_display()} - {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')} ({self.get_status_display()})"
 
 class TutorReview(models.Model):
     class Rating(models.TextChoices):
@@ -264,12 +274,11 @@ class LessonRequest(BaseLesson):
         return self.status == Status.CONFIRMED
 
 class LessonUpdateRequest(models.Model):
+
     class UpdateOption(models.TextChoices):
         CHANGE_TUTOR = '1', 'Change Tutor'
         CHANGE_DAY_TIME = '2', 'Change Day/Time'
         CANCEL_LESSONS = '3', 'Cancel Lessons'
-        CHANGE_FREQUENCY = '4', 'Change Frequency'
-        CHANGE_DURATION = '5', 'Change Duration of the Lesson'
 
     class MadeBy(models.TextChoices):
         TUTOR = 'Tutor', 'Tutor'
@@ -303,6 +312,9 @@ class LessonStatus(models.Model):
 
     def save(self, *args, **kwargs):
         today = date.today()
+
+        if self.status != Status.COMPLETED:
+            self.feedback = ''
 
         if self.date > today:
             self.feedback = ""

@@ -2,7 +2,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from libgravatar import Gravatar
-from tutorials.models.shared import Days
+from tutorials.models.choices import Days
 
 class User(AbstractUser):
     """Model used for user authentication, and team member related information."""

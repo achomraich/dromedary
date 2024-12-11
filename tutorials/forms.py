@@ -11,6 +11,7 @@ from .models.shared import *
 from .models.users import *
 from .models.lessons import *
 from .models.invoices import *
+from .models.choices import *
 
 
 from django import forms

@@ -62,6 +62,10 @@ class Tutor(models.Model):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
+    has_new_lesson_notification = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.full_name()
 
 # tested
 class Admin(models.Model):

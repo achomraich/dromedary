@@ -26,6 +26,7 @@
                 {% if lessons %}
                     {% for lesson in lessons %}
                         <tr>
+
                             <td>{{ lesson.student.user.username }}</td>
                             <td>{{ lesson.tutor.user.username }}</td>
                             <td>{{ lesson.subject }}</td>

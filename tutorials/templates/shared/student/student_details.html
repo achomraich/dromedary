@@ -24,7 +24,16 @@
                     </div>
                     <div class="mb-3">
                         <h5 class="mt-3"><strong>Other details:</strong></h5>
-                        <p>(Tutors related and modules)</p>
+                        <p class="mb-1"><strong>Subjects:</strong>
+                            {% for subject in subjects %}
+                                {% if subject == subjects.last %}
+                                    {{ subject }}
+                                {% else %}
+                                    {{ subject }}, 
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                        <p><strong>Tutors:</strong> {{ tutors }}</p>
                     </div>
                 
                     <h5 class="mt-4"><strong>Lessons</strong></h5>
@@ -44,7 +53,7 @@
                             <tbody>
                                 {% for lesson in lessons %}
                                     <tr>
-                                        <td>{{ lesson.subject_id.name }}</td>
+                                        <td>{{ lesson.subject }}</td>
                                         <td>{{ lesson.tutor.user.full_name }}</td>
                                         <td>{{ lesson.tutor.user.email }}</td>
                                         <td>{{ lesson.term_id.start_date }} - {{ lesson.term_id.end_date }}</td>

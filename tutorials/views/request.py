@@ -7,7 +7,13 @@ from tutorials.forms import AssignTutorForm, LessonRequestForm
 from tutorials.models import LessonRequest, Lesson, Status
 
 
+"""
+This file contains classes to handle 
+Requests 
+"""
+
 class RequestView(LoginRequiredMixin, View):
+    """ Handles request list views for admin and users"""
     status = None
     requests_list = None
 
@@ -53,7 +59,7 @@ class RequestView(LoginRequiredMixin, View):
         return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
 
     def assign_tutor(self, request, lrequest):
-
+        ''' Allows admin to assign a tutor to the request by student'''
         form = AssignTutorForm(request.POST, existing_request=lrequest)
 
         if form.is_valid():
@@ -63,7 +69,6 @@ class RequestView(LoginRequiredMixin, View):
 
             return redirect('requests')
         else:
-            print("Form errors:", form.errors.as_data())
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
             lrequest.refresh_from_db()
             return self.request_assign(request, lrequest.id, form)
@@ -93,6 +98,7 @@ class RequestView(LoginRequiredMixin, View):
 
 
     def reject_request(self, request, lrequest):
+        ''' Allows admin to reject a request '''
         lrequest.status = Status.REJECTED
         lrequest.save()
         self.toggle_notification(request, lrequest)
@@ -101,6 +107,7 @@ class RequestView(LoginRequiredMixin, View):
         return redirect('requests')
 
     def toggle_notification(self, request, lrequest):
+        ''' Handles notification to inform a student the there is updates on their request '''
         lrequest.student.has_new_lesson_notification = True
         lrequest.student.save()
 

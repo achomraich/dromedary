@@ -6,9 +6,17 @@ from django.views import View
 
 from tutorials.forms import SubjectForm
 from tutorials.models import Subject
-class SubjectView(View):
 
+
+"""
+This file contains classes to handle 
+Subjects view
+"""
+
+class SubjectView(View):
+    """ Allowing Admins to view, edit and delete subjects """
     def get(self, request, subject_id=None):
+        ''' Handles permissions '''
         if subject_id:
             return self.edit_subject(request, subject_id)
 
@@ -36,10 +44,12 @@ class SubjectView(View):
         return redirect('subjects_list')
 
     def delete_subject(self, request, subject):
+        ''' deletes a subject '''
         subject.delete()
         return redirect('subjects_list')
 
     def handle_subject_form(self, request, subject=None):
+        ''' subject form for adding or editing '''
         form = SubjectForm(request.POST or None, instance=subject)
 
         if form.is_valid():
@@ -51,6 +61,7 @@ class SubjectView(View):
         return form
 
     def edit_subject(self, request, subject_id):
+        ''' handles edit subject '''
         subject = get_object_or_404(Subject, pk=subject_id)
         form = self.handle_subject_form(request, subject)
 
@@ -60,6 +71,7 @@ class SubjectView(View):
         return render(request, 'admin/manage_subjects/subject_edit.html', {'form': form, 'subject': subject})
 
     def create_subject(self, request):
+        ''' create new subject form '''
         form = self.handle_subject_form(request)
         if isinstance(form, HttpResponseRedirect):  # Redirect if the form is valid
             return form

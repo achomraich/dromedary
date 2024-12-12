@@ -45,12 +45,6 @@ Run all tests with:
 $ python3 manage.py test
 ```
 
-Unseed the development database with:
-
-```
-$ python3 manage.py unseed
-```
-
 *The above instructions should work in your version of the application.  If there are deviations, declare those here in bold.  Otherwise, remove this line.*
 
 ## Sources

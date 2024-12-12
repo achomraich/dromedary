@@ -255,7 +255,7 @@ class Command(BaseCommand):
         students = Student.objects.all()[:5]
         subjects = Subject.objects.all()
         terms = Term.objects.all()
-        frequencies = ['W', 'B', 'M', 'O']  # Weekly, Biweekly, Monthly, Once
+        frequencies = ['W', 'F', 'M', 'O']  # Weekly, Fortnightly, Monthly, Once
         statuses = ['Pending', 'Booked', 'Cancelled', 'Completed', 'Confirmed', 'Rejected']
 
         for i in range(10):  # Create 10 lesson requests

@@ -37,7 +37,6 @@ class LessonRequestTest(TestCase):
         self.valid_data["start_date"] = date.today() + timedelta(days=10)
         lesson_request = LessonRequest(**self.valid_data)
         try:
-            print(lesson_request.start_date)
             lesson_request.clean()
         except ValidationError:
             self.fail("clean() raised ValidationError unexpectedly for valid data!")

@@ -131,7 +131,6 @@ class EntityView(LoginRequiredMixin, View):
             students = ', '.join(
                 sorted(student.user.full_name() for student in set(lesson.student for lesson in lessons)))
             availability = TutorAvailability.objects.filter(tutor=entity).order_by('day')
-            print(availability)
 
         content = {
             self.model.__name__.lower(): entity,

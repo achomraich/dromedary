@@ -1,9 +1,11 @@
 {% extends 'base_content.html' %}
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" style="max-width: 600px;">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">Welcome to your student dashboard, {{ user.username }}</h2>
+           <div class="d-flex flex-column align-items-center justify-content-center" style="height: 10vh;">
+                <h2 class="mb-4">Hello, {{ user.username }}</h2>
+            </div>
             <!-- Current Term Card -->
             <div class="card mb-3">
                 <div class="card-body py-2">

@@ -163,7 +163,7 @@ class UpdateLesson(LoginRequiredMixin, View):
         if not first_pending_lesson:
             messages.error(request, 'No lessons to reschedule!')
             LessonUpdateRequest.objects.filter(lesson_=lesson_id, is_handled="N").update(is_handled="Y")
-            Lesson.objects.filter(lesson=lesson_id).update(notes='—')
+            Lesson.objects.filter(lesson=lesson_id).update(notes='')
             return None
 
         form = UpdateLessonForm(
@@ -241,4 +241,4 @@ class UpdateLesson(LoginRequiredMixin, View):
         print("!")
         print()
         LessonUpdateRequest.objects.filter(lesson=lesson_id, is_handled="N").update(is_handled="Y")
-        Lesson.objects.filter(id=lesson_id).update(notes='—')
+        Lesson.objects.filter(id=lesson_id).update(notes='')

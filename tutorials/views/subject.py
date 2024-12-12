@@ -9,6 +9,9 @@ from tutorials.models import Subject
 class SubjectView(View):
 
     def get(self, request, subject_id=None):
+        if request.path.endswith('create'):
+            return self.create_subject(request)
+
         if subject_id:
             return self.edit_subject(request, subject_id)
 

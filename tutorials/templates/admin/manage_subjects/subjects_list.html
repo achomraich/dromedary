@@ -6,11 +6,10 @@
     <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back</a>
     <h1 class="mb-4">Subject List</h1>
 
-    <form action="{% url 'new_subject' %}" method="post">
+    <form action="{% url 'new_subject' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary mb-3">Add New Subject</button>
     </form>
-
     <table class="table table-bordered table-hover">
         <thead class="thead-dark">
             <tr>

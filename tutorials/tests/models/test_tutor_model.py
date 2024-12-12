@@ -23,8 +23,7 @@ class TutorModelTest(TestCase):
 """Unit tests for the Tutor model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tutorials.models.models import User
-from tutorials.models.models import Tutor
+from tutorials.models import User, Tutor
 
 class TutorModelTestCase(TestCase):
     """Unit tests for the Tutor model."""

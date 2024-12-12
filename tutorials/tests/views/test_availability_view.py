@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.messages import get_messages, ERROR
 
-from tutorials.models.models import TutorAvailability
+from tutorials.models import TutorAvailability
 from tutorials.forms import TutorAvailabilityForm
 
 

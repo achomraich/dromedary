@@ -3,7 +3,7 @@ from django import forms
 from django.test import TestCase
 from django.forms import ModelMultipleChoiceField
 from tutorials.forms import TutorForm
-from tutorials.models.models import Tutor, Subject, User
+from tutorials.models import Tutor, Subject, User
 
 class UserFormTestCase(TestCase):
     """Unit tests of the tutor form."""

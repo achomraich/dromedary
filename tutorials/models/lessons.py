@@ -56,7 +56,6 @@ class Lesson(BaseLesson):
         super().save(*args, **kwargs)
 
         if is_new:
-            print("New Lesson detected")
             term = self.term
             times = [
                 pytime(hour=h, minute=m)
@@ -112,7 +111,6 @@ class Lesson(BaseLesson):
                         current_date += timedelta(weeks=4)
                     elif self.frequency == 'F':  # Biweekly
                         current_date += timedelta(weeks=2)
-                    print("LessonStatus created")
                 except Exception as e:
                     print(f"Error creating LessonStatus: {e}")
 
@@ -124,7 +122,6 @@ class Lesson(BaseLesson):
                     end_time=end_time,
                     status='Booked',
                 )
-                print("TutorAvailability created")
             except Exception as e:
                 print(f"Error creating TutorAvailability: {e}")
 

@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from tutorials.models.models import User, Admin, Student, Tutor, Lesson
+from tutorials.models import User, Admin, Student, Tutor, Lesson
 
 class TutorsTestCase(TestCase):
 

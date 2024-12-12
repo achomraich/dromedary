@@ -3,7 +3,7 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
-from tutorials.models.models import (
+from tutorials.models import (
     Invoice, Student, User, LessonStatus, Tutor,
     Subject, Term, Lesson, InvoiceLessonLink
 )

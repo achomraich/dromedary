@@ -1,6 +1,6 @@
 from django.test import TestCase
 from tutorials.forms import InvoiceForm
-from tutorials.models.models import Student, Subject, User
+from tutorials.models import Student, Subject, User
 from datetime import date, timedelta
 
 

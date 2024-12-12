@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from tutorials.models.models import Lesson, LessonStatus, LessonUpdateRequest, Status, User, Student, Tutor, Term, Subject, Admin
+from tutorials.models import Lesson, LessonStatus, LessonUpdateRequest, Status, User, Student, Tutor, Term, Subject, Admin
 from datetime import date, time, timedelta
 
 class ViewLessonsTests(TestCase):

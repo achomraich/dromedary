@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.models.models import LessonStatus, Lesson, Tutor, Student, Subject, Term, Status, User
+from tutorials.models import LessonStatus, Lesson, Tutor, Student, Subject, Term, Status, User
 from datetime import date, time, timedelta
 from django.core.exceptions import ValidationError
 

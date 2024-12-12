@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from tutorials.models.models import Subject, User, Admin
+from tutorials.models import Subject, User, Admin
 
 class SubjectViewTest(TestCase):
 

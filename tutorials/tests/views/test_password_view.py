@@ -4,7 +4,7 @@ from django.contrib.auth.hashers import check_password
 from django.test import TestCase
 from django.urls import reverse
 from tutorials.forms import PasswordForm
-from tutorials.models.models import User
+from tutorials.models import User
 from tutorials.tests.helpers import reverse_with_next
 
 class PasswordViewTest(TestCase):

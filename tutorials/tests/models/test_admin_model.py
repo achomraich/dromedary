@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from tutorials.models.models import Admin, User
+from tutorials.models import Admin, User
 
 class AdminModelTest(TestCase):
 

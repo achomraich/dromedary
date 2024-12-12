@@ -1,7 +1,7 @@
 from django.test import TestCase
 from tutorials.forms import LessonFeedbackForm
 from django import forms
-from tutorials.models.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject
+from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject
 import datetime
 
 class LessonFeedbackFormTestCase(TestCase):

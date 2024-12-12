@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.models.models import Status
+from tutorials.models import Status
 
 
 class StatusTestCase(TestCase):

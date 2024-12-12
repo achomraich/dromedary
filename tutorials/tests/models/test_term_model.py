@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.models.models import Term
+from tutorials.models import Term
 from datetime import date
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError

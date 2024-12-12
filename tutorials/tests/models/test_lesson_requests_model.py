@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.models.models import LessonRequest, Student, User
+from tutorials.models import LessonRequest, Student, User
 
 class LessonRequestModelTest(TestCase):
     def setUp(self):

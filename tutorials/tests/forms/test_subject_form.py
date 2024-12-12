@@ -1,7 +1,7 @@
 from django.test import TestCase
 from tutorials.forms import SubjectForm
 from django import forms
-from tutorials.models.models import Subject
+from tutorials.models import Subject
 
 class SubjectFormTestCase(TestCase):
 

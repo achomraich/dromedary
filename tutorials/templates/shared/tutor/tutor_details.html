@@ -5,7 +5,9 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-12">
-            <a href="{% url 'tutors_list' %}" class="btn btn-secondary mt-2 mb-4">Back</a>
+            <a href="{% url 'tutors_list' %}" class="btn btn-secondary mt-2 mb-3">
+                <i class="bi bi-arrow-left-square"></i> Back to Tutors List
+            </a>
         </div>
     </div>
     <div class="row justify-content-center">
@@ -97,11 +99,12 @@
                         <p>No lessons found for this tutor.</p>
                     {% endif %}
                 </div>
-                <div class="card-footer text-center">
+                <td class="d-flex gap-2">
                     {% if user.is_authenticated and user.admin_profile %}
-                        <a href="{% url 'tutor_edit' tutor.user.id %}" class="btn btn-warning me-2">Edit</a>
+                    <a href="{% url 'tutor_edit' tutor.user.id %}" class="btn btn-outline-warning btn-sm d-flex align-items-center justify-content-center" style="width: 120px; height: 40px;">
+                        <i class="bi bi-pencil-square me-1"></i> Edit
+                    </a>
                     {% endif %}
-                    <a href="{% url 'tutors_list' %}" class="btn btn-secondary">Back to List</a>
                 </div>
             </div>
         </div>

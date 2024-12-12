@@ -1,0 +1,42 @@
+[
+  {
+    "model": "tutorials.invoicelessonlink",
+    "pk": 1,
+    "fields": {
+      "invoice": 1,
+      "lesson": 1
+    }
+  },
+  {
+    "model": "tutorials.invoicelessonlink",
+    "pk": 2,
+    "fields": {
+      "invoice": 1,
+      "lesson": 2
+    }
+  },
+  {
+    "model": "tutorials.invoicelessonlink",
+    "pk": 3,
+    "fields": {
+      "invoice": 2,
+      "lesson": 3
+    }
+  },
+  {
+    "model": "tutorials.invoicelessonlink",
+    "pk": 4,
+    "fields": {
+      "invoice": 2,
+      "lesson": 4
+    }
+  },
+  {
+    "model": "tutorials.invoicelessonlink",
+    "pk": 5,
+    "fields": {
+      "invoice": 3,
+      "lesson": 5
+    }
+  }
+]

@@ -3,6 +3,7 @@ from django.db.models import OuterRef, Exists
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.core.paginator import Paginator
 from django.utils.timezone import now
 from django.views import View
 
@@ -39,14 +40,18 @@ class ViewLessons(LoginRequiredMixin, View):
                 )
             )
         )
-        # print(self.can_be_updated)
+
+        self.list_of_lessons = self.list_of_lessons.order_by('student__user__first_name')
+        paginator = Paginator(self.list_of_lessons, 20)
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
 
         lessons_requests = LessonUpdateRequest.objects.filter(lesson__in=self.list_of_lessons, is_handled="N")
         lessons_with_requests = set(lessons_requests.values_list('lesson_id', flat=True))
 
         return render(request, f'{self.status}/manage_lessons/lessons_list.html',
-                      {"list_of_lessons": self.list_of_lessons, 'lessons_with_requests': lessons_with_requests,
-                       'can_handle_request': self.can_be_updated})
+                      {"list_of_lessons": page_obj, 'lessons_with_requests': lessons_with_requests,
+                       'can_handle_request': self.can_be_updated, 'page_obj': page_obj})
 
     def post(self, request, lesson_id=None):
 

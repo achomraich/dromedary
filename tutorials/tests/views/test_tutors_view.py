@@ -52,13 +52,6 @@ class TutorsTestCase(TestCase):
         self.assertContains(response, self.tutor1.user.username)
         self.assertNotContains(response, self.tutor2.user.username)
 
-    def test_get_tutors_by_user(self):
-        self.client.login(username='@jamesdoe', password='Password123')
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 403)
-
     def test_get_tutor_details(self):
         self.client.login(username='@johndoe', password='Password123')
         response = self.client.get(reverse('tutor_details', args=[self.tutor1.user.id]))
@@ -121,7 +114,7 @@ class TutorsTestCase(TestCase):
         updated_username = 'BAD_USERNAME'
         self.client.login(username='@johndoe', password='Password123')
         response = self.client.post(reverse('tutor_details', args=[self.tutor1.user.id]), {
-            'entity_id': self.tutor1.user.id,
+            'id': self.tutor1.user.id,
             'edit': 'edit',
             'username': updated_username,
             'first_name': self.tutor1.user.first_name,

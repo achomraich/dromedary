@@ -148,10 +148,10 @@ class LessonRequest(BaseLesson):
 
     def clean(self):
         """Ensures duration is positive, and the start date is positive and within the term dates."""
-        if self.duration <= timedelta(0):
-            raise ValidationError("Duration must be a positive value.")
         if not self.start_date:
             raise ValidationError("Start date is required.")
+        if self.duration <= timedelta(0):
+            raise ValidationError("Duration must be a positive value.")
         if self.start_date < date.today():
             raise ValidationError("Start date must be in the future.")
         if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
@@ -210,8 +210,6 @@ class LessonStatus(models.Model):
         if self.date > date.today() and self.feedback != "":
             raise ValidationError("Feedback should be empty for future lessons.")
 
-        if not self.date:
-            raise ValidationError("Date cannot be null.")
 
     def save(self, *args, **kwargs):
         today = date.today()
@@ -223,7 +221,6 @@ class LessonStatus(models.Model):
                 self.status = Status.CANCELLED
             elif self.status == Status.SCHEDULED:
                 self.status = Status.COMPLETED
-
 
         if self.status != Status.COMPLETED:
             self.feedback = ''

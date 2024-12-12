@@ -120,6 +120,32 @@ class LessonModelTestCase(TestCase):
             )
             lesson.clean()
 
+        with self.assertRaises(ValidationError):
+            lesson = Lesson(
+                tutor=self.tutor,
+                student=self.student,
+                subject=self.subject,
+                term=self.term,
+                frequency="W",
+                duration="timedelta(hours=-1)",
+                start_date="",
+                price_per_lesson=50,
+            )
+            lesson.clean()
+
+        with self.assertRaises(ValidationError):
+            lesson = Lesson(
+                tutor=self.tutor,
+                student=self.student,
+                subject=self.subject,
+                term=self.term,
+                frequency="W",
+                duration=date(2024, 9, 15),
+                start_date=date(2023, 9, 15),
+                price_per_lesson=50,
+            )
+            lesson.clean()
+
     def test_default_notes_value(self):
         lesson = Lesson.objects.create(
             tutor=self.tutor,

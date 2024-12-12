@@ -1,8 +1,10 @@
 from django.test import TestCase
 from tutorials.models import LessonRequest, Student, User, Subject, Term, Status
 from datetime import date, timedelta
+from django.core.exceptions import ValidationError
 
 class LessonRequestModelTest(TestCase):
+
     def setUp(self):
         # Create a user and student for testing
         self.user = User.objects.create_user(
@@ -35,3 +37,18 @@ class LessonRequestModelTest(TestCase):
         self.assertEqual(self.lesson_request.frequency, 'W')
         self.assertEqual(self.lesson_request.start_date, date(2025, 2, 15))
         self.assertEqual(self.lesson_request.status, Status.PENDING)
+
+    def test_lesson_request_invalid_start_date(self):
+
+        self.subject1 = Subject.objects.create(name="C++", description="Python Subject")
+        with self.assertRaises(ValidationError):
+            lesson_request = LessonRequest.objects.create(
+            subject=self.subject1,
+            time='14:00',
+            status=Status.PENDING,
+            frequency='W',
+            term=self.term,
+            start_date="",
+            student=self.student
+            )
+            lesson_request.clean()

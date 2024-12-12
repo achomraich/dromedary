@@ -1,7 +1,8 @@
 """Unit tests for the User model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tutorials.models import User
+from tutorials.models import User, Tutor, Student, TutorAvailability
+from datetime import time
 
 class UserModelTestCase(TestCase):
     """Unit tests for the User model."""
@@ -156,3 +157,37 @@ class UserModelTestCase(TestCase):
     def _assert_user_is_invalid(self):
         with self.assertRaises(ValidationError):
             self.user.full_clean()
+
+    def test_tutor_str(self):
+        """Test the string representation of TutorAvailability."""
+        # Format the expected string
+
+        self.tutor=Tutor.objects.create(user=self.user)
+
+        # Assert that the actual string matches the expected format
+        self.assertEqual('John Doe', str(self.tutor))
+
+    def test_student_str(self):
+        """Test the string representation of TutorAvailability."""
+        # Format the expected string
+
+        self.student = Student.objects.create(user=self.user)
+
+        # Assert that the actual string matches the expected format
+        self.assertEqual('John Doe', str(self.student))
+
+    def test_tutor_availability_str(self):
+        """Test the string representation of TutorAvailability."""
+        # Format the expected string
+        self.tutor = Tutor.objects.create(user=self.user)
+
+        self.tutor_availability = TutorAvailability.objects.create(
+            tutor=Tutor.objects.get(user=self.tutor),
+            day=0,
+            start_time=time(9, 0),
+            end_time=time(13, 0),
+            status="Available",
+        )
+
+        # Assert that the actual string matches the expected format
+        self.assertEqual('John Doe - Monday - 09:00 - 13:00 (Available)', str(self.tutor_availability))

@@ -120,7 +120,7 @@ class RequestView(LoginRequiredMixin, View):
 
 class MakeRequestView(LoginRequiredMixin, View):
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         form = LessonRequestForm()
         return render(request, 'student/requests/lesson_request_form.html', {'form': form})
 

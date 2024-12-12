@@ -40,7 +40,7 @@ class AvailabilityView(ListView, LoginRequiredMixin):
 
 class AddEditAvailabilityView(LoginRequiredMixin, View):
     """ Handles adding or editing availability """
-    def get(self, request, pk=None):
+    def get(self, request, pk=None, *args, **kwargs):
         if pk:
             availability = get_object_or_404(TutorAvailability, pk=pk)
             form = TutorAvailabilityForm(instance=availability)
@@ -48,7 +48,7 @@ class AddEditAvailabilityView(LoginRequiredMixin, View):
             form = TutorAvailabilityForm()
         return render(request, 'tutor/my_availability/add_edit_availability.html', {'form': form, 'pk': pk})
 
-    def post(self, request, pk=None):
+    def post(self, request, pk=None, *args, **kwargs):
         if pk:
             availability = get_object_or_404(TutorAvailability, pk=pk)
             form = TutorAvailabilityForm(request.POST, instance=availability)

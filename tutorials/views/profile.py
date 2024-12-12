@@ -57,7 +57,7 @@ class ProfileUpdateView(LoginRequiredMixin, TemplateView):
         context['tutor_form'] = tutor_form
         return context
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         user_form = UserForm(self.request.POST, instance=self.request.user)
         if hasattr(self.request.user, 'tutor_profile'):
             tutor_form = TutorForm(self.request.POST, instance=self.request.user.tutor_profile)

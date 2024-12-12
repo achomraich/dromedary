@@ -17,7 +17,7 @@ class LoginProhibitedMixin:
             return self.handle_already_logged_in(*args, **kwargs)
         return super().dispatch(*args, **kwargs)
 
-    def handle_already_logged_in(self):
+    def handle_already_logged_in(self, *args, **kwargs):
         url = self.get_redirect_when_logged_in_url()
         return redirect(url)
 

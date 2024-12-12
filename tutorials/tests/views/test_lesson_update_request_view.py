@@ -82,7 +82,7 @@ class UpdateLessonRequestTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'student/manage_lessons/request_changes.html')
         self.assertIn('form', response.context)
-        self.assertIn('subject', response.context)
+        self.assertIn('subject.py', response.context)
 
     def test_post_request_changes_as_student(self):
         self.client.login(username='@student', password='student123')

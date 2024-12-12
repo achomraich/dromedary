@@ -5,18 +5,21 @@ from django.utils.timezone import now
 from tutorials.models import Tutor, Lesson, LessonStatus, Status, LessonStatus, TutorAvailability
 from datetime import timedelta, datetime
 import datetime
-from tutorials.choices import Days
+from tutorials.models.choices import Days
 from django.db.models import Q, Exists, OuterRef
+
 
 def login_prohibited(view_function):
     """Decorator for view functions that redirect users away if they are logged in."""
-    
+
     def modified_view_function(request):
         if request.user.is_authenticated:
             return redirect(settings.REDIRECT_URL_WHEN_LOGGED_IN)
         else:
             return view_function(request)
+
     return modified_view_function
+
 
 class TutorAvailabilityManager:
     def get_current_tutor_availability(self, lesson_id):
@@ -73,6 +76,7 @@ class TutorAvailabilityManager:
         Lesson.objects.filter(id=lesson_id).update(
             notes=f"All lessons were cancelled on {current_datetime.date()}."
         )
+        self.restore_old_tutor_availability(Lesson.objects.get(id=lesson_id).tutor, planned_lessons[0].date, planned_lessons[0].time, Lesson.objects.get(id=lesson_id).duration)
 
     def get_closest_day(self, lesson_id):
         current_datetime = now()
@@ -83,8 +87,10 @@ class TutorAvailabilityManager:
         if last_date:
             return last_date.date.weekday()
 
-        first_pending_lesson=LessonStatus.objects.filter(lesson_id=lesson_id, status=Status.PENDING).order_by('date').last()
-        if first_pending_lesson and Lesson.objects.get(pk=first_pending_lesson.lesson_id.lesson_id).term_id.end_date > now().date():
+        first_pending_lesson = LessonStatus.objects.filter(lesson_id=lesson_id, status=Status.PENDING).order_by(
+            'date').last()
+        if first_pending_lesson and Lesson.objects.get(
+                pk=first_pending_lesson.lesson_id.lesson_id).term_id.end_date > now().date():
             return first_pending_lesson.date.weekday()
         return None
 
@@ -93,10 +99,10 @@ class TutorAvailabilityManager:
         try:
             start_datetime = datetime.datetime.strptime(str(lesson_start_time), "%H:%M:%S")
 
-            #print(start_datetime)
+            # print(start_datetime)
             end_time = (start_datetime + duration).time()
 
-            #print(end_time)
+            # print(end_time)
         except Exception as e:
             print(f"An error occurred: {str(e)}")
 
@@ -127,30 +133,31 @@ class TutorAvailabilityManager:
         print("start_datetime")
         start_datetime = datetime.datetime.strptime(str(start_time), "%H:%M")
         duration_timedelta = datetime.timedelta(
-        hours=duration.hour,
-        minutes=duration.minute,
-        seconds=duration.second
+            hours=duration.hour,
+            minutes=duration.minute,
+            seconds=duration.second
         )
 
         print(duration_timedelta)
         try:
             end_time = (start_datetime + duration_timedelta)
             print(end_time.time())
-            print(f"TutorAvailability.objects.filter(tutor={tutor},day={date},start_time__lte={start_datetime.time()},end_time__gte={end_time.time()}, status='Available')"
-                  f"end_time__gte={end_time.time()}, status='Available')")
+            print(
+                f"TutorAvailability.objects.filter(tutor={tutor},day={date},start_time__lte={start_datetime.time()},end_time__gte={end_time.time()}, status='Available')"
+                f"end_time__gte={end_time.time()}, status='Available')")
             print(TutorAvailability.objects.filter(status='Available'))
             print(TutorAvailability.objects.filter(tutor=tutor,
-                                         day=date,
-                                         start_time__lte=start_datetime.time(),
-                                         end_time__gte=end_time.time(), status='Available'))
+                                                   day=date,
+                                                   start_time__lte=start_datetime.time(),
+                                                   end_time__gte=end_time.time(), status='Available'))
         except Exception as e:
             print(f"{e}")
             return None
         print("yftjgnh")
         return TutorAvailability.objects.filter(tutor=tutor,
-                                         day=date,
-                                         start_time__lte=start_datetime.time(),
-                                         end_time__gte=end_time.time(), status='Available')
+                                                day=date,
+                                                start_time__lte=start_datetime.time(),
+                                                end_time__gte=end_time.time(), status='Available')
 
     def merge_overlapping_availabilities(self, availabilities):
         merged_availabilities = []
@@ -225,9 +232,12 @@ class TutorAvailabilityManager:
                 time=time,
                 status=Status.SCHEDULED
             )
-
-            if frequency == 'W':
+            if frequency == 'O':
+                return
+            elif frequency == 'W':
                 current_date += datetime.timedelta(weeks=1)
+            elif frequency == 'F':
+                current_date += datetime.timedelta(weeks=2)
             elif frequency == 'M':
                 current_date += datetime.timedelta(weeks=4)
             else:

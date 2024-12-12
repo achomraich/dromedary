@@ -3,7 +3,7 @@
 {% block content %}
 
     <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mb-3">Back to dashboard</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back to dashboard</a>
 
         <h1 class="mb-2">Lessons</h1>
         {% load lesson_filters %}
@@ -42,7 +42,7 @@
                                             Update Lesson</button>
                                     </form>
                                 {% else %}
-                                    {% if lesson.lesson_id in lessons_with_requests %}
+                                    {% if lesson.id in lessons_with_requests %}
                                         <p>Request already made</p>
                                     {% else %}
                                         <p>No Booked Lessons</p>

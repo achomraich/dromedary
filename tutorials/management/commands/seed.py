@@ -1,6 +1,10 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from tutorials.models import User, Admin, Student, Tutor, Lesson, Subject, Term, Frequency
+from tutorials.models.shared import *
+from tutorials.models.users import *
+from tutorials.models.lessons import *
+from tutorials.models.invoices import *
+from tutorials.models.choices import *
 
 import pytz
 from faker import Faker
@@ -37,8 +41,8 @@ class Command(BaseCommand):
     """Build automation command to seed the database."""
 
 
-    USER_COUNT = 30
-    LESSON_COUNT = 50
+    USER_COUNT = 10
+    LESSON_COUNT = 15
 
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
@@ -126,7 +130,7 @@ class Command(BaseCommand):
     def create_subjects(self):
         for data in subjects:
             try:
-                # Check for existing subject by name
+                # Check for existing subject.py by name
                 existing_subject = Subject.objects.filter(name=data["name"]).first()
                 if existing_subject:
                     print(f"Subject '{data['name']}' already exists.")
@@ -166,7 +170,7 @@ class Command(BaseCommand):
             self.create_lesson({
                 'tutor': tutor,
                 'student': student,
-                'subject': subject,
+                'subject.py': subject,
                 'term': term,
                 'frequency': frequency,
                 'duration': duration,
@@ -179,7 +183,7 @@ class Command(BaseCommand):
             Lesson.objects.create(
                 tutor=data["tutor"],
                 student=data["student"],
-                subject=data["subject"],
+                subject=data["subject.py"],
                 term=data["term"],
                 frequency=data["frequency"],
                 duration=data["duration"],
@@ -187,7 +191,7 @@ class Command(BaseCommand):
                 price_per_lesson=data["price_per_lesson"]
             )
             tutor = data["tutor"]
-            tutor.subjects.add(data["subject"])
+            tutor.subjects.add(data["subject.py"])
         except:
             pass
 

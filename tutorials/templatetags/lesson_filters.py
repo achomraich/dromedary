@@ -21,6 +21,10 @@ def format_frequency(value):
         return 'Month'
     elif value == 'D':
         return 'Day'
+    elif value == 'O':
+        return 'Once'
+    elif value == 'F':
+        return 'Fortnightly'
     return value
 
 @register.filter

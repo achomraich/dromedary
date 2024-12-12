@@ -7,125 +7,9 @@ from datetime import date, timedelta, datetime, time as pytime
 from random import randint, choice, choices
 from django.conf import settings
 from django.utils import timezone
-from .choices import Status, Days, Frequency, PaymentStatus
-
-
-from tutorials.choices import Status, Days, Frequency, PaymentStatus
-
-class User(AbstractUser):
-    """Model used for user authentication, and team member related information."""
-    username = models.CharField(
-        max_length=30,
-        unique=True,
-        validators=[RegexValidator(
-            regex=r'^@\w{3,}$',
-            message='Username must consist of @ followed by at least three alphanumericals'
-        )]
-    )
-    first_name = models.CharField(max_length=50, blank=False)
-    last_name = models.CharField(max_length=50, blank=False)
-    email = models.EmailField(unique=True, blank=False)
-    about_me = models.TextField(max_length=2000, blank=True, default='')
-
-    class Meta:
-        """Model options."""
-        ordering = ['last_name', 'first_name']
-
-    def full_name(self):
-        """Return a string containing the user's full name."""
-        return f'{self.first_name} {self.last_name}'
-
-    def __str__(self):
-        """Return a string containing the user's full name."""
-
-        return f'{self.first_name} {self.last_name}'
-
-    def gravatar(self, size=120):
-        """Return a URL to the user's gravatar."""
-        gravatar_object = Gravatar(self.email)
-        gravatar_url = gravatar_object.get_image(size=size, default='mp')
-        return gravatar_url
-
-    def mini_gravatar(self):
-        """Return a URL to a miniature version of the user's gravatar."""
-        return self.gravatar(size=60)
-
-class Tutor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
-    subjects = models.ManyToManyField('Subject', blank=True)
-    experience = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.user.full_name()
-
-class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
-    has_new_lesson_notification = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.user.full_name()
-
-class Admin(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
-
-class Subject(models.Model):
-    name = models.CharField(max_length=20)
-    description = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-class TutorAvailability(models.Model):
-    class Availability(models.TextChoices):
-        AVAILABLE = 'Available', 'Available'
-        BOOKED = 'Unavailable', 'Unavailable'
-
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    day = models.IntegerField(choices=Days.choices)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    status = models.CharField(max_length=11, choices=Availability.choices)
-
-    class Meta:
-        unique_together = ('tutor', 'day', 'start_time', 'end_time')
-        
-    def __str__(self):
-        return f"{self.tutor.user.full_name()} - {self.get_day_display()} - {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')} ({self.get_status_display()})"
-
-class TutorReview(models.Model):
-    class Rating(models.TextChoices):
-        POOR = '1', 'Poor'
-        FAIR = '2', 'Fair'
-        GOOD = '3', 'Good'
-        VERY_GOOD = '4', 'Very Good'
-        EXCELLENT = '5', 'Excellent'
-
-    tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    text = models.CharField(max_length=255)
-    date = models.DateField()
-    rating = models.CharField(max_length=1, choices=Rating.choices, default=Rating.EXCELLENT)
-
-class Term(models.Model):
-    class Term(models.IntegerChoices):
-        SEPT_JAN = 1, 'Sept-Jan'
-        FEB_APR = 2, 'Feb-Apr'
-        MAY_JUL = 3, 'May-Jul'
-
-    start_date = models.DateField()
-    end_date = models.DateField()
-    term_name = models.IntegerField(choices=Term.choices, null=True, blank=True)
-
-    def __str__(self):
-        return self.get_term_name_display() if self.term_name else "Undefined Term"
-
-    def clean(self):
-        if self.start_date >= self.end_date:
-            raise ValidationError("The start date must be before the end date.")
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
+from tutorials.models.users import Tutor, TutorAvailability
+from tutorials.models.shared import Subject, Term
+from tutorials.models.choices import Frequency, Status, Days
 
 class BaseLesson(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE)
@@ -138,8 +22,8 @@ class BaseLesson(models.Model):
     def clean(self):
         if not self.start_date:
             raise ValidationError("Start date is required.")
-        if self.start_date < date.today():
-            raise ValidationError("Start date must be in the future.")
+        '''if self.start_date < date.today():
+            raise ValidationError("Start date must be in the future.")'''
         if self.duration <= timedelta(0):
             raise ValidationError("Duration must be a positive value.")
 
@@ -172,7 +56,6 @@ class Lesson(BaseLesson):
         super().save(*args, **kwargs)
 
         if is_new:
-            print("New Lesson detected")
             term = self.term
             times = [
                 pytime(hour=h, minute=m)
@@ -228,7 +111,6 @@ class Lesson(BaseLesson):
                         current_date += timedelta(weeks=4)
                     elif self.frequency == 'F':  # Biweekly
                         current_date += timedelta(weeks=2)
-                    print("LessonStatus created")
                 except Exception as e:
                     print(f"Error creating LessonStatus: {e}")
 
@@ -238,9 +120,8 @@ class Lesson(BaseLesson):
                     day=start_date.weekday(),
                     start_time=start_time,
                     end_time=end_time,
-                    status=TutorAvailability.Availability.BOOKED
+                    status=TutorAvailability.Availability.BOOKED,
                 )
-                print("TutorAvailability created")
             except Exception as e:
                 print(f"Error creating TutorAvailability: {e}")
 
@@ -290,7 +171,7 @@ class LessonUpdateRequest(models.Model):
 
     lesson_update_id = models.BigAutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    update_option = models.CharField(max_length=1, choices=UpdateOption.choices, default='1')
+    update_option = models.CharField(max_length=1, choices=UpdateOption.choices, default=UpdateOption.CHANGE_TUTOR)
     details = models.CharField(max_length=255, blank=True)
     made_by = models.CharField(max_length=10, choices=MadeBy.choices, default=MadeBy.TUTOR)
     is_handled = models.CharField(max_length=10, choices=IsHandled.choices, default=IsHandled.NOT_DONE)
@@ -325,44 +206,3 @@ class LessonStatus(models.Model):
                 self.status = Status.COMPLETED
 
         super().save(*args, **kwargs)
-
-class Invoice(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
-    lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
-    due_date = models.DateField()
-    status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.UNPAID)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    amount = models.DecimalField(max_digits=6, decimal_places=2)
-
-    def check_if_overdue(self):
-        """Mark invoice as overdue if unpaid and past due date."""
-        if self.status == PaymentStatus.UNPAID and self.due_date < date.today():
-            if self.status != PaymentStatus.OVERDUE:
-                self.status = PaymentStatus.OVERDUE
-                self.save()
-
-    def get_total_hours(self):
-        """Calculate total hours for all associated lessons."""
-        return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
-
-    def mark_as_paid(self):
-        self.status = 'PAID'
-        self.save()
-        # Update all associated lessons to mark them as invoiced
-        for lesson_status in self.lessons.all():
-            lesson_status.invoiced = True
-            lesson_status.save()
-
-    def clean(self):
-        """Shared validation logic for invoices."""
-        if self.due_date < date.today():
-            print("Error")
-            raise ValidationError("Due date cannot be in the past.")
-
-class InvoiceLessonLink(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    lesson = models.ForeignKey('LessonStatus', on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('invoice', 'lesson')

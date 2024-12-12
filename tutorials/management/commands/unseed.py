@@ -1,5 +1,9 @@
 from django.core.management.base import BaseCommand, CommandError
-from tutorials.models import User
+from tutorials.models.shared import *
+from tutorials.models.users import *
+from tutorials.models.lessons import *
+from tutorials.models.invoices import *
+from tutorials.models.choices import *
 
 class Command(BaseCommand):
     """Build automation command to unseed the database."""

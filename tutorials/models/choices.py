@@ -1,3 +1,5 @@
+"""The choices used by other models."""
+
 from django.db import models
 
 class Status(models.TextChoices):

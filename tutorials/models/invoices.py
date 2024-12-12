@@ -7,6 +7,7 @@ from tutorials.models.lessons import LessonStatus
 from tutorials.models.choices import PaymentStatus
 
 class Invoice(models.Model):
+    """Model for an invoice for a student, linking to the respective lessons, and tracking payment status."""
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
     lessons = models.ManyToManyField(LessonStatus, through='InvoiceLessonLink')
     due_date = models.DateField()
@@ -27,6 +28,7 @@ class Invoice(models.Model):
         return sum(lesson.lesson_id.duration.total_seconds() / 3600 for lesson in self.lessons.all())
 
     def mark_as_paid(self):
+        """Mark the invoice as paid and update all associated lesson statuses respectively."""
         self.status = 'PAID'
         self.save()
         # Update all associated lessons to mark them as invoiced
@@ -42,6 +44,7 @@ class Invoice(models.Model):
             raise ValidationError("Due date cannot be in the past.")
 
 class InvoiceLessonLink(models.Model):
+    """Model for the relationship between an invoice and the lessons in that invoice."""
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     lesson = models.ForeignKey('LessonStatus', on_delete=models.CASCADE)
 

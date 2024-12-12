@@ -106,7 +106,7 @@ class RequestView(LoginRequiredMixin, View):
         messages.success(request, "Request rejected.")
         return redirect('requests')
 
-    def toggle_notification(self, lrequest):
+    def toggle_notification(self, request, lrequest):
         ''' Handles notification to inform a student the there is updates on their request '''
         lrequest.student.has_new_lesson_notification = True
         lrequest.student.save()

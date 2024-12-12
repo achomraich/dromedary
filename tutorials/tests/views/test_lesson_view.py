@@ -73,7 +73,7 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson1,
             date=date(2023, 9, 15),
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
@@ -82,7 +82,7 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson2,
             date=date(2025, 2, 15),
             time=time(12, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
@@ -125,7 +125,7 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson2,
             date=date(2025, 2, 15),
             time=time(19, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )

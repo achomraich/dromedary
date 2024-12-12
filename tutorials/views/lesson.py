@@ -109,7 +109,7 @@ class ViewLessons(LoginRequiredMixin, View):
         lesson.feedback = f'Lesson was cancelled by {self.status}'
         lesson.save()
 
-        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.lesson_id)
+        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.id)
 
     def lesson_detail(self, request, lessonStatus_id):
         ''' Views the lesson details '''

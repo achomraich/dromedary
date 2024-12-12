@@ -43,7 +43,7 @@ class SubjectView(View):
                 subject = get_object_or_404(Subject, pk=subject_id)
                 return self.delete_subject(request, subject)
 
-        return redirect('subjects_list')
+        #return redirect('subjects_list')
 
     def delete_subject(self, request, subject):
         ''' deletes a subject '''

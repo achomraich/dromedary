@@ -6,10 +6,14 @@ from django.views import View
 from datetime import timedelta, datetime
 from django.utils.timezone import now
 
-'''
-This class is to gather lessons information to present them as a calendar
-'''
+
+"""
+This file contains classes to handle 
+Calendar View
+"""
+
 class Calendar(View):
+    ''' This class is to gather lessons information to present them as a calendar '''
     def get(self, request, year=None, month=None):
         user = request.user
         today = now().date()
@@ -43,11 +47,9 @@ class Calendar(View):
         }
         return render(request, 'shared/calendar.html', content)
 
-    '''
-    Counts the lesson frequency to present each lesson in a schedule for the user
-    '''
 
     def lessons_frequency(self, lessons, start):
+        ''' Counts the lesson frequency to present each lesson in a schedule for the user '''
         freq = []
         for lesson in lessons:
             current_date = lesson.start_date

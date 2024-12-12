@@ -9,6 +9,11 @@ from django.views.generic import FormView, TemplateView
 from tutorials.forms import PasswordForm, TutorForm, UserForm
 
 
+"""
+This file contains classes to handle 
+Password and update it
+"""
+
 class PasswordView(LoginRequiredMixin, FormView):
     """Display password change screen and handle password change requests."""
 
@@ -52,7 +57,7 @@ class ProfileUpdateView(LoginRequiredMixin, TemplateView):
         context['tutor_form'] = tutor_form
         return context
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         user_form = UserForm(self.request.POST, instance=self.request.user)
         if hasattr(self.request.user, 'tutor_profile'):
             tutor_form = TutorForm(self.request.POST, instance=self.request.user.tutor_profile)

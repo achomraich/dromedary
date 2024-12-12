@@ -11,14 +11,19 @@ from tutorials.forms import LessonFeedbackForm
 from tutorials.models import LessonStatus, Status, LessonUpdateRequest, Lesson
 
 
-class ViewLessons(LoginRequiredMixin, View):
+"""
+This file contains classes to handle 
+Lessons View
+"""
 
+class ViewLessons(LoginRequiredMixin, View):
+    """ Allows admin and users to view list of lessons """
     def get(self, request, lesson_id=None):
+        ''' Handeles the list of lessons '''
         current_user = request.user
         self.can_be_updated = []
 
         if lesson_id:
-            print(lesson_id)
             return self.lesson_detail(request, lesson_id)
 
         if hasattr(current_user, 'admin_profile'):
@@ -64,7 +69,6 @@ class ViewLessons(LoginRequiredMixin, View):
 
         if lesson_id:
             if 'update_feedback' in request.path:
-                print(LessonStatus.objects.get(pk=lesson_id).date < now().date())
                 return self.update_feedback(request, lesson_id)
             elif 'cancel_lesson' in request.path:
                 return self.cancel_lesson(request, lesson_id)
@@ -87,6 +91,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return form
 
     def update_feedback(self, request, status_id=None):
+        ''' Allows tutor to update the feedback '''
         lesson = get_object_or_404(LessonStatus, pk=status_id)
         form = self.handle_lessons_form(request, lesson)
 
@@ -96,7 +101,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
 
     def cancel_lesson(self, request, status_id=None):
-
+        ''' Allows cancelling a lesson '''
         lesson = get_object_or_404(LessonStatus, pk=status_id)
         if lesson.status == Status.SCHEDULED:
             lesson.status = Status.CANCELLED
@@ -107,7 +112,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.lesson_id)
 
     def lesson_detail(self, request, lessonStatus_id):
-
+        ''' Views the lesson details '''
         if hasattr(request.user, 'admin_profile'):
             self.status = 'admin'
         elif hasattr(request.user, 'student_profile'):

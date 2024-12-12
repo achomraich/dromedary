@@ -49,7 +49,6 @@ class EntityView(LoginRequiredMixin, View):
         if not entity_id:
             messages.error(request, "No entity ID provided for the operation.")
             return redirect(self.redirect_url)
-
         entity = get_object_or_404(self.model, user__id=entity_id)
 
         if 'edit' in request.POST:
@@ -164,7 +163,7 @@ class EntityView(LoginRequiredMixin, View):
         else:
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
 
-        return self.edit_form(request, entity, form)
+        return self.edit_form(request, entity.user.id, form)
 
     def delete_entity(self, request, entity):
         """ delete an entity """

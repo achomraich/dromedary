@@ -185,11 +185,13 @@ class LessonStatus(models.Model):
     invoiced = models.BooleanField(default=False)
 
     def clean(self):
+        if not self.date:
+            raise ValidationError("Date cannot be null.")
+
         if self.date > date.today() and self.feedback != "":
             raise ValidationError("Feedback should be empty for future lessons.")
 
-        if not self.date:
-            raise ValidationError("Date cannot be null.")
+
 
     def save(self, *args, **kwargs):
         today = date.today()

@@ -6,43 +6,42 @@ import datetime
 
 class LessonFeedbackFormTestCase(TestCase):
 
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+    ]
+
     def setUp(self):
         self.form_data = {'feedback': 'This lesson was great!'}
 
-        self.user1 = User.objects.create_user(first_name="Jane",
-                                             last_name="Doe",
-                                             username="@janedoe",
-                                             email="janedoe@example.org")
+        self.tutor = Tutor.objects.get(user__username='@petrapickles')
+        self.student = Student.objects.get(user__username='@rogersmith')
 
-        self.user2 = User.objects.create_user(first_name="Charlie",
-                                             last_name="Johnson",
-                                             username="@charlie",
-                                             email="charlie.johnson@example.org")
-        self.user1.set_password('Password123')
-        self.user2.set_password('Password123')
+        self.subject = Subject.objects.get(name='Python')
 
-        self.tutor = Tutor.objects.create(user=self.user1)
-        self.student = Student.objects.create(user=self.user2)
+        self.term = Term.objects.get(start_date='2024-01-01')
 
-        self.subject = Subject.objects.create(name="Python", description="This is Python coding course")
-
-        self.term = Term.objects.create(start_date=datetime.date(2024, 9, 1),
-                                        end_date=datetime.date(2025, 1, 15))
-
-        self.lesson = Lesson.objects.create(tutor=self.tutor,
-                                            student=self.student,
-                                            subject_id=self.subject,
-                                            term_id=self.term,
-                                            frequency='D',
-                                            duration=datetime.timedelta(hours=2, minutes=30),
-                                            start_date=datetime.date(2024, 9, 1),
-                                            price_per_lesson=20)
+        self.lesson = Lesson.objects.create(
+            tutor=self.tutor,
+            student=self.student,
+            subject=self.subject,
+            term=self.term,
+            frequency='F',
+            duration=datetime.timedelta(hours=2, minutes=30),
+            start_date=datetime.date(2024, 9, 1),
+            price_per_lesson=20
+        )
 
         self.lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=datetime.date(2024, 9, 1),
             time=datetime.time(20, 15),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="",
             invoiced=False
         )
@@ -95,7 +94,7 @@ class LessonFeedbackFormTestCase(TestCase):
 
     def test_initial_values(self):
         form = LessonFeedbackForm(instance=self.lesson_status)
-        self.assertEqual(form.initial['lesson_name'], self.lesson.subject_id.name)
+        self.assertEqual(form.initial['lesson_name'], self.lesson.subject.name)
         self.assertEqual(form.initial['student_name'], self.student.user.full_name())
         self.assertEqual(form.initial['lesson_date'], self.lesson_status.date)
         self.assertEqual(form.initial['lesson_time'], self.lesson_status.time)

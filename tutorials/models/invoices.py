@@ -36,7 +36,7 @@ class Invoice(models.Model):
 
     def clean(self):
         """Shared validation logic for invoices."""
-        if self.due_date < date.today():
+        if self.due_date and self.due_date < date.today():
             print("Error")
             raise ValidationError("Due date cannot be in the past.")
 

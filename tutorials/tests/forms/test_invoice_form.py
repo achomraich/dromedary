@@ -5,25 +5,28 @@ from datetime import date, timedelta
 
 
 class InvoiceFormTest(TestCase):
+
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+    ]
+
     def setUp(self):
         # Create test user
-        self.user = User.objects.create_user(
-            username='@testuser',
-            email='test@example.com',
-            password='testpassword',
-            first_name='Test',
-            last_name='User'
-        )
-
+        self.user = User.objects.get(username='@johndoe')
         # Create student
-        self.student = Student.objects.create(user=self.user)
-
+        self.student = Student.objects.get(user__username='@janedoe')
         # Create subject.py
-        self.subject = Subject.objects.create(name='Test Subject')
+        self.subject = Subject.objects.get(name='Python')
 
         self.valid_form_data = {
-            'student': self.student.pk,
-            'subject.py': self.subject.pk,
+            'student': self.student,
+            'subject': self.subject,
             'amount': 100.00,
             'due_date': (date.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
             'status': 'UNPAID'

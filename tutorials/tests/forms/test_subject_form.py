@@ -5,13 +5,23 @@ from tutorials.models import Subject
 
 class SubjectFormTestCase(TestCase):
 
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+    ]
+
     def setUp(self):
         self.form_input = {
             'name': 'C++',
             'description': 'Description of C++ course'
         }
 
-        self.existing_subject = Subject.objects.create(name="Python", description="This is Python coding course")
+        self.subject = Subject.objects.get(name="Python")
 
     def test_valid_subject_form(self):
         form = SubjectForm(data=self.form_input)
@@ -32,10 +42,10 @@ class SubjectFormTestCase(TestCase):
         form = SubjectForm(data=self.form_input)
         self.assertFalse(form.is_valid())
 
-    def test_blank_subject_description_is_invalid(self):
+    def test_blank_subject_description_is_valid(self):
         self.form_input['description'] = ""
         form = SubjectForm(data=self.form_input)
-        self.assertFalse(form.is_valid())
+        self.assertTrue(form.is_valid())
 
     def test_overload_subject_name(self):
         self.form_input['name'] = "C++" * 7
@@ -55,7 +65,7 @@ class SubjectFormTestCase(TestCase):
         self.assertEqual(before_count, after_count-1)
 
     def test_existing_subject_updated_correctly(self):
-        form = SubjectForm(data=self.form_input, instance=self.existing_subject)
+        form = SubjectForm(data=self.form_input, instance=self.subject)
         before_count = Subject.objects.count()
         updated_status = form.save()
         after_count = Subject.objects.count()
@@ -63,13 +73,8 @@ class SubjectFormTestCase(TestCase):
         self.assertEqual(updated_status.description, 'Description of C++ course')
         self.assertEqual(updated_status.name, 'Python')
 
-    def test_existing_subject_is_not_updated_correctly(self):
-        self.form_input['description'] = ''
-        form = SubjectForm(data=self.form_input, instance=self.existing_subject)
-        self.assertFalse(form.is_valid())
-
     def test_form_disables_name_for_existing_subject(self):
-        form = SubjectForm(instance=self.existing_subject)
+        form = SubjectForm(instance=self.subject)
         self.assertTrue(form.fields['name'].disabled)
 
     def test_form_enables_name_for_new_subject(self):

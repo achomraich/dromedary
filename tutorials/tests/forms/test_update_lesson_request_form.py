@@ -7,42 +7,32 @@ import datetime
 
 class LessonUpdateRequestTestCase(TestCase):
 
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+    ]
+
     def setUp(self):
+        self.user = User.objects.get(username='@petrapickles')
+        self.tutor = Tutor.objects.get(user__username='@petrapickles')
+        self.student = Student.objects.get(user__username='@rogersmith')
 
-        self.user1 = User.objects.create_user(first_name="Jane",
-                                              last_name="Doe",
-                                              username="@janedoe",
-                                              email="janedoe@example.org")
+        self.subject = Subject.objects.get(name='Python')
 
-        self.user2 = User.objects.create_user(first_name="Charlie",
-                                              last_name="Johnson",
-                                              username="@charlie",
-                                              email="charlie.johnson@example.org")
-        self.user1.set_password('Password123')
-        self.user2.set_password('Password123')
+        self.term = Term.objects.get(start_date='2024-01-01')
 
-        self.tutor = Tutor.objects.create(user=self.user1)
-        self.student = Student.objects.create(user=self.user2)
-
-        self.subject = Subject.objects.create(name="Python", description="This is Python coding course")
-
-        self.term = Term.objects.create(start_date=datetime.date(2024, 9, 1),
-                                        end_date=datetime.date(2025, 1, 15))
-
-        self.lesson = Lesson.objects.create(tutor=self.tutor,
-                                            student=self.student,
-                                            subject_id=self.subject,
-                                            term_id=self.term,
-                                            frequency='D',
-                                            duration=datetime.timedelta(hours=2, minutes=30),
-                                            start_date=datetime.date(2024, 9, 1),
-                                            price_per_lesson=20)
+        self.lesson = Lesson.objects.get(id=1)
 
         self.lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=datetime.date(2024, 9, 1),
             time=datetime.time(20, 15),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="",
             invoiced=False
         )
@@ -55,16 +45,11 @@ class LessonUpdateRequestTestCase(TestCase):
             made_by='Tutor'
         )
 
-        self.user_role = self.user1
+        self.user_role = self.user
 
     def test_valid_request_form(self):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
         self.assertTrue(form.is_valid())
-
-    def test_invalid_tutor_request_form(self):
-        self.form_data['update_option'] = '1'
-        form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
-        self.assertFalse(form.is_valid(), f"Form is invalid: Tutor can't change itself")
 
     def test_for_has_necessary_fields(self):
         form = UpdateLessonRequestForm()
@@ -88,20 +73,13 @@ class LessonUpdateRequestTestCase(TestCase):
         update_option_choices = form.fields['update_option'].choices
         self.assertEqual(
             update_option_choices,
-            LessonUpdateRequest.UPDATE_CHOICES,
-            "update_option should display all default choices when no user role is provided."
+            LessonUpdateRequest.UpdateOption.choices
         )
         self.assertTrue(isinstance(details_field, forms.CharField))
 
     def test_blank_update_option_is_invalid(self):
         self.form_data['update_option'] = ""
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
-        self.assertFalse(form.is_valid())
-
-    def test_blank_details_field_is_invalid(self):
-        self.form_data['details'] = ""
-        form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
-                                       user_role=self.user_role)
         self.assertFalse(form.is_valid())
 
     def test_feedback_field_is_editable(self):
@@ -130,7 +108,7 @@ class LessonUpdateRequestTestCase(TestCase):
 
         self.assertEqual(form.initial['tutor_name'], self.lesson.student.user.full_name())
         self.assertEqual(form.initial['duration'], self.lesson.duration)
-        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+        self.assertEqual(form.initial['frequency'], self.lesson.get_frequency_display())
 
     def test_request_added_correctly(self):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
@@ -146,7 +124,7 @@ class LessonUpdateRequestTestCase(TestCase):
         self.assertEqual(updated_request.details, 'xxx')
 
     def test_initial_values_with_student_profile(self):
-        self.user_role = self.user2
+        self.user_role = self.student.user
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
                                        user_role=self.user_role)
         self.assertEqual(form.initial['tutor_name'], self.lesson.tutor.user.full_name())

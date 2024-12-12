@@ -16,7 +16,7 @@ class SignUpFormTestCase(TestCase):
             'email': 'janedoe@example.org',
             'new_password': 'Password123',
             'password_confirmation': 'Password123',
-            'role': 'Admin'
+            'role': 'Tutor'
         }
 
     def test_valid_sign_up_form(self):
@@ -88,7 +88,7 @@ class SignUpFormTestCase(TestCase):
             'email': 'email@example.org',
             'new_password': 'Password123',
             'password_confirmation': 'Password123',
-            'role': 'Admin'
+            'role': 'Tutor'
         }
         form = SignUpForm(data=form_data1)
         form.is_valid()
@@ -101,7 +101,7 @@ class SignUpFormTestCase(TestCase):
             'email': 'email@example.org',
             'new_password': 'Password123',
             'password_confirmation': 'Password123',
-            'role': 'Admin'
+            'role': 'Student'
         }
         form = SignUpForm(data=form_data2)
 
@@ -117,7 +117,7 @@ class SignUpFormTestCase(TestCase):
             'email': 'email1@example.org',
             'new_password': 'Password123',
             'password_confirmation': 'Password123',
-            'role': 'Admin'
+            'role': 'Student'
         }
         form = SignUpForm(data=form_data1)
         form.is_valid()
@@ -130,7 +130,7 @@ class SignUpFormTestCase(TestCase):
             'email': 'email2@example.org',
             'new_password': 'Password123',
             'password_confirmation': 'Password123',
-            'role': 'Admin'
+            'role': 'Student'
         }
         form = SignUpForm(data=form_data2)
 

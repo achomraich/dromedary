@@ -3,21 +3,26 @@ from django.urls import reverse
 from tutorials.models import LessonRequest, Student, User
 
 class AdminLessonRequestsViewTest(TestCase):
+
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+    ]
+
     def setUp(self):
         # Create a user and student
-        self.user = User.objects.create_user(
-            username='@jane_doe',
-            first_name='Jane',
-            last_name='Doe',
-            email='jane.doe@example.com',
-            password='password123'
-        )
-        self.student = Student.objects.create(user=self.user)
+        self.user = User.objects.get(name='@janedoe')
+        self.student = Student.objects.get(name='@janedoe')
 
         # Create a lesson request
         self.lesson_request = LessonRequest.objects.create(
             student=self.student,
-            language='python',
+            language='Python',
             lesson_time='10:00',
             lesson_day='tue',
             lesson_length=45,

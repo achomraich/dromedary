@@ -27,18 +27,6 @@ def format_frequency(value):
         return 'Fortnightly'
     return value
 
-@register.filter
-def format_day(value):
-    """Format frequency value ('W', 'M', 'D') as ('Week', 'Month' and 'Day'))"""
-    if value == 'M':
-        return 'Month'
-    elif value == 'D':
-        return 'Day'
-    elif value == 'O':
-        return 'Once'
-    elif value == 'F':
-        return 'Fortnightly'
-    return value
 
 @register.filter
 def get(dictionary: dict, key):

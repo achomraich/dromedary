@@ -80,8 +80,8 @@ class InvoiceViewsTest(TestCase):
                     password='Password123'
                 )),
                 student=self.student,
-                subject_id=self.subject,
-                term_id=Term.objects.create(
+                subject=self.subject,
+                term=Term.objects.create(
                     start_date=date.today(),
                     end_date=date.today() + timedelta(days=90)
                 ),
@@ -98,12 +98,12 @@ class InvoiceViewsTest(TestCase):
 
         new_invoice_data = {
             'student': self.student.pk,
-            'subject.py': self.subject.pk,
+            'subject': self.subject.pk,
             'amount': 150.00,
             'due_date': (date.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
             'status': 'UNPAID'
         }
-        response = self.client.post(self.create_url, new_invoice_data, follow=True)
+        response = self.client.post(self.create_url, new_invoice_data, follow=False)
         self.assertRedirects(response, reverse('invoice_list'))
         self.assertTrue(Invoice.objects.filter(amount=150.00).exists())
 

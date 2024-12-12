@@ -3,13 +3,16 @@
 {% block content %}
 
     <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back to dashboard</a>
-
-        <h1 class="mb-2">Lessons</h1>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-2">
+            <i class="bi bi-arrow-left-square"></i> Back to Dashboard
+        </a>
+        
+        <h1 class="mt-2 mb-3">Lessons</h1>
         {% load lesson_filters %}
-        <table class="table table-striped">
-            <thead>
+        <table class="table table-bordered table-hover">
+            <thead class="thead-dark">
                 <tr>
+                    <th scope="col">#</th>
                     <th>Student</th>
                     <th>Teacher</th>
                     <th>Subject</th>
@@ -25,6 +28,7 @@
             <tbody>
                 {% for lesson in list_of_lessons %}
                     <tr onclick="window.location.href='{% url 'lesson_detail' lesson.id %}'" style="cursor: pointer;">
+                        <td class="align-middle">{{ forloop.counter0|add:page_obj.start_index }}</td>
                         <td>{{ lesson.student.user.full_name }}</td>
                         <td>{{ lesson.tutor.user.full_name }}</td>
                         <td>{{ lesson.subject.name }}</td>
@@ -37,15 +41,15 @@
                                 {% if lesson in can_handle_request %}
                                     <form action="{% url 'request_changes' lesson.id %}" method="get">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-primary mb-3"
+                                        <button type="submit" class="btn btn-warning btn-sm d-flex align-items-center justify-content-center"
                                             {% if lesson.id in lessons_with_requests %}disabled{% endif %}>
-                                            Update Lesson</button>
+                                            <i class="bi bi-pencil-square me-1"></i>Update Lesson</button>
                                     </form>
                                 {% else %}
                                     {% if lesson.id in lessons_with_requests %}
-                                        <p>Request already made</p>
+                                        Request already made
                                     {% else %}
-                                        <p>No Booked Lessons</p>
+                                        No Booked Lessons
                                     {% endif %}
                                 {% endif %}
 
@@ -55,5 +59,43 @@
                 {% endfor %}
             </tbody>
         </table>
+    
+        <!-- Display Total Students Count -->
+        <p class="text-center font-weight-bold">Total Lessons: {{ page_obj.paginator.count }}</p>
+    
+        <!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 {% endblock %}

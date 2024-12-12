@@ -1,36 +1,36 @@
 {% extends 'base_content.html' %}
 {% block content %}
 <div class="container">
-    <h1>Monthly Calendar - {{ current_month }}</h1>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-2">
+        <i class="bi bi-arrow-left-square"></i> Back to Dashboard
+    </a>
+    <h1 class="mt-2 mb-3">Calendar ({{ current_month }})</h1>
 
-    <div class="d-flex justify-content-between">
-        <a href="?year={{ previous_month.year }}&month={{ previous_month.month }}" class="btn btn-secondary">Previous</a>
-        <a href="?year={{ next_month.year }}&month={{ next_month.month }}" class="btn btn-secondary">Next</a>
-    </div>    
-    
-    
+    <div class="d-flex justify-content-between mb-3">
+        <a href="?year={{ previous_month.year }}&month={{ previous_month.month }}" class="btn btn-outline-success">
+            <i class="bi bi-arrow-left-square"></i> Previous Month
+        </a>
+        <a href="?year={{ next_month.year }}&month={{ next_month.month }}" class="btn btn-outline-success">
+            Next Month <i class="bi bi-arrow-right-square"></i>
+        </a>
+    </div>
     {% for week, lessons in schedule.items %}
-        <h2>{{ week }}</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Teacher</th>
-                    <th>Subject</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
+        <h5>{{ week }}</h5>
+        <table class="table table-bordered table-hover">
             <tbody>
                 {% if lessons %}
                     {% for lesson in lessons %}
                         <tr>
-
-                            <td>{{ lesson.student.user.username }}</td>
-                            <td>{{ lesson.tutor.user.username }}</td>
-                            <td>{{ lesson.subject }}</td>
                             <td>{{ lesson.date }}</td>
+                            {% if user.is_authenticated and user.tutor_profile %}
+                                <td>{{ lesson.student.user.full_name }}</td>
+                            {% elif user.is_authenticated and user.student_profile %}
+                                <td>{{ lesson.tutor.user.full_name }}</td>
+                            {% else %}
+                                <td>{{ lesson.student.user.full_name }}</td>
+                                <td>{{ lesson.tutor.user.full_name }}</td>
+                            {% endif %}
+                            <td>{{ lesson.subject }}</td>
                             <td>{{ lesson.time }}</td>
                             <td>{{ lesson.status }}</td>
                         </tr>
@@ -43,6 +43,14 @@
             </tbody>
         </table>
     {% endfor %}
+    <div class="d-flex justify-content-between mt-4 mb-5">
+        <a href="?year={{ previous_month.year }}&month={{ previous_month.month }}" class="btn btn-outline-success">
+            <i class="bi bi-arrow-left-square"></i> Previous Month
+        </a>
+        <a href="?year={{ next_month.year }}&month={{ next_month.month }}" class="btn btn-outline-success">
+            Next Month <i class="bi bi-arrow-right-square"></i>
+        </a>
+    </div>
 </div>
 {% endblock %}
 

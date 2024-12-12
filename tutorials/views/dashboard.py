@@ -5,6 +5,12 @@ from django.contrib.auth.decorators import login_required
 
 from tutorials.models import Term
 
+
+"""
+This file contains classes to handle 
+Dashboard
+"""
+
 @login_required
 def dashboard(request):
     """Display the application's dashboard for each user type."""

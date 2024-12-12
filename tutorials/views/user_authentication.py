@@ -9,6 +9,13 @@ from django.views.generic import FormView
 from tutorials.forms import LogInForm, SignUpForm
 from tutorials.views import LoginProhibitedMixin
 
+
+"""
+This file contains classes to handle 
+1- login 
+2- signup
+"""
+
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
 

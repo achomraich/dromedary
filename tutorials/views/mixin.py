@@ -1,6 +1,11 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
+"""
+This file contains classes to handle 
+Mixin
+"""
+
 class LoginProhibitedMixin:
     """Mixin that redirects when a user is logged in."""
 

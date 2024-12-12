@@ -15,8 +15,15 @@ from django.utils.timezone import now
 from datetime import timedelta, datetime
 import datetime
 
-class UpdateLessonRequest(LoginRequiredMixin, View):
 
+"""
+This file contains classes to handle 
+1- Update lesson request
+2- Update lessons 
+"""
+
+class UpdateLessonRequest(LoginRequiredMixin, View):
+    """ Update the lesson request by admin or user"""
     def get(self, request, lesson_id=None):
         current_user = request.user
         if hasattr(current_user, 'admin_profile'):
@@ -29,6 +36,7 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
         return render(request, 'admin/manage_update_requests/update_lesson_request_list.html', {'list_of_requests': list_of_requests})
 
     def post(self, request, lesson_id=None):
+        
         if lesson_id:
             if request.path.endswith('request_changes/'):
                 return self.request_change(request, lesson_id)
@@ -36,9 +44,9 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
         return redirect('lessons_list')
 
     def request_change(self, request, lesson_id):
+        """ Allows the user to request changes """
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         form = self.handle_subject_form(request, lesson)
-        #print(form.errors)
 
         if isinstance(form, HttpResponseRedirect):
             return form
@@ -53,10 +61,8 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
         )
 
     def handle_subject_form(self, request, lesson=None):
-        #if request.method == "POST":
-            print(lesson)
+            """Handels the subject form"""
             lesson_update_instance = LessonUpdateRequest(lesson=lesson)
-            print(request.user)
 
             form = UpdateLessonRequestForm(
                 data=request.POST if request.method == "POST" else None,
@@ -64,11 +70,9 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
                 user_role=request.user
             )
 
-            #print(form.duration)
 
             if form.is_valid():
                 try:
-                    print('form is valid')
                     saved_instance = form.save()
                     if hasattr(request.user, 'tutor_profile'):
                         saved_instance.made_by = 'Tutor'
@@ -86,10 +90,10 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
             return form
 
     def change_status(self, saved_instance):
+        """Changes the status of lesson"""
         if saved_instance and saved_instance.lesson:
             try:
                 lesson = saved_instance.lesson
-                print(f"Changing status for lesson {lesson.id} to 'Pending Update'")
 
                 LessonStatus.objects.filter(
                     status=Status.SCHEDULED,
@@ -100,12 +104,11 @@ class UpdateLessonRequest(LoginRequiredMixin, View):
 
 
 class UpdateLesson(LoginRequiredMixin, View):
+    """ Handeles updates related to lessons """
     def __init__(self):
         self.availability_manager = TutorAvailabilityManager()
 
     def get(self, request, lesson_id=None):
-        print(lesson_id)
-
         return self.update_lesson(request, lesson_id)
 
     def post(self, request, lesson_id=None):
@@ -117,7 +120,7 @@ class UpdateLesson(LoginRequiredMixin, View):
         return redirect('update_requests')
 
     def update_lesson(self, request, lesson_id):
-        print(f'{lesson_id}')
+        ''' Updates lesssons '''
         option = LessonUpdateRequest.objects.get(lesson=Lesson.objects.get(pk=lesson_id), is_handled="N")
         lesson = get_object_or_404(Lesson, pk=lesson_id)
 
@@ -140,12 +143,14 @@ class UpdateLesson(LoginRequiredMixin, View):
         )
 
     def cancel_lesson(self, request, lesson_id):
+        ''' Cancels a lesson '''
         self.availability_manager.cancel_lesson_availability(lesson_id)
         messages.success(request, "Lesson cancelled successfully.")
         LessonUpdateRequest.objects.filter(lesson_id=lesson_id, is_handled="N").update(is_handled="Y")
         return redirect('lessons_list')
 
     def prepare_update_form(self, request, lesson_id):
+        ''' Handles update lesson form '''
         lesson_update_instance = get_object_or_404(Lesson, pk=lesson_id)
         update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").get_update_option_display()
         details = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").details
@@ -159,7 +164,6 @@ class UpdateLesson(LoginRequiredMixin, View):
                 lesson_id=lesson_id, status=Status.PENDING
             ).order_by('date').first()
 
-        #print(first_pending_lesson.date)
         if not first_pending_lesson:
             messages.error(request, 'No lessons to reschedule!')
             LessonUpdateRequest.objects.filter(lesson_=lesson_id, is_handled="N").update(is_handled="Y")
@@ -187,29 +191,26 @@ class UpdateLesson(LoginRequiredMixin, View):
             else:
                 return HttpResponseRedirect(reverse('lessons_list'))
         else:
-            print(form.errors)
             return form
 
         return form
 
     def save_form_updates(self, form, lesson_id, request):
+        ''' save changes '''
         saved_instance = form.save()
         new_tutor = request.POST.get('new_tutor')
         new_lesson_time = request.POST.get('new_lesson_time')
-        print('efwkmgn')
-        print(new_lesson_time)
+
         try:
             new_day_of_week = datetime.datetime.strptime(request.POST.get('new_day_of_week'), '%Y-%m-%d').date()
-            print(new_day_of_week)
         except Exception as e:
             print(e)
 
-        print(new_day_of_week)
         try:
             tutor_availability = self.availability_manager.is_tutor_available(new_lesson_time, new_day_of_week.weekday(), Tutor.objects.get(pk=new_tutor), form.cleaned_data['duration'])
         except Exception as e:
             print(e)
-        print(tutor_availability)
+
         if not tutor_availability:
             form.add_error(None, 'Tutor is not available!!!')
             messages.error('Tutor is not available!!!')
@@ -238,7 +239,5 @@ class UpdateLesson(LoginRequiredMixin, View):
             lesson_id
         )
 
-        print("!")
-        print()
         LessonUpdateRequest.objects.filter(lesson=lesson_id, is_handled="N").update(is_handled="Y")
         Lesson.objects.filter(id=lesson_id).update(notes='')

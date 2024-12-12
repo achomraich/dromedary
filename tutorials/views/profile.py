@@ -9,6 +9,11 @@ from django.views.generic import FormView, TemplateView
 from tutorials.forms import PasswordForm, TutorForm, UserForm
 
 
+"""
+This file contains classes to handle 
+Password and update it
+"""
+
 class PasswordView(LoginRequiredMixin, FormView):
     """Display password change screen and handle password change requests."""
 

@@ -9,7 +9,15 @@ from tutorials.forms import InvoiceForm
 from tutorials.models import Invoice, LessonStatus, Student
 
 
+"""
+This file contains classes to handle 
+1- Invoices view
+2- Create Invoices
+3- Invoice details
+"""
+
 class InvoiceListView(LoginRequiredMixin, View):
+    ''' Handeles list of invoices '''
     def get(self, request):
         invoice_list = Invoice.objects.all().order_by('-created_at')
         paginator = Paginator(invoice_list, 10)  # Show 10 invoices per page
@@ -21,6 +29,7 @@ class InvoiceListView(LoginRequiredMixin, View):
 
 
 class CreateInvoiceView(LoginRequiredMixin, View):
+    """ Allowes admin to generate an invoice for students """
     def get(self, request):
         form = InvoiceForm()
         return render(request, 'invoices/create_invoice.html', {'form': form})
@@ -49,12 +58,14 @@ class CreateInvoiceView(LoginRequiredMixin, View):
 
 
 class InvoiceDetailView(LoginRequiredMixin, View):
+    """ Views the invoice details """
     def get(self, request, invoice_id):
         invoice = get_object_or_404(Invoice, id=invoice_id)
 
         return render(request, 'invoices/invoice_detail.html', {'invoice': invoice})
 
     def post(self, request, invoice_id):
+        ''' Allows admin to edit the invoice or delete it '''
         invoice = get_object_or_404(Invoice, id=invoice_id)
         if 'delete' in request.POST:
             invoice.delete()
@@ -74,10 +85,6 @@ def invoice_management(request):
 
 @login_required
 def create_invoice(request):
-    # Print debug information about available data
-    print("DEBUG: Checking for data")
-    print(f"Number of students: {Student.objects.count()}")
-    print(f"Number of subjects: {Subject.objects.all().count()}")
 
     if request.method == 'POST':
         form = InvoiceForm(request.POST)

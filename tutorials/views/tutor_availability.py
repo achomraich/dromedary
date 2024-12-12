@@ -8,14 +8,19 @@ from tutorials.forms import TutorAvailabilityForm
 from tutorials.models import TutorAvailability
 
 
-class AvailabilityView(ListView, LoginRequiredMixin):
+"""
+This file contains classes to handle 
+Tutor availability view
+"""
 
+class AvailabilityView(ListView, LoginRequiredMixin):
+    """ Handles viewing the availibility """
     model = TutorAvailability
     template_name = 'tutor/my_availability/availabilities.html'
     context_object_name = 'availabilities'
 
     def get_queryset(self):
-        # Filter availabilities for the logged-in tutor
+        '''Filter availabilities for the logged-in tutor'''
         return TutorAvailability.objects.filter(tutor=self.request.user.tutor_profile)
 
     def post(self, request, *args, **kwargs):
@@ -34,6 +39,7 @@ class AvailabilityView(ListView, LoginRequiredMixin):
 
 
 class AddEditAvailabilityView(LoginRequiredMixin, View):
+    """ Handles adding or editing availability """
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
             availability = get_object_or_404(TutorAvailability, pk=pk)

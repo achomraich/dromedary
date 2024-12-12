@@ -4,15 +4,31 @@ from tutorials.models import LessonUpdateRequest, Tutor, Lesson, Days
 
 
 class UpdateLessonRequestForm(forms.ModelForm):
-    tutor_name = forms.CharField(label='Lesson with: ', required=False, disabled=True)
-    duration = forms.CharField(label='Lesson duration: ', required=False, disabled=True)
-    frequency = forms.CharField(label='Lesson frequency: ', required=False, disabled=True)
+    tutor_name = forms.CharField(
+        label='Lesson with',
+        required=False,
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    duration = forms.CharField(
+        label='Lesson duration',
+        required=False,
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    frequency = forms.CharField(
+        label='Lesson frequency',
+        required=False,
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = LessonUpdateRequest
         fields = ['update_option', 'details']
         widgets = {
-            'details': forms.Textarea(attrs={'rows': 4, 'cols': 50, 'placeholder': 'Enter additional details here...'})
+            'update_option': forms.Select(attrs={'class': 'form-select'}),
+            'details': forms.Textarea(attrs={'rows': 4, 'cols': 50, 'placeholder': 'Enter additional details here...', 'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -25,7 +41,7 @@ class UpdateLessonRequestForm(forms.ModelForm):
             if user and hasattr(user, 'tutor_profile'):
                 kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.student.user.full_name()
             kwargs['initial']['duration'] = lesson_update_instance.lesson.duration
-            kwargs['initial']['frequency'] = lesson_update_instance.lesson.frequency
+            kwargs['initial']['frequency'] = lesson_update_instance.lesson.get_frequency_display()
             kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject.name
 
         super().__init__(*args, **kwargs)

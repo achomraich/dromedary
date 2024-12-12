@@ -1,12 +1,12 @@
 {% extends 'base_content.html' %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container">
 
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-2">
         <i class="bi bi-arrow-left-square"></i> Back to Dashboard
     </a>
-    <h1 class="mb-4">Subject List</h1>
+    <h1 class="mt-2 mb-3">Subject List</h1>
 
     <form action="{% url 'new_subject' %}" method="post">
         {% csrf_token %}

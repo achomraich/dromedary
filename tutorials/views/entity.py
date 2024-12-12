@@ -22,7 +22,7 @@ This file contains classes to handle
 """
 
 class EntityView(LoginRequiredMixin, View):
-    """ A parent class for an entity (students or tutors) list"""
+    """ A parent class for an entity (students or tutors) list """
     model = None
     list_admin = None
     list_user = None
@@ -31,18 +31,20 @@ class EntityView(LoginRequiredMixin, View):
     redirect_url = None
 
     def get(self, request, *args, **kwargs):
-        ''' views the list of an entity '''
+        """ View the list of an entity """
         entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
         if entity_id:
             if request.resolver_match.url_name == 'student_calendar' or request.resolver_match.url_name == 'tutor_calendar':
                 return self.get_calendar(request, entity_id)
             elif request.resolver_match.url_name == 'student_details' or request.resolver_match.url_name == 'tutor_details':
                 return self.entity_details(request, entity_id)
+            elif request.resolver_match.url_name == 'student_edit' or request.resolver_match.url_name == 'tutor_edit':
+                return self.edit_form(request, entity_id)
 
         return self.get_entities(request)
 
     def post(self, request, *args, **kwargs):
-        ''' Allows autorized user to make changes '''
+        """ Allows authorized user to make changes """
         entity_id = request.POST.get('entity_id')
         if not entity_id:
             messages.error(request, "No entity ID provided for the operation.")
@@ -59,7 +61,7 @@ class EntityView(LoginRequiredMixin, View):
         return redirect(self.redirect_url)
 
     def get_entities(self, request):
-        ''' loads the entities and apply filters '''
+        """ loads the entities and apply filters """
         user = request.user
         search = request.GET.get('search', '')
         subjects = Subject.objects.all()
@@ -108,7 +110,7 @@ class EntityView(LoginRequiredMixin, View):
         return self.model.objects.filter(user_id__in=lessons.values('tutor_id')).order_by('user__username').distinct()
 
     def entity_details(self, request, entity_id):
-        ''' views the details of an entity '''
+        """ View the details of an entity """
         entity = get_object_or_404(self.model, user__id=entity_id)
 
         lessons = None
@@ -145,14 +147,15 @@ class EntityView(LoginRequiredMixin, View):
         else:
             return render(request, self.details, content)
 
-    def edit_form(self, request, entity, form=None):
+    def edit_form(self, request, entity_id, form=None):
+        entity = get_object_or_404(self.model, user__id=entity_id)
         entity.refresh_from_db()
         if not form:
             form = UserForm(instance=entity.user)
         return render(request, self.edit, {'form': form, self.model.__name__.lower(): entity})
 
     def edit_entity(self, request, entity):
-        ''' edit an entity '''
+        """ edit an entity """
         form = UserForm(request.POST, instance=entity.user)
 
         if form.is_valid():
@@ -165,7 +168,7 @@ class EntityView(LoginRequiredMixin, View):
         return self.edit_form(request, entity, form)
 
     def delete_entity(self, request, entity):
-        ''' delete an entity '''
+        """ delete an entity """
         entity.user.delete()
         messages.success(request, "Deleted successfully.")
         return redirect(self.redirect_url)
@@ -203,7 +206,7 @@ class EntityView(LoginRequiredMixin, View):
 
 
 class StudentsView(EntityView, LoginRequiredMixin):
-    """ inherites from EntityView for students list """
+    """ Inherits from EntityView for students list """
     model = Student
 
     list_admin = 'admin/manage_students/students_list.html'
@@ -227,7 +230,7 @@ class StudentsView(EntityView, LoginRequiredMixin):
 
 
 class TutorsView(EntityView, LoginRequiredMixin):
-    """ inherites from EntityView for tutors list """
+    """ Inherits from EntityView for tutors list """
     model = Tutor
 
     list_admin = 'admin/manage_tutors/tutors_list.html'

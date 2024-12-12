@@ -9,6 +9,10 @@ class SubjectForm(forms.ModelForm):
 
         model = Subject
         fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
         subject = kwargs.get('instance', None)

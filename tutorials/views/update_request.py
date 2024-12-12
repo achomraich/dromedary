@@ -120,71 +120,89 @@ class UpdateLesson(LoginRequiredMixin, View):
         return redirect('update_requests')
 
     def update_lesson(self, request, lesson_id):
-        ''' Updates lesssons '''
-        option = LessonUpdateRequest.objects.get(lesson=Lesson.objects.get(pk=lesson_id), is_handled="N")
-        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        try:
+            option = LessonUpdateRequest.objects.get(lesson__id=lesson_id, is_handled="N")
+            lesson = get_object_or_404(Lesson, pk=lesson_id)
+            form = None  # Initialize form variable
 
-        if option.update_option == '3':
-            return self.cancel_lesson(request, lesson_id=lesson_id)
-        elif option.update_option in ['1', '2']:
-            form = self.prepare_update_form(request, lesson_id)
-            if not form:
+            if option.update_option == '3':
+                return self.cancel_lesson(request, lesson_id=lesson_id)
+            elif option.update_option in ['1', '2', '4', '5']:  # Added options 4 and 5
+                form = self.prepare_update_form(request, lesson_id)
+                if not form:
+                    return redirect('update_requests')
+            else:
+                messages.error(request, "Invalid update option")
                 return redirect('update_requests')
 
-        return render(
-            request,
-            'admin/manage_update_requests/update_lesson.html',
-            {
-                'form': form,
-                'current_tutor_availability': self.availability_manager.get_current_tutor_availability(lesson_id),
-                'all_tutors_availability': self.availability_manager.get_all_tutor_availability(Lesson.objects.get(pk=lesson_id).subject.name),
-                'update_option': option.get_update_option_display()
-            }
-        )
+            if form is None:
+                messages.error(request, "Could not prepare the update form")
+                return redirect('update_requests')
 
-    def cancel_lesson(self, request, lesson_id):
-        ''' Cancels a lesson '''
-        self.availability_manager.cancel_lesson_availability(lesson_id)
-        messages.success(request, "Lesson cancelled successfully.")
-        LessonUpdateRequest.objects.filter(lesson_id=lesson_id, is_handled="N").update(is_handled="Y")
-        return redirect('lessons_list')
+            return render(
+                request,
+                'admin/manage_update_requests/update_lesson.html',
+                {
+                    'form': form,
+                    'current_tutor_availability': self.availability_manager.get_current_tutor_availability(lesson_id),
+                    'all_tutors_availability': self.availability_manager.get_all_tutor_availability(
+                        lesson.subject.name),
+                    'update_option': option.get_update_option_display()
+                }
+            )
+        except LessonUpdateRequest.DoesNotExist:
+            messages.error(request, "Update request not found")
+            return redirect('update_requests')
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return redirect('update_requests')
 
     def prepare_update_form(self, request, lesson_id):
-        ''' Handles update lesson form '''
         lesson_update_instance = get_object_or_404(Lesson, pk=lesson_id)
-        update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").get_update_option_display()
-        details = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").details
-        lesson_time = LessonStatus.objects.filter(lesson_id=lesson_update_instance, date__gt=now()).first()
-        next_lesson_date = LessonStatus.objects.filter(lesson_id=lesson_update_instance, status=Status.PENDING)
+        update_option_display = LessonUpdateRequest.objects.get(lesson__id=lesson_id,
+                                                                is_handled="N").get_update_option_display()
+        details = LessonUpdateRequest.objects.get(lesson__id=lesson_id, is_handled="N").details
+
+        # Change this part to include both PENDING and SCHEDULED statuses
+        lesson_time = LessonStatus.objects.filter(
+            lesson_id=lesson_update_instance,
+            date__gt=now(),
+            status__in=[Status.PENDING, Status.SCHEDULED]  # Include both statuses
+        ).first()
+
+        next_lesson_date = LessonStatus.objects.filter(
+            lesson_id=lesson_update_instance,
+            status__in=[Status.PENDING, Status.SCHEDULED]  # Include both statuses
+        )
 
         if next_lesson_date:
             next_lesson_date = next_lesson_date[0]
 
+        # Modify this query to include SCHEDULED status as well
         first_pending_lesson = LessonStatus.objects.filter(
-                lesson_id=lesson_id, status=Status.PENDING
-            ).order_by('date').first()
+            lesson_id=lesson_id,
+            status__in=[Status.PENDING, Status.SCHEDULED]  # Include both statuses
+        ).order_by('date').first()
 
         if not first_pending_lesson:
             messages.error(request, 'No lessons to reschedule!')
-            LessonUpdateRequest.objects.filter(lesson_=lesson_id, is_handled="N").update(is_handled="Y")
-            Lesson.objects.filter(lesson=lesson_id).update(notes='—')
+            LessonUpdateRequest.objects.filter(lesson__id=lesson_id, is_handled="N").update(is_handled="Y")
+            Lesson.objects.filter(id=lesson_id).update(notes='')
             return None
 
         form = UpdateLessonForm(
             data=request.POST if request.method == "POST" else None,
             instance=lesson_update_instance,
             update_option=update_option_display,
-            details = details,
+            details=details,
             regular_lesson_time=lesson_time.time if lesson_time else first_pending_lesson.time,
             day_of_week=self.availability_manager.get_closest_day(lesson_id=lesson_id),
             next_lesson_date=next_lesson_date.date if next_lesson_date else first_pending_lesson.date
         )
 
-
         if form.is_valid():
             try:
                 if request.method == "POST":
-                    print('It is post method')
                     self.save_form_updates(form, lesson_id, request)
             except Exception as e:
                 form.add_error(None, f"An error occurred: {str(e)}")

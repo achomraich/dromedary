@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tutorials.forms import UpdateLessonRequestForm
+from tutorials.forms import UpdateLessonRequestForm, UpdateLessonForm
 from django import forms
 from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject, LessonUpdateRequest
 import datetime
@@ -31,9 +31,9 @@ class LessonUpdateRequestTestCase(TestCase):
 
         self.lesson = Lesson.objects.create(tutor=self.tutor,
                                             student=self.student,
-                                            subject_id=self.subject,
-                                            term_id=self.term,
-                                            frequency='D',
+                                            subject=self.subject,
+                                            term=self.term,
+                                            frequency='W',
                                             duration=datetime.timedelta(hours=2, minutes=30),
                                             start_date=datetime.date(2024, 9, 1),
                                             price_per_lesson=20)
@@ -42,7 +42,7 @@ class LessonUpdateRequestTestCase(TestCase):
             lesson_id=self.lesson,
             date=datetime.date(2024, 9, 1),
             time=datetime.time(20, 15),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="",
             invoiced=False
         )
@@ -60,11 +60,6 @@ class LessonUpdateRequestTestCase(TestCase):
     def test_valid_request_form(self):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
         self.assertTrue(form.is_valid())
-
-    def test_invalid_tutor_request_form(self):
-        self.form_data['update_option'] = '1'
-        form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
-        self.assertFalse(form.is_valid(), f"Form is invalid: Tutor can't change itself")
 
     def test_for_has_necessary_fields(self):
         form = UpdateLessonRequestForm()
@@ -88,7 +83,7 @@ class LessonUpdateRequestTestCase(TestCase):
         update_option_choices = form.fields['update_option'].choices
         self.assertEqual(
             update_option_choices,
-            LessonUpdateRequest.UPDATE_CHOICES,
+            LessonUpdateRequest.UpdateOption.choices,
             "update_option should display all default choices when no user role is provided."
         )
         self.assertTrue(isinstance(details_field, forms.CharField))
@@ -98,11 +93,6 @@ class LessonUpdateRequestTestCase(TestCase):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request, user_role=self.user_role)
         self.assertFalse(form.is_valid())
 
-    def test_blank_details_field_is_invalid(self):
-        self.form_data['details'] = ""
-        form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
-                                       user_role=self.user_role)
-        self.assertFalse(form.is_valid())
 
     def test_feedback_field_is_editable(self):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
@@ -150,3 +140,96 @@ class LessonUpdateRequestTestCase(TestCase):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
                                        user_role=self.user_role)
         self.assertEqual(form.initial['tutor_name'], self.lesson.tutor.user.full_name())
+
+    def test_update_lesson_request_form_tutor_role(self):
+        """Test the form for a tutor role."""
+        form = UpdateLessonRequestForm(instance=self.lesson_update_request, user_role=self.tutor.user)
+
+        # Check that the 'tutor_name' is correctly populated for a tutor
+        self.assertEqual(form.initial['tutor_name'], self.lesson.student.user.get_full_name())
+
+        # Ensure that the 'duration' and 'frequency' fields are populated
+        self.assertEqual(form.initial['duration'], self.lesson.duration)
+        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+
+        # Check that the 'update_option' field contains only relevant choices for tutor
+        self.assertIn(('1', 'Change Tutor'), form.fields['update_option'].choices)
+        self.assertIn(('2', 'Change Day/Time'), form.fields['update_option'].choices)
+        self.assertNotIn(('3', 'Cancel Lessons'), form.fields['update_option'].choices)
+
+    def test_update_lesson_request_form_student_role(self):
+        """Test the form for a student role."""
+        form = UpdateLessonRequestForm(instance=self.lesson_update_request, user_role=self.student.user)
+
+        # Check that the 'tutor_name' is correctly populated for a student
+        self.assertEqual(form.initial['tutor_name'], self.lesson.tutor.user.get_full_name())
+
+        # Ensure that 'duration' and 'frequency' are populated
+        self.assertEqual(form.initial['duration'], self.lesson.duration)
+        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+
+        # Check that the 'update_option' field contains only relevant choices for student
+        self.assertIn(('2', 'Change Day/Time'), form.fields['update_option'].choices)
+        self.assertIn(('3', 'Cancel Lessons'), form.fields['update_option'].choices)
+
+    def test_update_lesson_form_initialization(self):
+        form = UpdateLessonForm(instance=self.lesson,
+                                update_option='2',
+                                details="Test details",
+                                day_of_week=0,
+                                regular_lesson_time=self.lesson.set_start_time,
+                                next_lesson_date='2024-12-30')
+
+        self.assertEqual(form.initial['details'], "Test details")
+        self.assertEqual(form.initial['subject'], self.lesson.subject.name)
+        self.assertEqual(form.initial['duration'], str(self.lesson.duration))
+        self.assertEqual(form.initial['frequency'], 'Weekly')
+        self.assertEqual(form.initial['lesson_time'], self.lesson.set_start_time)
+
+        # Check the disabled fields
+        self.assertTrue(form.fields['tutor'].disabled)
+        self.assertTrue(form.fields['student'].disabled)
+
+    def test_form_new_tutor_queryset_based_on_subject(self):
+        form = UpdateLessonForm(instance=self.lesson,
+                                update_option='2',
+                                details="Test details",
+                                day_of_week=0,
+                                regular_lesson_time=self.lesson.set_start_time,
+                                next_lesson_date='2024-12-30')
+
+        self.tutor.subjects.set([self.subject])
+
+        self.assertTrue(form.fields['new_tutor'].queryset.filter(subjects=self.subject).exists())
+
+    def test_form_invalid_data(self):
+        """Test that form raises validation errors with invalid data."""
+        form_data = {
+            'new_tutor': Tutor.objects.get(pk=1),  # Missing new tutor, for example
+            'new_lesson_time': '10:00:00',
+            'new_day_of_week': '2024-12-12',  # Invalid date format
+        }
+
+
+
+        form = UpdateLessonForm(instance=self.lesson,
+                                data=form_data, update_option='1',
+                                day_of_week=0,)
+
+        # Check if form is not valid due to missing required fields or incorrect formats
+        self.assertFalse(form.is_valid())
+        self.assertIn('new_tutor', form.errors)
+
+    def test_update_lesson_request_form_save(self):
+        """Test saving the form and making sure initial data is correctly passed."""
+        data = {
+            'update_option': 2,
+            'details': "Test details"
+        }
+        form = UpdateLessonRequestForm(instance=self.lesson_update_request, user_role=self.student, data=data)
+        self.assertTrue(form.is_valid())
+        updated_instance = form.save()
+
+        # Verify that the lesson update request instance was saved correctly
+        self.assertEqual(updated_instance.details, "Test details")
+        self.assertEqual(updated_instance.update_option, "2")

@@ -48,8 +48,8 @@ class UpdateLessonRequestTests(TestCase):
         self.lesson1 = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject1,
-            term_id=self.term,
+            subject=self.subject1,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -97,7 +97,7 @@ class UpdateLessonRequestTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(LessonUpdateRequest.objects.filter(lesson=self.lesson1).exists())
-        print(i.subject_id for i in LessonUpdateRequest.objects.filter(lesson=self.lesson1))
+        print(i.subject for i in LessonUpdateRequest.objects.filter(lesson=self.lesson1))
         request_instance = LessonUpdateRequest.objects.get(lesson=self.lesson1, is_handled='N')
         self.assertEqual(request_instance.update_option, '1')
         self.assertEqual(request_instance.details, 'Request to change tutor')

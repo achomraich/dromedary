@@ -78,6 +78,9 @@ class Lesson(BaseLesson):
 
             current_date = start_date
             while current_date <= end_date:
+
+                if current_date is None:
+                    raise ValidationError("Due date cannot be empty.")
                 
                 if current_date >= today:
                     # If the date is in the future, ensure feedback is empty and status is 'Scheduled'
@@ -136,14 +139,18 @@ class LessonRequest(BaseLesson):
     lesson_assigned = models.ForeignKey(Lesson, on_delete=models.CASCADE, null=True, blank=True)
 
     def clean(self):
+        if self.duration <= timedelta(0):
+            raise ValidationError("Duration must be a positive value.")
         if not self.start_date:
             raise ValidationError("Start date is required.")
         if self.start_date < date.today():
             raise ValidationError("Start date must be in the future.")
         if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
+            print(self.start_date)
+
+            print(self.term.start_date)
+            print(self.term.end_date)
             raise ValidationError("Start date must be within the term.")
-        if self.duration <= timedelta(0):
-            raise ValidationError("Duration must be a positive value.")
 
     def decided(self):
         return self.cancelled() or self.confirmed()
@@ -185,6 +192,8 @@ class LessonStatus(models.Model):
     invoiced = models.BooleanField(default=False)
 
     def clean(self):
+        if self.date is None:
+            raise ValidationError("Due date cannot be empty.")
         if self.date > date.today() and self.feedback != "":
             raise ValidationError("Feedback should be empty for future lessons.")
 

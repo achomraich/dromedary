@@ -49,8 +49,8 @@ class ViewLessonsTests(TestCase):
         self.lesson1 = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject1,
-            term_id=self.term,
+            subject=self.subject1,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -60,8 +60,8 @@ class ViewLessonsTests(TestCase):
         self.lesson2 = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject2,
-            term_id=self.term,
+            subject=self.subject2,
+            term=self.term,
             frequency="M",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -112,8 +112,8 @@ class ViewLessonsTests(TestCase):
         self.lesson3 = Lesson.objects.create(
             tutor=self.tutor2,
             student=self.student2,
-            subject_id=self.subject1,
-            term_id=self.term,
+            subject=self.subject1,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -140,25 +140,25 @@ class ViewLessonsTests(TestCase):
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.subject_id.name)
-        self.assertContains(response, self.lesson2.subject_id.name)
-        self.assertContains(response, self.lesson3.subject_id.name)
+        self.assertContains(response, self.lesson1.subject.name)
+        self.assertContains(response, self.lesson2.subject.name)
+        self.assertContains(response, self.lesson3.subject.name)
 
     def test_student_get_lesson_list(self):
         self.client.login(username='@student', password='student123')
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.subject_id)
-        self.assertContains(response, self.lesson2.subject_id)
+        self.assertContains(response, self.lesson1.subject)
+        self.assertContains(response, self.lesson2.subject)
 
     def test_tutor_get_lesson_list(self):
         self.client.login(username='@tutor', password='tutor123')
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.lesson_id)
-        self.assertContains(response, self.lesson2.lesson_id)
+        self.assertContains(response, self.lesson1.id)
+        self.assertContains(response, self.lesson2.id)
 
 
     def test_lesson_detail_view(self):

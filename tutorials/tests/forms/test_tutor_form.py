@@ -22,7 +22,7 @@ class UserFormTestCase(TestCase):
 
         self.form_input = {
             'experience': 'I have 3 years of experience teaching Python',
-            'subjects': [self.subject1.subject_id, self.subject2.subject_id],
+            'subjects': [self.subject1.id, self.subject2.id],
         }
 
     def test_form_initialization_without_instance(self):
@@ -60,8 +60,8 @@ class UserFormTestCase(TestCase):
 
         self.assertEqual(self.tutor.experience, 'I have 3 years of experience teaching Python')
 
-        saved_subjects = list(self.tutor.subjects.values_list('subject_id', flat=True))
-        self.assertEqual(saved_subjects, [self.subject1.subject_id, self.subject2.subject_id])
+        saved_subjects = list(self.tutor.subjects.values_list('name', flat=True))
+        self.assertEqual(saved_subjects, [self.subject1.name, self.subject2.name])
 
     def test_field_customizations(self):
         # Verify field customizations

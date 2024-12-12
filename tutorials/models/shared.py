@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 class Subject(models.Model):
+    """Model for a subject that can by taught by tutors or taken by students."""
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=255, blank=True, null=True)
 
@@ -9,6 +10,7 @@ class Subject(models.Model):
         return self.name
 
 class Term(models.Model):
+    """Model for an academic term with specific start and end dates."""
     class Term(models.IntegerChoices):
         SEPT_JAN = 1, 'Sept-Jan'
         FEB_APR = 2, 'Feb-Apr'
@@ -22,9 +24,11 @@ class Term(models.Model):
         return self.get_term_name_display() if self.term_name else "Undefined Term"
 
     def clean(self):
+        """Ensures the start date is earlier than the end date."""
         if self.start_date >= self.end_date:
             raise ValidationError("The start date must be before the end date.")
 
     def save(self, *args, **kwargs):
+        """Ensures validation logic before saving."""
         self.clean()
         super().save(*args, **kwargs)

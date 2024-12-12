@@ -35,10 +35,10 @@
                         {% if user.student_profile or user.tutor_profile %}
                             <td>
                                 {% if lesson in can_handle_request %}
-                                    <form action="{% url 'request_changes' lesson.lesson_id%}" method="get">
+                                    <form action="{% url 'request_changes' lesson.id %}" method="get">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-primary mb-3"
-                                            {% if lesson.lesson_id in lessons_with_requests %}disabled{% endif %}>
+                                            {% if lesson.id in lessons_with_requests %}disabled{% endif %}>
                                             Update Lesson</button>
                                     </form>
                                 {% else %}

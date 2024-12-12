@@ -215,7 +215,7 @@ class LessonFeedbackForm(forms.ModelForm):
             student = lesson.student
             kwargs['initial'] = kwargs.get('initial', {})
 
-            kwargs['initial']['lesson_name'] = lesson.subject_id.name
+            kwargs['initial']['lesson_name'] = lesson.subject.name
             kwargs['initial']['student_name'] = student.user.full_name()
             kwargs['initial']['lesson_date'] = lesson_status.date
             kwargs['initial']['lesson_time'] = lesson_status.time
@@ -245,13 +245,13 @@ class UpdateLessonRequestForm(forms.ModelForm):
                 kwargs['initial']['tutor_name'] = lesson_update_instance.lesson.student.user.full_name()
             kwargs['initial']['duration'] = lesson_update_instance.lesson.duration
             kwargs['initial']['frequency'] = lesson_update_instance.lesson.frequency
-            kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject_id.name
+            kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject.name
 
         super().__init__(*args, **kwargs)
         if user:
             if hasattr(user, 'tutor_profile'):
                 self.fields['update_option'].choices = [
-                    choice for choice in LessonUpdateRequest.UPDATE_CHOICES if choice[0] == '2' or choice[0] == '3'
+                    choice for choice in LessonUpdateRequest.UpdateOption.choices if choice[0] == '2' or choice[0] == '3'
                 ]
 
 class UpdateLessonForm(forms.ModelForm):
@@ -269,7 +269,6 @@ class UpdateLessonForm(forms.ModelForm):
     new_day_of_week = forms.DateField(label='Choose date for the next lesson', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     new_tutor = forms.ModelChoiceField(
         queryset=Tutor.objects.all(),
-
         label='New Tutor',
         required=False
     )
@@ -300,7 +299,7 @@ class UpdateLessonForm(forms.ModelForm):
                 'duration': str(lesson_update_instance.duration),
                 'frequency': lesson_update_instance.get_frequency_display(),
                 'lesson_time': lesson_time,
-                'subject': lesson_update_instance.subject_id.name,
+                'subject': lesson_update_instance.subject.name,
                 'day_of_week': day_of_week_display,
                 'new_lesson_time': None,
                 'next_lesson': next_lesson_date
@@ -312,23 +311,11 @@ class UpdateLessonForm(forms.ModelForm):
             self.fields['student'].disabled = True
             self.fields['subject'].disabled = True
             self.fields['duration'].disabled = True
-            self.fields['student'].disabled = True
-
-        '''common_fields = ['tutor', 'student', 'details', 'subject', 'next_lesson', 'duration', 'frequency']
-
-        fields_for_option = {
-            'Change Tutor': common_fields + ['new_day_of_week', 'new_lesson_time', 'day_of_week', 'lesson_time', 'new_tutor'],
-            'Change Day/Time': common_fields + ['new_day_of_week', 'new_lesson_time', 'day_of_week', 'lesson_time', 'new_tutor'],
-            'Cancel Lessons': common_fields + ['day_of_week', 'lesson_time', 'duration']
-        }
-
-        all_fields = set(self.fields.keys())
-        displayed_fields = set(fields_for_option.get(option, common_fields))
-        hidden_fields = all_fields - displayed_fields
-
-        for field_name in hidden_fields:
-            self.fields[field_name].disabled = True
-            self.fields[field_name].widget = forms.HiddenInput()'''
+        if lesson_update_instance.subject:
+            subject_name = lesson_update_instance.subject
+            self.fields['new_tutor'].queryset = Tutor.objects.filter(subjects__name=subject_name)
+        else:
+            self.fields['new_tutor'].queryset = Tutor.objects.none()
 
 
 class InvoiceForm(forms.ModelForm):
@@ -416,7 +403,6 @@ class AssignTutorForm(forms.ModelForm):
         self.fields['price_per_lesson'].label = "Select a price per lesson ($)"
 
 
-
 class TutorAvailabilityForm(forms.ModelForm):
     class Meta:
         model = TutorAvailability
@@ -436,8 +422,6 @@ class TutorAvailabilityForm(forms.ModelForm):
         self.fields['status'].choices = [('', 'Select an option')] + [
             choice for choice in self.fields['status'].choices if choice[0] != ''
         ]
-
-
 
 class TutorAvailabilityList(forms.Form):
     # Radio buttons for selecting "Current Tutor" or "Other Tutors"

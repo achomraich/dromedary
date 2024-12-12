@@ -2,7 +2,8 @@ from django.db import models
 
 class Status(models.TextChoices):
     PENDING = 'Pending', 'Pending'
-    BOOKED = 'Booked', 'Booked'
+    #BOOKED = 'Booked', 'Booked'
+    SCHEDULED = 'Scheduled', 'Scheduled'
     CANCELLED = 'Cancelled', 'Cancelled'
     COMPLETED = 'Completed', 'Completed'
     CONFIRMED = 'Confirmed', 'Confirmed'

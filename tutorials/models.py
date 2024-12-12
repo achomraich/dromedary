@@ -238,7 +238,7 @@ class Lesson(BaseLesson):
                     day=start_date.weekday(),
                     start_time=start_time,
                     end_time=end_time,
-                    status='Booked',
+                    status=TutorAvailability.Availability.BOOKED
                 )
                 print("TutorAvailability created")
             except Exception as e:
@@ -289,8 +289,8 @@ class LessonUpdateRequest(models.Model):
         DONE = 'Y', 'Done'
 
     lesson_update_id = models.BigAutoField(primary_key=True)
-    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)
-    update_option = models.CharField(max_length=1, choices=UpdateOption.choices, default=UpdateOption.CHANGE_TUTOR)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    update_option = models.CharField(max_length=1, choices=UpdateOption.choices, default='1')
     details = models.CharField(max_length=255, blank=True)
     made_by = models.CharField(max_length=10, choices=MadeBy.choices, default=MadeBy.TUTOR)
     is_handled = models.CharField(max_length=10, choices=IsHandled.choices, default=IsHandled.NOT_DONE)
@@ -299,7 +299,7 @@ class LessonStatus(models.Model):
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     date = models.DateField()
     time = models.TimeField()
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.BOOKED)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.SCHEDULED)
     feedback = models.CharField(max_length=255, blank=True)
     invoiced = models.BooleanField(default=False)
 
@@ -321,7 +321,7 @@ class LessonStatus(models.Model):
         elif self.date < today:
             if self.status == Status.PENDING:
                 self.status = Status.CANCELLED
-            elif self.status == Status.BOOKED:
+            elif self.status == Status.SCHEDULED:
                 self.status = Status.COMPLETED
 
         super().save(*args, **kwargs)

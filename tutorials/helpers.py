@@ -6,6 +6,7 @@ from tutorials.models import Tutor, Lesson, LessonStatus, Status, LessonStatus, 
 from datetime import timedelta, datetime
 import datetime
 from tutorials.choices import Days
+from django.db.models import Q, Exists, OuterRef
 
 def login_prohibited(view_function):
     """Decorator for view functions that redirect users away if they are logged in."""
@@ -25,8 +26,16 @@ class TutorAvailabilityManager:
             slot.day = dict(Days.choices).get(int(slot.day))
         return current_tutor_availability
 
-    def get_all_tutor_availability(self):
-        all_tutors_availability = TutorAvailability.objects.filter(status='Available')
+    def get_all_tutor_availability(self, subject_name=None):
+        if subject_name:
+            tutors_with_subject = Tutor.objects.filter(subjects__name=subject_name)
+            all_tutors_availability = TutorAvailability.objects.filter(
+                status='Available',
+                tutor__in=tutors_with_subject
+            )
+        else:
+            all_tutors_availability = TutorAvailability.objects.filter(status='Available')
+
         grouped_availability = {}
 
         for slot in all_tutors_availability:
@@ -61,7 +70,7 @@ class TutorAvailabilityManager:
             lesson.status = Status.CANCELLED
             lesson.save()
 
-        Lesson.objects.filter(lesson_id=lesson_id).update(
+        Lesson.objects.filter(id=lesson_id).update(
             notes=f"All lessons were cancelled on {current_datetime.date()}."
         )
 
@@ -96,6 +105,7 @@ class TutorAvailabilityManager:
             day=day.weekday(),
             status='Available'
         ).order_by('start_time')
+        print(existing_availabilities)
 
         TutorAvailability.objects.filter(
             tutor=tutor,
@@ -111,6 +121,36 @@ class TutorAvailabilityManager:
         ).order_by('start_time')
 
         self.merge_overlapping_availabilities(all_availabilities)
+
+    def is_tutor_available(self, start_time, date, tutor, duration):
+
+        print("start_datetime")
+        start_datetime = datetime.datetime.strptime(str(start_time), "%H:%M")
+        duration_timedelta = datetime.timedelta(
+        hours=duration.hour,
+        minutes=duration.minute,
+        seconds=duration.second
+        )
+
+        print(duration_timedelta)
+        try:
+            end_time = (start_datetime + duration_timedelta)
+            print(end_time.time())
+            print(f"TutorAvailability.objects.filter(tutor={tutor},day={date},start_time__lte={start_datetime.time()},end_time__gte={end_time.time()}, status='Available')"
+                  f"end_time__gte={end_time.time()}, status='Available')")
+            print(TutorAvailability.objects.filter(status='Available'))
+            print(TutorAvailability.objects.filter(tutor=tutor,
+                                         day=date,
+                                         start_time__lte=start_datetime.time(),
+                                         end_time__gte=end_time.time(), status='Available'))
+        except Exception as e:
+            print(f"{e}")
+            return None
+        print("yftjgnh")
+        return TutorAvailability.objects.filter(tutor=tutor,
+                                         day=date,
+                                         start_time__lte=start_datetime.time(),
+                                         end_time__gte=end_time.time(), status='Available')
 
     def merge_overlapping_availabilities(self, availabilities):
         merged_availabilities = []
@@ -183,7 +223,7 @@ class TutorAvailabilityManager:
                 lesson_id=Lesson.objects.get(pk=lesson_id),
                 date=current_date,
                 time=time,
-                status=Status.BOOKED
+                status=Status.SCHEDULED
             )
 
             if frequency == 'W':

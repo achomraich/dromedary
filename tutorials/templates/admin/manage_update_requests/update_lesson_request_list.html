@@ -33,15 +33,21 @@
                         <td>{{ lesson.made_by }}</td>
                         <td>{{ lesson.details}}</td>
                         <td>
-
                             {% if user.is_authenticated and user.admin_profile and lesson.is_handled == "N" %}
-                            <form action="{% url 'update_lesson' lesson.lesson_id %}" method="get">
-                                <button type="submit" class="btn btn-primary" >Handle the Request</button>
-                            </form>
-                            {% elif lesson.is_handled == "Y" %}
-                                <p>Request already handled</p>
-                            {% endif %}
 
+                                {% if lesson.update_option == '3' and lesson.is_handled == "N"%}
+                                    <form action="{% url 'update_lesson' lesson.lesson.id %}" method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancell all lessons?');">Cancell Lessons</button>
+                                    </form>
+                                {% elif lesson.is_handled == "Y" %}
+                                    <p>Request already handled</p>
+                                {% else %}
+                                    <form action="{% url 'update_lesson' lesson.lesson.id %}" method="get">
+                                        <button type="submit" class="btn btn-primary" >Handle the Request</button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

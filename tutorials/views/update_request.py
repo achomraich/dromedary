@@ -143,14 +143,12 @@ class UpdateLesson(LoginRequiredMixin, View):
         )
 
     def cancel_lesson(self, request, lesson_id):
-        ''' Cancels a lesson '''
         self.availability_manager.cancel_lesson_availability(lesson_id)
         messages.success(request, "Lesson cancelled successfully.")
         LessonUpdateRequest.objects.filter(lesson_id=lesson_id, is_handled="N").update(is_handled="Y")
         return redirect('lessons_list')
 
     def prepare_update_form(self, request, lesson_id):
-        ''' Handles update lesson form '''
         lesson_update_instance = get_object_or_404(Lesson, pk=lesson_id)
         update_option_display = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").get_update_option_display()
         details = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").details
@@ -184,7 +182,6 @@ class UpdateLesson(LoginRequiredMixin, View):
         if form.is_valid():
             try:
                 if request.method == "POST":
-                    print('It is post method')
                     self.save_form_updates(form, lesson_id, request)
             except Exception as e:
                 form.add_error(None, f"An error occurred: {str(e)}")
@@ -201,15 +198,11 @@ class UpdateLesson(LoginRequiredMixin, View):
         new_tutor = request.POST.get('new_tutor')
         new_lesson_time = request.POST.get('new_lesson_time')
 
-        try:
-            new_day_of_week = datetime.datetime.strptime(request.POST.get('new_day_of_week'), '%Y-%m-%d').date()
-        except Exception as e:
-            print(e)
+        new_day_of_week = datetime.datetime.strptime(request.POST.get('new_day_of_week'), '%Y-%m-%d').date()
 
-        try:
-            tutor_availability = self.availability_manager.is_tutor_available(new_lesson_time, new_day_of_week.weekday(), Tutor.objects.get(pk=new_tutor), form.cleaned_data['duration'])
-        except Exception as e:
-            print(e)
+
+        tutor_availability = self.availability_manager.is_tutor_available(new_lesson_time, new_day_of_week.weekday(), Tutor.objects.get(pk=new_tutor), form.cleaned_data['duration'])
+
 
         if not tutor_availability:
             form.add_error(None, 'Tutor is not available!!!')

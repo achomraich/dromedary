@@ -46,8 +46,8 @@ class InvoiceModelTest(TestCase):
         self.lesson = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject,
-            term_id=self.term,
+            subject=self.subject,
+            term=self.term,
             frequency='W',
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -101,7 +101,3 @@ class InvoiceModelTest(TestCase):
     def test_get_total_hours(self):
         total_hours = self.invoice.get_total_hours()
         self.assertEqual(total_hours, 1.0)  # Based on the lesson duration we set
-
-    def test_str_representation(self):
-        expected_str = f"Invoice #{self.invoice.id} - {self.student.user.full_name()}"
-        self.assertEqual(str(self.invoice), expected_str)

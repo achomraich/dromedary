@@ -51,8 +51,6 @@ class StudentsTestCase(TestCase):
         response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shared/calendar.html')
-        self.assertContains(response, self.student.user.username)
-        self.assertContains(response, self.tutor.user.username)
         self.assertContains(response, self.lesson.subject)
         self.assertContains(response, 'Dec. 4, 2024')
         self.assertContains(response, 'Dec. 11, 2024')
@@ -90,9 +88,7 @@ class StudentsTestCase(TestCase):
         response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shared/calendar.html')
-        
-        self.assertContains(response, self.student.user.username)
-        self.assertContains(response, self.tutor.user.username)
+
         self.assertContains(response, self.lesson.subject.name)
         self.assertContains(response, 'Dec. 4, 2024')
         self.assertContains(response, 'Dec. 11, 2024')

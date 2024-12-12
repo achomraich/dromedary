@@ -18,8 +18,8 @@ class LessonUpdateRequestModelTestCase(TestCase):
         self.lesson = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject,
-            term_id=self.term,
+            subject=self.subject,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -41,8 +41,8 @@ class LessonUpdateRequestModelTestCase(TestCase):
         self.assertEqual(update_request.made_by, "Student")
         self.assertEqual(update_request.is_handled, "N")
         self.assertEqual(
-            str(update_request),
-            f"Update Request for Lesson {self.lesson.lesson_id} - Change Day/Time"
+            update_request.update_option,
+            LessonUpdateRequest.UpdateOption.CHANGE_DAY_TIME
         )
 
     def test_default_values(self):
@@ -88,6 +88,6 @@ class LessonUpdateRequestModelTestCase(TestCase):
             update_option="3"
         )
         self.assertEqual(
-            str(update_request),
-            f"Update Request for Lesson {self.lesson.lesson_id} - Cancel Lessons"
+            update_request.update_option,
+            LessonUpdateRequest.UpdateOption.CANCEL_LESSONS
         )

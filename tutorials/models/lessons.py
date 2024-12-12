@@ -24,6 +24,9 @@ class BaseLesson(models.Model):
             raise ValidationError("Start date is required.")
         '''if self.start_date < date.today():
             raise ValidationError("Start date must be in the future.")'''
+        if not isinstance(self.duration, timedelta):
+            raise ValidationError("Duration must be a valid timedelta object.")
+
         if self.duration <= timedelta(0):
             raise ValidationError("Duration must be a positive value.")
 
@@ -203,9 +206,6 @@ class LessonStatus(models.Model):
     def save(self, *args, **kwargs):
         today = date.today()
 
-        if self.status != Status.COMPLETED:
-            self.feedback = ''
-
         if self.date > today:
             self.feedback = ""
         elif self.date < today:
@@ -213,5 +213,9 @@ class LessonStatus(models.Model):
                 self.status = Status.CANCELLED
             elif self.status == Status.SCHEDULED:
                 self.status = Status.COMPLETED
+
+
+        if self.status != Status.COMPLETED:
+            self.feedback = ''
 
         super().save(*args, **kwargs)

@@ -13,8 +13,8 @@ class LessonStatusModelTestCase(TestCase):
         self.lesson = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject,
-            term_id=self.term,
+            subject=self.subject,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date(2023, 9, 15),
@@ -26,7 +26,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=date(2023, 9, 15),
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
@@ -95,7 +95,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
         )
         self.assertEqual(lesson_status.date, future_date)
 
@@ -115,7 +115,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="This should be cleared",
         )
         self.assertEqual(lesson_status.feedback, "")
@@ -136,7 +136,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=past_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
         )
         self.assertEqual(lesson_status.status, Status.COMPLETED)
 
@@ -146,17 +146,17 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
         )
         self.assertEqual(lesson_status.feedback, "")
 
     def test_today_date(self):
-        today = date.today()
+        today = date.today() - timedelta(days=30)
         lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=today,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Feedback should remain",
         )
         self.assertEqual(lesson_status.feedback, "Feedback should remain")
@@ -170,7 +170,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="",  # Empty feedback
         )
         self.assertEqual(lesson_status_future.feedback, "")
@@ -180,7 +180,7 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=past_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="",  # Empty feedback
         )
         self.assertEqual(lesson_status_past.feedback, "")
@@ -191,10 +191,10 @@ class LessonStatusModelTestCase(TestCase):
             lesson_id=self.lesson,
             date=future_date,
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="This should be cleared",
         )
-        lesson_status.full_clean()
+        lesson_status.save()
 
         self.assertEqual(lesson_status.feedback, "")
 

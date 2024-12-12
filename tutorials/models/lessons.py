@@ -12,6 +12,7 @@ from tutorials.models.shared import Subject, Term
 from tutorials.models.choices import Frequency, Status, Days
 
 class BaseLesson(models.Model):
+    """Abstract model for lessons."""
     student = models.ForeignKey('Student', on_delete=models.CASCADE)
     duration = models.DurationField(default=timedelta(hours=1))
     start_date = models.DateField()
@@ -20,6 +21,7 @@ class BaseLesson(models.Model):
         abstract = True
 
     def clean(self):
+        """Ensures there is a start date and that the duration is positive."""
         if not self.start_date:
             raise ValidationError("Start date is required.")
         '''if self.start_date < date.today():
@@ -31,6 +33,7 @@ class BaseLesson(models.Model):
             raise ValidationError("Duration must be a positive value.")
 
 class Lesson(BaseLesson):
+    """Model for a specific lesson."""
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
@@ -43,7 +46,7 @@ class Lesson(BaseLesson):
         unique_together = ('tutor', 'student', 'subject_id')
 
     def clean(self):
-        """Custom validation logic for the Lesson model."""
+        """Ensures lesson price is positive."""
         super().clean()
         if not isinstance(self.duration, timedelta):
             raise ValidationError("Duration must be a valid timedelta object.")
@@ -55,6 +58,7 @@ class Lesson(BaseLesson):
             raise ValidationError({"price_per_lesson": "Price per lesson must be greater than zero."})
 
     def save(self, *args, **kwargs):
+        """Creates associated lesson status and updates tutor availability."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
 
@@ -132,6 +136,7 @@ class Lesson(BaseLesson):
                 print(f"Error creating TutorAvailability: {e}")
 
 class LessonRequest(BaseLesson):
+    """Model for a request for scheduling a lesson."""
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     time = models.TimeField()
@@ -142,6 +147,7 @@ class LessonRequest(BaseLesson):
     lesson_assigned = models.ForeignKey(Lesson, on_delete=models.CASCADE, null=True, blank=True)
 
     def clean(self):
+        """Ensures duration is positive, and the start date is positive and within the term dates."""
         if self.duration <= timedelta(0):
             raise ValidationError("Duration must be a positive value.")
         if not self.start_date:
@@ -156,16 +162,19 @@ class LessonRequest(BaseLesson):
             raise ValidationError("Start date must be within the term.")
 
     def decided(self):
+        """Check if the request has been either confirmed or cancelled."""
         return self.cancelled() or self.confirmed()
 
     def cancelled(self):
+        """Check if the request is cancelled."""
         return self.status == Status.CANCELLED
 
     def confirmed(self):
+        """Check if the request is confirmed."""
         return self.status == Status.CONFIRMED
 
 class LessonUpdateRequest(models.Model):
-
+    """Model for a request to update or modify an existing lesson."""
     class UpdateOption(models.TextChoices):
         CHANGE_TUTOR = '1', 'Change Tutor'
         CHANGE_DAY_TIME = '2', 'Change Day/Time'
@@ -187,6 +196,7 @@ class LessonUpdateRequest(models.Model):
     is_handled = models.CharField(max_length=10, choices=IsHandled.choices, default=IsHandled.NOT_DONE)
 
 class LessonStatus(models.Model):
+    """Model for the status of a specific lesson, including completion, feedback, and invoicing."""
     lesson_id = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     date = models.DateField()
     time = models.TimeField()
@@ -219,3 +229,4 @@ class LessonStatus(models.Model):
             self.feedback = ''
 
         super().save(*args, **kwargs)
+        

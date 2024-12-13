@@ -2,6 +2,8 @@ from django.test import TestCase
 from tutorials.forms import LessonFeedbackForm
 from django import forms
 from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject
+
+from datetime import date, time, timedelta
 import datetime
 
 class LessonFeedbackFormTestCase(TestCase):
@@ -34,7 +36,14 @@ class LessonFeedbackFormTestCase(TestCase):
                                             start_date=datetime.date(2024, 9, 1),
                                             price_per_lesson=20)
 
-        self.lesson_status=LessonStatus.objects.get(pk=1)
+        self.lesson_status = LessonStatus.objects.create(
+            lesson_id=self.lesson,
+            date=date(2024, 2, 10),
+            time=time(12, 30),
+            status=Status.COMPLETED,
+            feedback="Great session",
+            invoiced=True,
+        )
 
 
 

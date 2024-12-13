@@ -1,7 +1,7 @@
 from django.test import TestCase
 from tutorials.forms import UpdateLessonRequestForm, UpdateLessonForm
 from django import forms
-from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject, LessonUpdateRequest
+from tutorials.models import LessonStatus, Lesson, User, Student, Status, Tutor, Term, Subject, LessonUpdateRequest, Frequency
 import datetime
 
 
@@ -33,7 +33,7 @@ class LessonUpdateRequestTestCase(TestCase):
                                             student=self.student,
                                             subject=self.subject,
                                             term=self.term,
-                                            frequency='W',
+                                            frequency=Frequency.WEEKLY,
                                             duration=datetime.timedelta(hours=2, minutes=30),
                                             start_date=datetime.date(2024, 9, 1),
                                             price_per_lesson=20)
@@ -120,7 +120,7 @@ class LessonUpdateRequestTestCase(TestCase):
 
         self.assertEqual(form.initial['tutor_name'], self.lesson.student.user.full_name())
         self.assertEqual(form.initial['duration'], self.lesson.duration)
-        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+        self.assertEqual(form.initial['frequency'], Frequency.WEEKLY.label)
 
     def test_request_added_correctly(self):
         form = UpdateLessonRequestForm(data=self.form_data, instance=self.lesson_update_request,
@@ -166,7 +166,7 @@ class LessonUpdateRequestTestCase(TestCase):
 
         # Ensure that 'duration' and 'frequency' are populated
         self.assertEqual(form.initial['duration'], self.lesson.duration)
-        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+        self.assertEqual(form.initial['frequency'], Frequency.WEEKLY.label)
 
         # Check that the 'update_option' field contains only relevant choices for student
         self.assertIn(('2', 'Change Day/Time'), form.fields['update_option'].choices)
@@ -183,7 +183,7 @@ class LessonUpdateRequestTestCase(TestCase):
         self.assertEqual(form.initial['details'], "Test details")
         self.assertEqual(form.initial['subject'], self.lesson.subject.name)
         self.assertEqual(form.initial['duration'], str(self.lesson.duration))
-        self.assertEqual(form.initial['frequency'], 'Weekly')
+        self.assertEqual(form.initial['frequency'], Frequency.WEEKLY.label)
         self.assertEqual(form.initial['lesson_time'], self.lesson.set_start_time)
 
         # Check the disabled fields

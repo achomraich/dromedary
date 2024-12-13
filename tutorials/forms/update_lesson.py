@@ -128,5 +128,3 @@ class UpdateLessonForm(forms.ModelForm):
         if lesson_update_instance.subject:
             subject_name = lesson_update_instance.subject
             self.fields['new_tutor'].queryset = Tutor.objects.filter(subjects__name=subject_name)
-        else:
-            self.fields['new_tutor'].queryset = Tutor.objects.none()

@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class StudentTests(BaseListTests):
+class LessonsListTest(BaseListTests):
 
     @classmethod
     def tearDownClass(cls):
@@ -18,7 +18,7 @@ class StudentTests(BaseListTests):
         {"username": "@tutor", "password": "Qa1", "role": "Tutor"},
     ]
 
-    def test_student_lessons(self):
+    def test_tutor_lessons(self):
         expected_headers = \
             ["Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes", "Action"]
         row_data_list = [
@@ -40,9 +40,9 @@ class StudentTests(BaseListTests):
                 else:
                     self.verify_row_content()
 
-                super().logout()  # Logout after each account
+                super().logout()
 
-    def test_student_lessons_have_details(self):
+    def test_tutor_lessons_have_details(self):
         expected_headers = ["Date", "Time", "Status", "Feedback", "Actions"]
         row_data_list = {
             "1":
@@ -93,7 +93,7 @@ class StudentTests(BaseListTests):
 
                 super(BaseListTests, self).logout()
 
-    def test_student_can_open_lesson_details(self):
+    def test_tutor_can_open_lesson_details(self):
 
         for account in self.test_accounts:
             with self.subTest(account=account):

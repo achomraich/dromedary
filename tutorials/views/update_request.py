@@ -166,7 +166,6 @@ class UpdateLesson(LoginRequiredMixin, View):
         details = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").details
         lesson_time = LessonStatus.objects.filter(lesson_id=lesson_update_instance, date__gt=now()).first()
         next_lesson_date = LessonStatus.objects.filter(lesson_id=lesson_update_instance, status=Status.PENDING)
-        print()
         if next_lesson_date:
             next_lesson_date = next_lesson_date[0]
 

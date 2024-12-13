@@ -5,11 +5,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class StudentTests(BaseListTests):
+class LessonsListTest(BaseListTests):
 
     @classmethod
     def tearDownClass(cls):
-        print("Closing browser and cleaning up after all tests...")
         if cls.driver:
             cls.driver.quit()
             cls.driver = None
@@ -29,7 +28,7 @@ class StudentTests(BaseListTests):
         ]
 
         for account in self.test_accounts:
-            with self.subTest(account=account):  # Run tests for each account
+            with self.subTest(account=account):
                 self.login_with_account(account, '/dashboard/lessons/')
                 self.verify_table_headers(expected_headers)
 
@@ -41,7 +40,7 @@ class StudentTests(BaseListTests):
                 else:
                     self.verify_row_content()
 
-                super().logout()  # Logout after each account
+                super().logout()
 
     def test_student_lessons_have_details(self):
         expected_headers = ["Date", "Time", "Status", "Feedback", "Actions"]

@@ -9,7 +9,6 @@
     <h1 class="mt-2 mb-3">Subject List</h1>
 
     <form action="{% url 'new_subject' %}">
-        {% csrf_token %}
         <button type="submit" class="btn btn-primary mb-3">
             <i class="bi bi-plus-circle"></i> Add New Subject
         </button>

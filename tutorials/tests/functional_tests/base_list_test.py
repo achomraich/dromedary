@@ -6,7 +6,7 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from .base_selenium_test import BaseSeleniumTest
 
 class ListSeleniumTest(StaticLiveServerTestCase):
-    current_role = None  # Tracks the currently logged-in role for test functions
+    current_role = None
     roles = ["Admin", "Tutor", "Student"]
 
     @classmethod
@@ -39,19 +39,23 @@ class BaseListTests(ListSeleniumTest, BaseSeleniumTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        print("Seeding data for all tests in the class...")
-        #cls.seed_data()
 
     def login_with_account(self, account, url):
         self.login_as_user(username=account["username"], password=account["password"])
         self.driver.get(f"{self.live_server_url}{url}")
+
+        '''WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "table"))
+        )
+        self.table = self.driver.find_element(By.CLASS_NAME, "table")'''
+
+    def verify_table_headers(self, expected_headers):
+
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.CLASS_NAME, "table"))
         )
         self.table = self.driver.find_element(By.CLASS_NAME, "table")
 
-    def verify_table_headers(self, expected_headers):
-        self.table = self.driver.find_element(By.CLASS_NAME, "table")
         headers=self.table.find_elements(By.TAG_NAME, "th")
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "th"))
@@ -60,6 +64,12 @@ class BaseListTests(ListSeleniumTest, BaseSeleniumTest):
         self.assertEqual(headers, expected_headers)
 
     def verify_table_row_count(self, models_len):
+
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "table"))
+        )
+        self.table = self.driver.find_element(By.CLASS_NAME, "table")
+
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.TAG_NAME, "tr"))
         )

@@ -4,10 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist  # Add this import at the 
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
-from tutorials.models.models import *
+from tutorials.models import *
 from datetime import datetime, date
 from django.test import TransactionTestCase
 from django.test import TestCase
+
 
 class BaseSeleniumTest(TestCase):
 
@@ -46,73 +47,72 @@ class BaseSeleniumTest(TestCase):
             else:
                 Student.objects.create(user=self.user)
 
-
     def seed_term_model(self):
         term_dates = [
-            {"term_id": 1, "start_date": "2024-09-01", "end_date": "2025-01-15"},
-            {"term_id": 2, "start_date": "2025-02-01", "end_date": "2025-04-30"},
-            {"term_id": 3, "start_date": "2025-05-01", "end_date": "2025-07-15"}
+            {"id": 1, "start_date": "2024-09-01", "end_date": "2025-01-15"},
+            {"id": 2, "start_date": "2025-02-01", "end_date": "2025-04-30"},
+            {"id": 3, "start_date": "2025-05-01", "end_date": "2025-07-15"}
         ]
         for term_data in term_dates:
             Term.objects.create(
-                term_id=term_data["term_id"],
+                id=term_data["id"],
                 start_date=term_data["start_date"],
                 end_date=term_data["end_date"]
             )
 
     def seed_subject_model(self):
-        subjects = [{'subject_id': 1, "name": "C++", "description": "C++ course"},
-                    {'subject_id': 2, "name": "Java", "description": "Java course"},
-                    {'subject_id': 3, "name": "Python", "description": "Python course"}]
+        subjects = [{'id': 1, "name": "C++", "description": "C++ course"},
+                    {'id': 2, "name": "Java", "description": "Java course"},
+                    {'id': 3, "name": "Python", "description": "Python course"}]
 
         for s in subjects:
-            Subject.objects.create(subject_id=s['subject_id'], name=s["name"], description=s["description"])
+            Subject.objects.create(id=s['id'], name=s["name"], description=s["description"])
 
     def seed_lessons_model(self):
         lessons = [
             {
-            'lesson_id': 1,
-            'tutor': Tutor.objects.get(pk=2),
-            'student': Student.objects.get(pk=3),
-            'subject_id': Subject.objects.get(pk=1),
-            'term_id': Term.objects.get(pk=1),
-            'frequency': 'W',
-            'duration': timedelta(hours=2, minutes=30),
-            'start_date': "2024-09-01",
-            'price_per_lesson': 20
+                'id': 1,
+                'tutor': Tutor.objects.get(pk=2),
+                'student': Student.objects.get(pk=3),
+                'subject': Subject.objects.get(pk=1),
+                'term': Term.objects.get(pk=1),
+                'frequency': 'W',
+                'duration': timedelta(hours=2, minutes=30),
+                'start_date': "2024-09-01",
+                'price_per_lesson': 20
             },
 
             {
-            'lesson_id': 2,
-            'tutor': Tutor.objects.get(pk=2),
-            'student': Student.objects.get(pk=3),
-            'subject_id': Subject.objects.get(pk=2),
-            'term_id': Term.objects.get(pk=2),
-            'frequency': 'M',
-            'duration': timedelta(hours=2, minutes=30),
-            'start_date': "2025-02-01",
-            'price_per_lesson': 30
+                'id': 2,
+                'tutor': Tutor.objects.get(pk=2),
+                'student': Student.objects.get(pk=3),
+                'subject': Subject.objects.get(pk=2),
+                'term': Term.objects.get(pk=2),
+                'frequency': 'M',
+                'duration': timedelta(hours=2, minutes=30),
+                'start_date': "2025-02-01",
+                'price_per_lesson': 30
             },
 
             {
-            'lesson_id': 3,
-            'tutor': Tutor.objects.get(pk=2),
-            'student': Student.objects.get(pk=3),
-            'subject_id': Subject.objects.get(pk=3),
-            'term_id': Term.objects.get(pk=3),
-            'frequency': 'D',
-            'duration': timedelta(hours=2, minutes=30),
-            'start_date': "2025-03-01",
-            'price_per_lesson': 10
+                'id': 3,
+                'tutor': Tutor.objects.get(pk=2),
+                'student': Student.objects.get(pk=3),
+                'subject': Subject.objects.get(pk=3),
+                'term': Term.objects.get(pk=3),
+                'frequency': 'D',
+                'duration': timedelta(hours=2, minutes=30),
+                'start_date': "2025-03-01",
+                'price_per_lesson': 10
             }]
 
         for lesson in lessons:
             Lesson.objects.create(
-                lesson_id=lesson["lesson_id"],
+                id=lesson["id"],
                 tutor=lesson["tutor"],
                 student=lesson["student"],
-                subject_id=lesson["subject_id"],
-                term_id=lesson["term_id"],
+                subject=lesson["subject"],
+                term=lesson["term"],
                 frequency=lesson["frequency"],
                 duration=lesson["duration"],
                 start_date=lesson["start_date"],
@@ -122,23 +122,23 @@ class BaseSeleniumTest(TestCase):
     def seed_lessonStatus_model(self):
 
         lessonStatus = [
-            {'lesson_id': Lesson.objects.get(pk=1),
+            {'id': Lesson.objects.get(pk=1),
              'date': "2024-10-05", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
-            {'lesson_id': Lesson.objects.get(pk=1),
+            {'id': Lesson.objects.get(pk=1),
              'date': "2024-10-12", 'time': "12:00:00", 'status': "Completed", 'feedback': ''},
-            {'lesson_id': Lesson.objects.get(pk=2),
+            {'id': Lesson.objects.get(pk=2),
              'date': "2024-10-05", 'time': "15:30:00", 'status': "Completed", 'feedback': ''},
-            {'lesson_id': Lesson.objects.get(pk=2),
+            {'id': Lesson.objects.get(pk=2),
              'date': "2024-10-12", 'time': "14:00:00", 'status': "Cancelled", 'feedback': ''},
-            {'lesson_id': Lesson.objects.get(pk=3),
+            {'id': Lesson.objects.get(pk=3),
              'date': "2024-12-06", 'time': "19:30:00", 'status': "Booked", 'feedback': ''},
-            {'lesson_id': Lesson.objects.get(pk=3),
+            {'id': Lesson.objects.get(pk=3),
              'date': "2024-12-12", 'time': "09:00:00", 'status': "Booked", 'feedback': ''}
         ]
 
         for status_data in lessonStatus:
             LessonStatus.objects.create(
-                lesson_id=status_data['lesson_id'],
+                lesson_id=status_data['id'],
                 date=datetime.strptime(status_data['date'], '%Y-%m-%d').date(),
                 time=status_data['time'],
                 status=status_data['status'],
@@ -149,14 +149,23 @@ class BaseSeleniumTest(TestCase):
     def lessons_number_for_student(self, student=None):
         if not student:
             return Lesson.objects.all().count()
-        user_object=User.objects.get(username=student)
-        student_object=Student.objects.get(user=user_object)
+        user_object = User.objects.get(username=student)
+        student_object = Student.objects.get(user=user_object)
         return Lesson.objects.filter(student=student_object).count()
+
+    def subjects_number(self):
+        return Subject.objects.all().count()
+
+    def student_number(self):
+        return Student.objects.all().count()
+
+    def tutor_number(self):
+        return Tutor.objects.all().count()
 
     def lessons_number_for_tutor(self, tutor=None):
         if not tutor:
             return Lesson.objects.all().count()
-        user_object=User.objects.get(username=tutor)
+        user_object = User.objects.get(username=tutor)
         object = user_object
         try:
             object = Tutor.objects.get(user=user_object)
@@ -178,7 +187,6 @@ class BaseSeleniumTest(TestCase):
         if object:
             return Lesson.objects.filter(student=object).count()
 
-        #return Lesson.objects.filter(tutor=tutor_object).count()
 
     def lessons_details_number(self, lesson_number):
 
@@ -197,6 +205,7 @@ class BaseSeleniumTest(TestCase):
         cls.seed_subject_model(cls)
         cls.seed_lessons_model(cls)
         cls.seed_lessonStatus_model(cls)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

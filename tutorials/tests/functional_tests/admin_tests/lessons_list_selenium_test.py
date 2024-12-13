@@ -1,34 +1,24 @@
 from tutorials.tests.functional_tests.base_list_test import  ListSeleniumTest, BaseListTests
 from selenium.webdriver.common.by import By
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class AdminTests(BaseListTests):
+class LessonsListTest(BaseListTests):
 
     def setUp(self):
-        # Ensure parent class seeds its data
         super().setUp()
-        print("Seeding additional data in StudentTests...")
 
     @classmethod
     def tearDownClass(cls):
-        print("Closing browser and cleaning up after all tests...")
-        # Quit the browser if it's initialized
         if cls.driver:
             cls.driver.quit()
-            cls.driver = None  # Clean up reference
-
-            #super().tearDownClass()
-
-            # Define multiple student accounts to test
+            cls.driver = None
     test_accounts = [
         {"username": "@johndoe", "password": "Qa1", "role": "Admin"},
     ]
 
-    def test_student_lessons(self):
-        expected_headers = \
-            ["Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes"]
+    def test_lessons(self):
+        expected_headers = ["Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes"]
         row_data_list = [
             ["Charlie Johnson", "Jane Doe", "C++", "Sept. 1, 2024", "2h 30min", "Week", "—"],
             ["Charlie Johnson", "Jane Doe", "Java", "Feb. 1, 2025", "2h 30min", "Month", "—"],
@@ -36,7 +26,7 @@ class AdminTests(BaseListTests):
         ]
 
         for account in self.test_accounts:
-            with self.subTest(account=account):  # Run tests for each account
+            with self.subTest(account=account):
                 self.login_with_account(account, '/dashboard/lessons/')
                 self.verify_table_headers(expected_headers)
 
@@ -44,9 +34,9 @@ class AdminTests(BaseListTests):
                 self.verify_table_row_count(table_number)
                 self.verify_row_content(row_data_list)
 
-                super().logout()  # Logout after each account
+                super().logout()
 
-    def test_student_lessons_details(self):
+    def test_lessons_details(self):
 
         expected_headers = ["Date", "Time", "Status", "Feedback", "Actions"]
         row_data_list = {
@@ -95,7 +85,7 @@ class AdminTests(BaseListTests):
 
                 super(BaseListTests, self).logout()
 
-    def test_student_can_open_lesson_details(self):
+    def test_can_open_lesson_details(self):
 
         for account in self.test_accounts:
             with self.subTest(account=account):

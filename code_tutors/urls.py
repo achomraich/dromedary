@@ -58,6 +58,7 @@ urlpatterns = [
     path('dashboard/subjects/<int:subject_id>/edit/', views.SubjectView.as_view(), name='subject_edit'),
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
     path('dashboard/subjects/create', views.SubjectView.as_view(), name='new_subject'),
+
     path('dashboard/update_requests/', views.UpdateLessonRequest.as_view(), name='update_requests'),
     path('dashboard/update_requests/<int:lesson_id>/', views.UpdateLesson.as_view(), name='update_lesson'),
 

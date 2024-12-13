@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from tutorials.models import Subject, User, Admin
@@ -164,4 +166,32 @@ class SubjectViewTest(TestCase):
         self.client.login(username="@user", password="user123")
         response = self.client.get(reverse('subjects_list'))
         self.assertNotEqual(response.status_code, 200)
+
+    def test_subject_view_get_no_subject_id(self):
+        """Test behavior when subject_id is not provided and path is unhandled."""
+        self.client.login(username="@admin", password="admin123")
+        response = self.client.get('/dashboard/subjects/some_random_path/')
+        self.assertEqual(response.status_code, 404)
+
+    @patch('tutorials.forms.SubjectForm.save')
+    def test_form_save_exception(self, mock_save):
+        """Test form save failure handling."""
+        mock_save.side_effect = Exception("Database error")
+        self.client.login(username="@admin", password="admin123")
+        response = self.client.post(reverse('new_subject'), {'name': 'Biology'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/manage_subjects/subject_create.html')
+        self.assertFalse(Subject.objects.filter(name='Biology').exists())
+
+    def test_subject_view_no_subject_id(self):
+        """Test behavior when subject_id is not provided and path is unhandled."""
+        self.client.login(username="@admin", password="admin123")
+        response = self.client.post(reverse('subjects_list', args=[]))
+        self.assertEqual(response.status_code, 302)
+
+    def test_subject_view_post_no_subject_id(self):
+        """Test behavior when subject_id is not provided and path is unhandled."""
+        self.client.login(username="@admin", password="admin123")
+        response = self.client.post(f'/dashboard/subjects/{self.subject1.id}/unknown/')
+        self.assertEqual(response.status_code, 404)
 

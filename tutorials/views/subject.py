@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
@@ -37,15 +37,14 @@ class SubjectView(View):
         """Handle POST actions to create, edit or delete subjects."""
         if 'create' in request.path:
             return self.create_subject(request)
-
         if subject_id:
             if request.path.endswith('edit/'):
                 return self.edit_subject(request, subject_id)
-            elif request.path.endswith('delete/'):
+            else:
                 subject = get_object_or_404(Subject, pk=subject_id)
                 return self.delete_subject(request, subject)
 
-        #return redirect('subjects_list')
+        return redirect('subjects_list')
 
     def delete_subject(self, request, subject):
         """Deletes a subject."""

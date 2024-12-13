@@ -1,5 +1,5 @@
 
-from tutorials.tests.functional_tests.base_list_test import  ListSeleniumTest, BaseListTests
+from tutorials.tests.functional.base_list_test import  ListSeleniumTest, BaseListTests
 from selenium.webdriver.common.by import By
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,9 +22,9 @@ class LessonsListTest(BaseListTests):
         expected_headers = \
             ["Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes", "Action"]
         row_data_list = [
-            ["Charlie Johnson", "Jane Doe", "C++", "Sept. 1, 2024", "2h 30min", "Week", "—", "No Booked Lessons"],
-            ["Charlie Johnson", "Jane Doe", "Java", "Feb. 1, 2025", "2h 30min", "Month", "—", "No Booked Lessons"],
-            ["Charlie Johnson", "Jane Doe", "Python", "May 1, 2025", "2h 30min", "Day", "—", "Update Lesson"],
+            ["Charlie Johnson", "Jane Doe", "C++", "Sept. 1, 2024", "2h 30min", "Weekly", "—", "No Booked Lessons"],
+            ["Charlie Johnson", "Jane Doe", "Java", "Feb. 1, 2025", "2h 30min", "Monthly", "—", "No Booked Lessons"],
+            ["Charlie Johnson", "Jane Doe", "Python", "May 1, 2025", "2h 30min", "D", "—", "Update Lesson"],
         ]
 
         for account in self.test_accounts:

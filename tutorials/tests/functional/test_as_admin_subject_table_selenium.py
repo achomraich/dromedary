@@ -1,5 +1,5 @@
 
-from tutorials.tests.functional_tests.base_list_test import ListSeleniumTest, BaseListTests
+from tutorials.tests.functional.base_list_test import ListSeleniumTest, BaseListTests
 from selenium.webdriver.common.by import By
 import time
 from selenium.webdriver.support.ui import WebDriverWait

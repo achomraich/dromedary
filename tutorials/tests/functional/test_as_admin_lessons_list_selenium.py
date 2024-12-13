@@ -1,4 +1,4 @@
-from tutorials.tests.functional_tests.base_list_test import  ListSeleniumTest, BaseListTests
+from tutorials.tests.functional.base_list_test import  ListSeleniumTest, BaseListTests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -18,11 +18,11 @@ class LessonsListTest(BaseListTests):
     ]
 
     def test_lessons(self):
-        expected_headers = ["Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes"]
+        expected_headers = ["#", "Student", "Teacher", "Subject", "Term Start Date", "Duration", "Frequency", "Notes"]
         row_data_list = [
-            ["Charlie Johnson", "Jane Doe", "C++", "Sept. 1, 2024", "2h 30min", "Week", "—"],
-            ["Charlie Johnson", "Jane Doe", "Java", "Feb. 1, 2025", "2h 30min", "Month", "—"],
-            ["Charlie Johnson", "Jane Doe", "Python", "May 1, 2025", "2h 30min", "Day", "—"],
+            ["1", "Charlie Johnson", "Jane Doe", "C++", "Sept. 1, 2024", "2h 30min", "Weekly", ""],
+            ["2", "Charlie Johnson", "Jane Doe", "Java", "Feb. 1, 2025", "2h 30min", "Monthly", ""],
+            ["3", "Charlie Johnson", "Jane Doe", "Python", "May 1, 2025", "2h 30min", "D", ""],
         ]
 
         for account in self.test_accounts:
@@ -53,7 +53,7 @@ class LessonsListTest(BaseListTests):
             "3":
                 [
                     ["Dec. 6, 2024", "7:30 p.m.", "Completed", '', ''],
-                    ["Dec. 12, 2024", "9 a.m.", "Booked", '', '']
+                    ["Dec. 12, 2024", "9 a.m.", "Completed", '', '']
                 ]
         }
 

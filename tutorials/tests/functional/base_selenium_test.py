@@ -131,9 +131,9 @@ class BaseSeleniumTest(TestCase):
             {'id': Lesson.objects.get(pk=2),
              'date': "2024-10-12", 'time': "14:00:00", 'status': "Cancelled", 'feedback': ''},
             {'id': Lesson.objects.get(pk=3),
-             'date': "2024-12-06", 'time': "19:30:00", 'status': "Booked", 'feedback': ''},
+             'date': "2024-12-06", 'time': "19:30:00", 'status': "Scheduled", 'feedback': ''},
             {'id': Lesson.objects.get(pk=3),
-             'date': "2024-12-12", 'time': "09:00:00", 'status': "Booked", 'feedback': ''}
+             'date': "2024-12-12", 'time': "09:00:00", 'status': "Scheduled", 'feedback': ''}
         ]
 
         for status_data in lessonStatus:

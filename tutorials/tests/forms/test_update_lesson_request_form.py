@@ -50,6 +50,8 @@ class LessonUpdateRequestTestCase(TestCase):
         self.form_data = {'update_option': '2',
                           'details': 'xxx'}
 
+        self.tutor.subjects.add(self.subject)
+
         self.lesson_update_request = LessonUpdateRequest.objects.create(
             lesson=self.lesson,
             made_by='Tutor'
@@ -207,18 +209,19 @@ class LessonUpdateRequestTestCase(TestCase):
         form_data = {
             'new_tutor': Tutor.objects.get(pk=1),  # Missing new tutor, for example
             'new_lesson_time': '10:00:00',
-            'new_day_of_week': '2024-12-12',  # Invalid date format
+            'new_day_of_week': '2024-13-12',  # Invalid date format
         }
 
 
 
         form = UpdateLessonForm(instance=self.lesson,
+                                details="Details",
                                 data=form_data, update_option='1',
                                 day_of_week=0,)
 
-        # Check if form is not valid due to missing required fields or incorrect formats
+
         self.assertFalse(form.is_valid())
-        self.assertIn('new_tutor', form.errors)
+        self.assertIn('new_day_of_week', form.errors)
 
     def test_update_lesson_request_form_save(self):
         """Test saving the form and making sure initial data is correctly passed."""
@@ -233,3 +236,21 @@ class LessonUpdateRequestTestCase(TestCase):
         # Verify that the lesson update request instance was saved correctly
         self.assertEqual(updated_instance.details, "Test details")
         self.assertEqual(updated_instance.update_option, "2")
+
+    def test_form_invalid_day_of_week(self):
+        """Test that form raises validation errors with invalid data."""
+        form_data = {
+            'new_tutor': Tutor.objects.get(pk=1),  # Missing new tutor, for example
+            'new_lesson_time': '10:00:00',
+            'new_day_of_week': '2024-12-12',  # Invalid date format
+        }
+
+
+
+        form = UpdateLessonForm(instance=self.lesson,
+                                details="Details",
+                                data=form_data, update_option='1',
+                                day_of_week=None,)
+
+        self.assertEqual(form.initial['day_of_week'], "Unknown Day")
+        self.assertTrue(form.is_valid())

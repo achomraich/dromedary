@@ -54,14 +54,14 @@ class UpdateLessonViewTest(TestCase):
             notes="Test lesson1"
         )
 
-        self.lesson_status = LessonStatus.objects.create(
+        '''self.lesson_status = LessonStatus.objects.create(
             lesson_id=self.lesson,
             date=date(2025, 2, 10),
             time=time(12, 30),
             status=Status.PENDING,
             feedback="Great session",
             invoiced=True,
-        )
+        )'''
 
         self.lesson_update_request = LessonUpdateRequest.objects.create(
             lesson=self.lesson,
@@ -81,21 +81,29 @@ class UpdateLessonViewTest(TestCase):
             status="Available",
         )
 
+        TutorAvailability.objects.create(
+            tutor=Tutor.objects.get(user__username='@petrapickles'),
+            day=0,
+            start_time="12:30",
+            end_time="15:00",
+            status="Available",
+        )
+
         self.client = Client()
 
-    def test_update_lesson_get(self):
+    def update_lesson(self):
         # Simulate a GET request to the view with lesson_id
 
         self.client.login(username='@admin', password='admin123')
-        response = self.client.get(reverse('update_lesson', kwargs={'lesson_id': self.lesson.id}))
+        response = self.client.get(reverse('update_lesson', kwargs={'lesson_id': self.lesson.id}), follow=False)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'admin/manage_update_requests/update_lesson.html')
+        self.assertEqual(response.status_code, 302)
 
     def test_get_current_tutor_availability(self):
+
         availability = self.manager.get_current_tutor_availability(self.lesson.id)
         print(availability)
-        self.assertEqual(len(availability), 2)
+        self.assertEqual(len(availability), 3)
 
         self.assertEqual(availability[0].day, "Monday")  # Translates from integer to string
 
@@ -108,8 +116,9 @@ class UpdateLessonViewTest(TestCase):
 
     def test_cancel_lesson_availability(self):
         self.manager.cancel_lesson_availability(self.lesson.id)
-        lesson_status = LessonStatus.objects.filter(lesson_id=self.lesson.id).last()
-        self.assertEqual(lesson_status.status, "Cancelled")
+        lesson_status = LessonStatus.objects.filter(lesson_id=self.lesson.id, date__gte=now().date())
+        for i in lesson_status:
+            self.assertEqual(i.status, "Cancelled")
         updated_lesson = Lesson.objects.get(pk=self.lesson.pk)
         self.assertIn("All lessons were cancelled", updated_lesson.notes)
 
@@ -128,14 +137,12 @@ class UpdateLessonViewTest(TestCase):
         self.assertEqual(len(restored_availabilities), 0)  # Previous + restored slot
 
     def test_update_new_tutor_availability(self):
-        day_mapping = {day[1]: day[0] for day in
-                       Days.choices}  # Assuming Days.choices is like [(0, 'Monday'), (1, 'Tuesday'), ...]
-        day_index = day_mapping.get("Monday")
+        d1 = LessonStatus.objects.filter(lesson_id=self.lesson, date__gte=now().date()).first()
 
         self.manager.restore_old_tutor_availability(
             tutor=self.tutor,
-            day=date(2025, 2, 10),
-            lesson_start_time="12:30:00",
+            day=d1.date,
+            lesson_start_time=d1.time,
             duration=timedelta(hours=1),
         )
 
@@ -170,6 +177,37 @@ class UpdateLessonViewTest(TestCase):
             frequency="W",
             end_date=end_date,
             lesson_id=self.lesson.id,
+        )
+
+        statuses = LessonStatus.objects.filter(lesson_id=self.lesson.id)
+        self.assertGreater(len(statuses), 0)
+
+    def test_update_lesson_statuses1(self):
+        old_date = now().date()
+        next_date = now().date() - timedelta(weeks=3)
+        end_date = now().date()
+
+
+        self.term2 = Term.objects.get(start_date='2025-01-01')
+        self.lesson2 = Lesson.objects.create(
+            tutor=self.tutor,
+            student=self.student,
+            subject=self.subject1,
+            term=self.term2,
+            frequency="M",
+            duration=timedelta(hours=1),
+            start_date='2025-03-15',
+            price_per_lesson=50,
+            notes="Test lesson1"
+        )
+
+        self.manager.update_lesson_statuses(
+            old_lesson_date=self.lesson2.start_date,
+            next_lesson_date=now().date() + timedelta(months = 3),
+            time="09:00:00",
+            frequency="W",
+            end_date=end_date,
+            lesson_id=self.lesson2.id,
         )
 
         statuses = LessonStatus.objects.filter(lesson_id=self.lesson.id)

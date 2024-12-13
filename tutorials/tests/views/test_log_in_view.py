@@ -9,11 +9,16 @@ from tutorials.tests.helpers import LogInTester, reverse_with_next
 class LogInViewTestCase(TestCase, LogInTester):
     """Tests of the log in view."""
 
-    fixtures = ['tutorials/tests/fixtures/default_user.json']
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_student.json'
+    ]
 
     def setUp(self):
         self.url = reverse('log_in')
         self.user = User.objects.get(username='@johndoe')
+
 
     def test_log_in_url(self):
         self.assertEqual(self.url,'/log_in/')
@@ -89,16 +94,15 @@ class LogInViewTestCase(TestCase, LogInTester):
         self.assertEqual(len(messages_list), 1)
         self.assertEqual(messages_list[0].level, messages.ERROR)
 
-    def test_succesful_log_in(self):
+    def test_successful_log_in(self):
         form_input = { 'username': '@charlie', 'password': 'Password123' }
         response = self.client.post(self.url, form_input, follow=True)
         self.assertTrue(self._is_logged_in())
         response_url = reverse('dashboard')
         self.assertRedirects(response, response_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'dashboard.html')
+        self.assertTemplateUsed(response, 'student/student_dashboard.html')
         messages_list = list(response.context['messages'])
         self.assertEqual(len(messages_list), 0)
-        self.assert_menu(response)
 
     '''def test_succesful_log_in_with_redirect(self):
         redirect_url = reverse('profile')

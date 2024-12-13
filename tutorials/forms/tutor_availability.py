@@ -4,7 +4,9 @@ from tutorials.models import TutorAvailability
 
 
 class TutorAvailabilityForm(forms.ModelForm):
+    """Form to add or edit tutor's availability."""
     class Meta:
+        """Form options."""
         model = TutorAvailability
         fields = ['day', 'start_time', 'end_time', 'status']
         widgets = {
@@ -15,10 +17,12 @@ class TutorAvailabilityForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Set day and status fields to display 'Select an option' as the default selection"""
+
         super().__init__(*args, **kwargs)
         self.fields['day'].choices = [('', 'Select an option')] + [
             choice for choice in self.fields['day'].choices if choice[0] != ''
-        ]
+        ] # Adds 'Select an option' as a choice in the list of choices in form
         self.fields['status'].choices = [('', 'Select an option')] + [
             choice for choice in self.fields['status'].choices if choice[0] != ''
         ]
@@ -26,6 +30,8 @@ class TutorAvailabilityForm(forms.ModelForm):
 
 
 class TutorAvailabilityList(forms.Form):
+    """Form to select tutors for viewing availabilities in lesson update requests."""
+
     # Radio buttons for selecting "Current Tutor" or "Other Tutors"
     tutor_selection = forms.ChoiceField(
         label="Select Tutor Option",
@@ -45,6 +51,7 @@ class TutorAvailabilityList(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """Set attributes for the current tutor name field."""
         current_tutor = kwargs.pop('current_tutor', None)  # Pass the current tutor
         super().__init__(*args, **kwargs)
 

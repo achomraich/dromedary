@@ -40,7 +40,7 @@ class StudentModelTest(TestCase):
     def test_delete_user_deletes_student(self):
         self.user.delete()
         with self.assertRaises(Student.DoesNotExist):
-            Student.objects.get(user=self.user)
+            Student.objects.get(user__username="@student1")
 
     def test_student_without_user(self):
         with self.assertRaises(IntegrityError):

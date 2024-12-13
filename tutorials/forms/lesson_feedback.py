@@ -4,6 +4,9 @@ from tutorials.models import LessonStatus
 
 
 class LessonFeedbackForm(forms.ModelForm):
+    """Form to update lesson feedback."""
+
+    """Disabled fields for displaying, not editing."""
     lesson_name = forms.CharField(
         label='Lesson Subject',
         required=True,
@@ -29,7 +32,9 @@ class LessonFeedbackForm(forms.ModelForm):
         widget=forms.TimeInput(attrs={'class': 'form-control'})
     )
 
+
     class Meta:
+        """Form options."""
         model = LessonStatus
         fields = ['feedback']
         widgets = {
@@ -37,6 +42,7 @@ class LessonFeedbackForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Set initial values for certain displayed fields."""
         lesson_status = kwargs.get('instance')
         if lesson_status:
             lesson = lesson_status.lesson_id

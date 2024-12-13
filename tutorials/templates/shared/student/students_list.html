@@ -60,11 +60,16 @@
                 <td class="align-middle">{{ student.user.username }}</td>
                 <td class="align-middle">{{ student.user.full_name }}</td>
                 <td class="align-middle">{{ student.user.email }}</td>
+<<<<<<< HEAD
                 <td class="d-flex gap-2">
                     <a href="{% url 'student_details' student.user.id %}" class="btn btn-outline-info btn-sm d-flex align-items-center justify-content-center" style="width: 90px; height: 30px;">
                         <i class="bi bi-eye me-1"></i> View
                     </a>
                     
+=======
+                <td class="align-middle">
+                    <a href="{% url 'student_details' student.user.id %}" class="btn btn-info btn-sm">View</a>
+>>>>>>> main
                     {% if user.is_authenticated and user.admin_profile %}
                     <a href="{% url 'student_calendar' student.user.id %}" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center" style="width: 90px; height: 30px;">
                         <i class="fas fa-calendar-alt me-1"></i> Calendar

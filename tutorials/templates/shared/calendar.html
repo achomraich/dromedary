@@ -6,6 +6,7 @@
     </a>
     <h1 class="mt-2 mb-3">Calendar ({{ current_month }})</h1>
 
+<<<<<<< HEAD
     <div class="d-flex justify-content-between mb-3">
         <a href="?year={{ previous_month.year }}&month={{ previous_month.month }}" class="btn btn-outline-success">
             <i class="bi bi-arrow-left-square"></i> Previous Month
@@ -14,6 +15,13 @@
             Next Month <i class="bi bi-arrow-right-square"></i>
         </a>
     </div>
+=======
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'calendar' previous_month.year previous_month.month %}" class="btn btn-secondary">Previous</a>
+        <a href="{% url 'calendar' next_month.year next_month.month %}" class="btn btn-secondary">Next</a>
+    </div>
+
+>>>>>>> main
     {% for week, lessons in schedule.items %}
         <h5>{{ week }}</h5>
         <table class="table table-bordered table-hover">
@@ -21,6 +29,12 @@
                 {% if lessons %}
                     {% for lesson in lessons %}
                         <tr>
+<<<<<<< HEAD
+=======
+                            <td>{{ lesson.student.user.full_name }}</td>
+                            <td>{{ lesson.tutor.user.full_name }}</td>
+                            <td>{{ lesson.subject.name }}</td>
+>>>>>>> main
                             <td>{{ lesson.date }}</td>
                             {% if user.is_authenticated and user.tutor_profile %}
                                 <td>{{ lesson.student.user.full_name }}</td>

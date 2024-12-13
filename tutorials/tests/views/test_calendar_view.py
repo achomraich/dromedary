@@ -63,12 +63,10 @@ class StudentsTestCase(TestCase):
         self.assertTemplateUsed(response, 'shared/calendar.html')
 
         for status in self.lesson_statuses:
-            self.assertContains(response, self.student.user.username)
-            self.assertContains(response, self.tutor.user.username)
+            self.assertContains(response, self.tutor.user.full_name())
             self.assertContains(response, self.lesson.subject.name)
             self.assertContains(response, status.status)
-
-            formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
+            formatted_date = status.date.strftime('%b. %d, %Y').replace(' 0', ' ')
             self.assertContains(response, formatted_date)
 
 
@@ -104,11 +102,10 @@ class StudentsTestCase(TestCase):
         self.assertTemplateUsed(response, 'shared/calendar.html')
         
         for status in self.lesson_statuses:
-            self.assertContains(response, self.student.user.username)
-            self.assertContains(response, self.tutor.user.username)
+            self.assertContains(response, self.student.user.full_name())
             self.assertContains(response, self.lesson.subject.name)
             self.assertContains(response, status.status)
 
-            formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
+            formatted_date = status.date.strftime('%b. %d, %Y').replace(' 0', ' ')  # Matching HTML
             self.assertContains(response, formatted_date)
 

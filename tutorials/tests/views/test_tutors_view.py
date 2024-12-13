@@ -104,8 +104,7 @@ class TutorsTestCase(TestCase):
         self.assertTemplateUsed(response, 'admin/manage_tutors/edit_tutor.html')
         self.assertContains(
             response,
-            "This field is required.",
-            html=True
+            "This field is required."
         )
         self.tutor1.refresh_from_db()
         self.assertNotEqual(self.tutor1.user.username, updated_username)
@@ -113,8 +112,8 @@ class TutorsTestCase(TestCase):
     def test_post_edit_tutor_invalid_username(self):
         updated_username = 'BAD_USERNAME'
         self.client.login(username='@johndoe', password='Password123')
-        response = self.client.post(reverse('tutor_details', args=[self.tutor1.user.id]), {
-            'id': self.tutor1.user.id,
+        response = self.client.post(reverse('tutor_edit', args=[self.tutor1.user.id]), {
+            'entity_id': self.tutor1.user.id,
             'edit': 'edit',
             'username': updated_username,
             'first_name': self.tutor1.user.first_name,
@@ -125,8 +124,7 @@ class TutorsTestCase(TestCase):
         self.assertTemplateUsed(response, 'admin/manage_tutors/edit_tutor.html')
         self.assertContains(
             response,
-            "Username must consist of @ followed by at least three alphanumericals",
-            html=True
+            "Username must consist of @ followed by at least three alphanumericals"
         )
         self.tutor1.refresh_from_db()
         self.assertNotEqual(self.tutor1.user.username, updated_username)

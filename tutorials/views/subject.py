@@ -25,7 +25,7 @@ class SubjectView(View):
         if hasattr(request.user, 'admin_profile'):
             self.list_of_subjects = Subject.objects.all()
 
-            paginator = Paginator(self.list_of_subjects, 20)
+            paginator = Paginator(self.list_of_subjects.order_by('name'), 20)
             page_number = request.GET.get('page')
             page_obj = paginator.get_page(page_number)
 

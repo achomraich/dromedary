@@ -154,16 +154,17 @@ class LessonRequest(BaseLesson):
             raise ValidationError("Duration must be a positive value.")
         if self.start_date < date.today():
             raise ValidationError("Start date must be in the future.")
-        if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
-            print(self.start_date)
-
-            print(self.term.start_date)
-            print(self.term.end_date)
-            raise ValidationError("Start date must be within the term.")
+        if self.term:
+            if self.start_date < self.term.start_date or self.start_date > self.term.end_date:
+                raise ValidationError("Start date must be within the term.")
 
     def decided(self):
-        """Check if the request has been either confirmed or cancelled."""
-        return self.cancelled() or self.confirmed()
+        """Check if the request has been either confirmed, cancelled, or rejected."""
+        return self.cancelled() or self.confirmed() or self.rejected()
+
+    def rejected(self):
+        """Check if the request is rejected."""
+        return self.status == Status.REJECTED
 
     def cancelled(self):
         """Check if the request is cancelled."""

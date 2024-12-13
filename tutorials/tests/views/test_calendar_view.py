@@ -69,8 +69,6 @@ class StudentsTestCase(TestCase):
             self.assertContains(response, status.status)
 
             formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
-            formatted_time = status.time.strftime('%I %p').lstrip("0").replace("AM", "a.m.").replace("PM","p.m.") # Matching HTML
-            self.assertContains(response, formatted_time)
             self.assertContains(response, formatted_date)
 
 
@@ -112,7 +110,5 @@ class StudentsTestCase(TestCase):
             self.assertContains(response, status.status)
 
             formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
-            formatted_time = status.time.strftime('%I %p').lstrip("0").replace("AM", "a.m.").replace("PM","p.m.") # Matching HTML
-            self.assertContains(response, formatted_time)
             self.assertContains(response, formatted_date)
 

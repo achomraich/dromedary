@@ -12,5 +12,12 @@
     "fields": {
       "user": 5
     }
+  },
+  {
+    "model": "tutorials.student",
+    "pk": 10,
+    "fields": {
+      "user": 10
+    }
   }
 ]

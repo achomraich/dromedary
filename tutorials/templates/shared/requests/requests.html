@@ -3,18 +3,18 @@
 
 {% block content %}
 <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-2">
         <i class="bi bi-arrow-left-square"></i> Back to Dashboard
     </a>
-    <h1 class="mt-3 mb-4">Lesson Requests</h1>
+    <h1 class="mt-2 mb-3">Lesson Requests</h1>
     {% if user.is_authenticated and user.student_profile %}
         <a href="{% url 'lesson_request' %}" class="btn btn-success mb-3">
             <i class="bi bi-plus-circle"></i> Request a new lesson
         </a>
     {% endif %}
 
-    <table class="table table-bordered table-hover">
-        <thead class="thead-dark">
+    <table class="table table-hover">
+        <thead>
             <tr>
                 <th scope="col">Username</th>
                 <th scope="col">Subject</th>
@@ -43,34 +43,31 @@
                 <td class="align-middle">
                     {% if user.is_authenticated and user.admin_profile %}
                         {% if request.decided %}
-                            {% if not request.cancelled %}
-                                <!-- View lesson button -->
-                                <a href="{% url 'lesson_detail' request.lesson_assigned.id %}" class="btn btn-warning btn-sm">View</a>
+                            {% if not request.cancelled and request.lesson_assigned and request.lesson_assigned.pk %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.pk %}" class="btn btn-warning btn-sm">View</a>
                             {% endif %}
                         {% else %}
-                            <!-- Assign request button -->
-                            <a href="{% url 'request_assign' request.id %}" class="btn btn-warning btn-sm">Assign</a>
-                            <!-- Reject request button -->
-                            <form action="" method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="reject" value="reject">
-                                <input type="hidden" name="request_id" value="{{ request.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
-                            </form>
+                            {% if request.pk %}
+                                <a href="{% url 'request_assign' request.pk %}" class="btn btn-warning btn-sm">Assign</a>
+                                <form action="" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="reject" value="reject">
+                                    <input type="hidden" name="request_id" value="{{ request.pk }}">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
+                                </form>
+                            {% endif %}
                         {% endif %}
                     {% endif %}
                     {% if user.is_authenticated and user.student_profile %}
                         {% if request.decided %}
-                            <!-- View lesson button -->
-                            {% if not request.cancelled %}
-                               <a href="{% url 'lesson_detail' request.lesson_assigned.id %}" class="btn btn-warning btn-sm">View</a>
+                            {% if not request.cancelled and request.lesson_assigned and request.lesson_assigned.pk %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.pk %}" class="btn btn-warning btn-sm">View</a>
                             {% endif %}
                         {% else %}
-                            <!-- Cancel request button -->
                             <form action="" method="post" style="display:inline;">
                                 {% csrf_token %}
                                 <input type="hidden" name="cancel" value="cancel">
-                                <input type="hidden" name="request_id" value="{{ request.id }}">
+                                <input type="hidden" name="request_id" value="{{ request.pk }}">
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">Cancel</button>
                             </form>
                         {% endif %}
@@ -79,7 +76,7 @@
             </tr>
             {% empty %}   
                 <tr>
-                    <td colspan="9">No lesson requests found.</td>
+                    <td colspan="10" class="text-center">No lesson requests found.</td>
                 </tr>
             {% endfor %}
         </tbody>

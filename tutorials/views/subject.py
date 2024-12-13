@@ -16,14 +16,16 @@ Subjects view
 class SubjectView(View):
     """ Allowing Admins to view, edit and delete subjects """
     def get(self, request, subject_id=None):
-        ''' Handles permissions '''
+        if request.path.endswith('create'):
+            return self.create_subject(request)
+
         if subject_id:
             return self.edit_subject(request, subject_id)
 
         if hasattr(request.user, 'admin_profile'):
             self.list_of_subjects = Subject.objects.all()
 
-            paginator = Paginator(self.list_of_subjects, 20)
+            paginator = Paginator(self.list_of_subjects.order_by('name'), 20)
             page_number = request.GET.get('page')
             page_obj = paginator.get_page(page_number)
 
@@ -41,7 +43,7 @@ class SubjectView(View):
                 subject = get_object_or_404(Subject, pk=subject_id)
                 return self.delete_subject(request, subject)
 
-        return redirect('subjects_list')
+        #return redirect('subjects_list')
 
     def delete_subject(self, request, subject):
         ''' deletes a subject '''

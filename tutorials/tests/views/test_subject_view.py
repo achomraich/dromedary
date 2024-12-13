@@ -36,16 +36,16 @@ class SubjectViewTest(TestCase):
 
     def test_subject_edit_view_get(self):
         self.client.login(username="@admin", password="admin123")
-        response = self.client.get(reverse('subject_edit', args=[self.subject1.subject_id]))
+        response = self.client.get(reverse('subject_edit', args=[self.subject1.id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_subjects/subject_edit.html')
-        self.assertEqual(response.context['subject.py'], self.subject1)
+        self.assertEqual(response.context['subject'], self.subject1)
 
     def test_subject_edit_view_post(self):
         self.client.login(username="@admin", password="admin123")
 
         response = self.client.post(
-            reverse('subject_edit', args=[self.subject1.subject_id]),
+            reverse('subject_edit', args=[self.subject1.id]),
             {'name': self.subject1.name, 'description': 'Updated Python'},
             follow=False
         )
@@ -63,15 +63,15 @@ class SubjectViewTest(TestCase):
 
     def test_subject_delete_view(self):
         self.client.login(username="@admin", password="admin123")
-        response = self.client.post(reverse('subject_delete', args=[self.subject2.subject_id]), follow=False)
+        response = self.client.post(reverse('subject_delete', args=[self.subject2.id]), follow=False)
         self.assertRedirects(response, reverse('subjects_list'))
-        self.assertFalse(Subject.objects.filter(subject_id=self.subject2.subject_id).exists())
+        self.assertFalse(Subject.objects.filter(id=self.subject2.id).exists())
 
     def test_subject_create_view_get(self):
         self.client.login(username="@admin", password="admin123")
         response = self.client.get(reverse('new_subject'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'admin/manage_subjects/subjects_list.html')
+        self.assertTemplateUsed(response, 'admin/manage_subjects/subject_create.html')
 
     def test_subject_create_view_post(self):
         self.client.login(username="@admin", password="admin123")
@@ -103,10 +103,10 @@ class SubjectViewTest(TestCase):
 
     def test_get_with_subject_id(self):
         self.client.login(username="@admin", password="admin123")
-        response = self.client.get(reverse('subject_edit', args=[self.subject1.subject_id]))
+        response = self.client.get(reverse('subject_edit', args=[self.subject1.id]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_subjects/subject_edit.html')
-        self.assertEqual(response.context['subject.py'], self.subject1)
+        self.assertEqual(response.context['subject'], self.subject1)
 
     def test_get_subjects_list_with_admin(self):
         self.client.login(username="@admin", password="admin123")
@@ -125,9 +125,9 @@ class SubjectViewTest(TestCase):
 
     def test_post_to_delete_subject(self):
         self.client.login(username="@admin", password="admin123")
-        response = self.client.post(reverse('subject_delete', args=[self.subject2.subject_id]))
+        response = self.client.post(reverse('subject_delete', args=[self.subject2.id]))
         self.assertRedirects(response, reverse('subjects_list'))
-        self.assertFalse(Subject.objects.filter(subject_id=self.subject2.subject_id).exists())
+        self.assertFalse(Subject.objects.filter(id=self.subject2.id).exists())
 
     def test_handle_subject_form_valid(self):
         self.client.login(username="@admin", password="admin123")

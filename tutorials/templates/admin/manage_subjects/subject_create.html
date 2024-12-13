@@ -1,19 +1,59 @@
 {% extends 'base_content.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Edit Subject: {{ form.instance.name }}</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Page Heading -->
+            <h1 class="text-center mb-4 display-6 text-primary">Edit Subject: {{ form.instance.name }}</h1>
 
-    <div class="card p-4 shadow-sm">
-         <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                {{ form.as_p }}
+            <!-- Form Card -->
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Subject Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Form Fields -->
+                        <div class="row g-4">
+                            <!-- Name Field -->
+                            <div class="col-12">
+                                <label for="id_name" class="form-label fw-bold">Name</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.name.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description Field -->
+                            <div class="col-12">
+                                <label for="id_description" class="form-label fw-bold">Description</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.description.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'subjects_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <button type="submit" class="btn btn-primary">Create</button>
-            <a href="{% url 'subjects_list' %}" class="btn btn-secondary ml-2">Cancel</a>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -29,16 +29,16 @@ class AssignTutorFormTestCase(TestCase):
             term=self.term,
             time=datetime.time(hour=15, minute=0, second=0),
             duration= datetime.timedelta(hours=1),
-            frequency= 'B',
+            frequency= 'F',
             start_date= '2024-01-01',
         )
         self.form_data = {
             'tutor': self.tutor,
-            'subject_id': self.subject,
-            'term_id': self.term,
+            'subject': self.subject,
+            'term': self.term,
             'student': self.student,
             'duration': '01:00:00',
-            'frequency': 'B',
+            'frequency': 'F',
             'start_date': '2024-01-01',
             'price_per_lesson': 25
         }
@@ -55,10 +55,10 @@ class AssignTutorFormTestCase(TestCase):
         # Check if fields are disabled and have correct initial values
         self.assertTrue(form.fields['student'].disabled)
         self.assertEqual(form.fields['student'].initial, self.existing_request.student)
-        self.assertTrue(form.fields['subject_id'].disabled)
-        self.assertEqual(form.fields['subject_id'].initial, self.existing_request.subject)
-        self.assertTrue(form.fields['term_id'].disabled)
-        self.assertEqual(form.fields['term_id'].initial, self.existing_request.term)
+        self.assertTrue(form.fields['subject'].disabled)
+        self.assertEqual(form.fields['subject'].initial, self.existing_request.subject)
+        self.assertTrue(form.fields['term'].disabled)
+        self.assertEqual(form.fields['term'].initial, self.existing_request.term)
         self.assertTrue(form.fields['duration'].disabled)
         self.assertEqual(form.fields['duration'].initial, self.existing_request.duration)
         self.assertTrue(form.fields['frequency'].disabled)
@@ -82,6 +82,7 @@ class AssignTutorFormTestCase(TestCase):
     def test_form_saves_correctly(self):
         # Test that form saves data correctly
         form = AssignTutorForm(data=self.form_data)
+
         self.assertTrue(form.is_valid())
         lesson = form.save(commit=False)
         lesson.save()
@@ -89,10 +90,10 @@ class AssignTutorFormTestCase(TestCase):
         saved_lesson = Lesson.objects.last()
         self.assertEqual(saved_lesson.student, self.student)
         self.assertEqual(saved_lesson.tutor, self.tutor)
-        self.assertEqual(saved_lesson.subject_id, self.subject)
-        self.assertEqual(saved_lesson.term_id, self.term)
+        self.assertEqual(saved_lesson.subject, self.subject)
+        self.assertEqual(saved_lesson.term, self.term)
         self.assertEqual(saved_lesson.duration, datetime.timedelta(hours=1))
-        self.assertEqual(saved_lesson.frequency, 'B')
+        self.assertEqual(saved_lesson.frequency, 'F')
         self.assertEqual(saved_lesson.start_date.strftime('%Y-%m-%d'), '2024-01-01')
         self.assertEqual(saved_lesson.price_per_lesson, 25.0)
 

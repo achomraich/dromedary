@@ -4,14 +4,37 @@ from tutorials.models import LessonStatus
 
 
 class LessonFeedbackForm(forms.ModelForm):
-    lesson_name = forms.CharField(label='Lesson Subject', required=True, disabled=True)
-    student_name = forms.CharField(label='Student', required=True, disabled=True)
-    lesson_date = forms.DateField(label='Lesson Date', required=True, disabled=True)
-    lesson_time = forms.TimeField(label='Lesson Time', required=True, disabled=True)
+    lesson_name = forms.CharField(
+        label='Lesson Subject',
+        required=True,
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    student_name = forms.CharField(
+        label='Student',
+        required=True,
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    lesson_date = forms.DateField(
+        label='Lesson Date',
+        required=True,
+        disabled=True,
+        widget=forms.DateInput(attrs={'class': 'form-control'})
+    )
+    lesson_time = forms.TimeField(
+        label='Lesson Time',
+        required=True,
+        disabled=True,
+        widget=forms.TimeInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = LessonStatus
         fields = ['feedback']
+        widgets = {
+            'feedback': forms.Textarea(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
         lesson_status = kwargs.get('instance')

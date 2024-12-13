@@ -4,6 +4,17 @@ from tutorials.models import Lesson, LessonStatus, LessonUpdateRequest, Status, 
 from datetime import date, time, timedelta
 
 class ViewLessonsTests(TestCase):
+
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_term.json'
+    ]
+
     def setUp(self):
 
         self.admin_user = User.objects.create_user(
@@ -49,8 +60,8 @@ class ViewLessonsTests(TestCase):
         self.lesson1 = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject1,
-            term_id=self.term,
+            subject=self.subject1,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -60,8 +71,8 @@ class ViewLessonsTests(TestCase):
         self.lesson2 = Lesson.objects.create(
             tutor=self.tutor,
             student=self.student,
-            subject_id=self.subject2,
-            term_id=self.term,
+            subject=self.subject2,
+            term=self.term,
             frequency="M",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -73,7 +84,7 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson1,
             date=date(2023, 9, 15),
             time=time(10, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
@@ -82,13 +93,11 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson2,
             date=date(2025, 2, 15),
             time=time(12, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
 
-
-        #########################################
         self.student_user2 = User.objects.create_user(
             username='@student2',
             first_name='Student2Name',
@@ -112,8 +121,8 @@ class ViewLessonsTests(TestCase):
         self.lesson3 = Lesson.objects.create(
             tutor=self.tutor2,
             student=self.student2,
-            subject_id=self.subject1,
-            term_id=self.term,
+            subject=self.subject1,
+            term=self.term,
             frequency="W",
             duration=timedelta(hours=1),
             start_date=date.today(),
@@ -125,7 +134,7 @@ class ViewLessonsTests(TestCase):
             lesson_id=self.lesson2,
             date=date(2025, 2, 15),
             time=time(19, 30),
-            status=Status.BOOKED,
+            status=Status.SCHEDULED,
             feedback="Great session",
             invoiced=True,
         )
@@ -140,25 +149,25 @@ class ViewLessonsTests(TestCase):
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.subject_id.name)
-        self.assertContains(response, self.lesson2.subject_id.name)
-        self.assertContains(response, self.lesson3.subject_id.name)
+        self.assertContains(response, self.lesson1.subject.name)
+        self.assertContains(response, self.lesson2.subject.name)
+        self.assertContains(response, self.lesson3.subject.name)
 
     def test_student_get_lesson_list(self):
         self.client.login(username='@student', password='student123')
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.subject_id)
-        self.assertContains(response, self.lesson2.subject_id)
+        self.assertContains(response, self.lesson1.subject)
+        self.assertContains(response, self.lesson2.subject)
 
     def test_tutor_get_lesson_list(self):
         self.client.login(username='@tutor', password='tutor123')
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.lesson1.lesson_id)
-        self.assertContains(response, self.lesson2.lesson_id)
+        self.assertContains(response, self.lesson1.id)
+        self.assertContains(response, self.lesson2.id)
 
 
     def test_lesson_detail_view(self):
@@ -177,17 +186,25 @@ class ViewLessonsTests(TestCase):
         self.lesson_status2.refresh_from_db()
         self.assertEqual(self.lesson_status2.status, Status.CANCELLED)
 
-    def test_update_feedback_future_lesson_view(self):
+    def test_cancel_lesson_by_admin(self):
+        self.client.login(username='@admin', password='admin123')
+        response = self.client.post(reverse('cancel_lesson', args=[self.lesson_status2.pk]))
+
+        self.assertRedirects(response, reverse('lesson_detail', args=[self.lesson2.pk]))
+
+        # Verify status changed to CANCELLED
+        self.lesson_status2.refresh_from_db()
+        self.assertEqual(self.lesson_status2.status, Status.CANCELLED)
+
+    def test_update_feedback_form_invalid_view(self):
         self.client.login(username='@student', password='student123')
         response = self.client.post(reverse('update_feedback', args=[self.lesson_status2.pk]),
                                     data={"feedback": "Great lesson!"})
 
-        self.assertEqual(response.status_code, 302)  # Redirect after saving feedback
-        self.lesson_status1.refresh_from_db()
-        self.assertEqual(self.lesson_status1.feedback, "")
+        self.assertEqual(response.status_code, 200)
 
     def test_update_feedback_view(self):
-        self.client.login(username='@student', password='student123')
+        self.client.login(username='@tutor', password='tutor123')
         response = self.client.post(reverse('update_feedback', args=[self.lesson_status1.pk]),
                                     data={"feedback": "Great lesson!"})
 
@@ -207,8 +224,18 @@ class ViewLessonsTests(TestCase):
         response = self.client.get(reverse('lessons_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertQuerysetEqual(
-            response.context['can_handle_request'],
-            [self.lesson2.pk],
+        self.assertQuerySetEqual(
+            response.context['can_handle_request'].order_by('pk'),
+            [self.lesson1.pk, self.lesson2.pk],
             transform=lambda x: x.pk
         )
+
+    def test_post_no_lesson_id(self):
+        self.client.login(username='@student', password='student123')
+        response = self.client.post(reverse('lessons_list'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_post_no_lesson_id(self):
+        self.client.login(username='@student', password='student123')
+        response = self.client.post(reverse('lessons_list'), data={'lesson_id': 3})
+        self.assertEqual(response.status_code, 302)

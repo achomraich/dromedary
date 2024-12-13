@@ -42,7 +42,7 @@ class SubjectModelTest(TestCase):
 
     def test_default_description(self):
         subject = Subject.objects.create(name="C++")
-        self.assertEqual(subject.description, "")
+        self.assertEqual(subject.description, None)
 
     def test_invalid_description_length(self):
         long_description = "x" * 256

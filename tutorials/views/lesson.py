@@ -19,7 +19,7 @@ Lessons View
 class ViewLessons(LoginRequiredMixin, View):
     """ Allows admin and users to view list of lessons """
     def get(self, request, lesson_id=None):
-        ''' Handeles the list of lessons '''
+        """ Handles the list of lessons """
         current_user = request.user
         self.can_be_updated = []
 
@@ -73,20 +73,21 @@ class ViewLessons(LoginRequiredMixin, View):
             elif 'cancel_lesson' in request.path:
                 return self.cancel_lesson(request, lesson_id)
 
+        return redirect('lessons_list')
+
     def handle_lessons_form(self, request, lesson=None):
         form = LessonFeedbackForm(request.POST or None, instance=lesson)
 
-        if request.method == "POST":
-            if form.is_valid():
-                try:
-                    form.save()
-                except:
-                    form.add_error(None, "It was not possible to update this feedback")
-                else:
-                    path = reverse('lesson_detail', args=[lesson.lesson_id.id])
-                    return HttpResponseRedirect(path)
+        if form.is_valid():
+            try:
+                form.save()
+            except:
+                form.add_error(None, "It was not possible to update this feedback")
             else:
-                form = LessonFeedbackForm()
+                path = reverse('lesson_detail', args=[lesson.lesson_id.id])
+                return HttpResponseRedirect(path)
+        else:
+            form = LessonFeedbackForm(instance=lesson)
 
         return form
 
@@ -109,7 +110,7 @@ class ViewLessons(LoginRequiredMixin, View):
         lesson.feedback = f'Lesson was cancelled by {self.status}'
         lesson.save()
 
-        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.lesson_id)
+        return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.id)
 
     def lesson_detail(self, request, lessonStatus_id):
         ''' Views the lesson details '''

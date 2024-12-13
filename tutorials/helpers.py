@@ -24,7 +24,7 @@ def login_prohibited(view_function):
 class TutorAvailabilityManager:
     def get_current_tutor_availability(self, lesson_id):
         current_tutor = Lesson.objects.get(pk=lesson_id).tutor
-        current_tutor_availability = TutorAvailability.objects.filter(tutor=current_tutor)
+        current_tutor_availability = TutorAvailability.objects.filter(tutor=current_tutor).order_by('day', 'start_time')
         for slot in current_tutor_availability:
             slot.day = dict(Days.choices).get(int(slot.day))
         return current_tutor_availability
@@ -84,11 +84,14 @@ class TutorAvailabilityManager:
             date__gt=current_datetime, lesson_id=lesson_id
         ).order_by('date').first()
 
+
         if last_date:
             return last_date.date.weekday()
 
+
         first_pending_lesson = LessonStatus.objects.filter(lesson_id=lesson_id, status=Status.PENDING).order_by(
             'date').last()
+
         if first_pending_lesson and Lesson.objects.get(
                 pk=first_pending_lesson.lesson_id.lesson_id).term_id.end_date > now().date():
             return first_pending_lesson.date.weekday()
@@ -96,22 +99,15 @@ class TutorAvailabilityManager:
 
     def restore_old_tutor_availability(self, tutor, day, lesson_start_time, duration):
 
-        try:
-            start_datetime = datetime.datetime.strptime(str(lesson_start_time), "%H:%M:%S")
+        start_datetime = datetime.datetime.strptime(str(lesson_start_time), "%H:%M:%S")
+        end_time = (start_datetime + duration).time()
 
-            # print(start_datetime)
-            end_time = (start_datetime + duration).time()
-
-            # print(end_time)
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
 
         existing_availabilities = TutorAvailability.objects.filter(
             tutor=tutor,
             day=day.weekday(),
             status='Available'
         ).order_by('start_time')
-        print(existing_availabilities)
 
         TutorAvailability.objects.filter(
             tutor=tutor,
@@ -130,7 +126,6 @@ class TutorAvailabilityManager:
 
     def is_tutor_available(self, start_time, date, tutor, duration):
 
-        print("start_datetime")
         start_datetime = datetime.datetime.strptime(str(start_time), "%H:%M")
         duration_timedelta = datetime.timedelta(
             hours=duration.hour,
@@ -138,22 +133,11 @@ class TutorAvailabilityManager:
             seconds=duration.second
         )
 
-        print(duration_timedelta)
         try:
             end_time = (start_datetime + duration_timedelta)
-            print(end_time.time())
-            print(
-                f"TutorAvailability.objects.filter(tutor={tutor},day={date},start_time__lte={start_datetime.time()},end_time__gte={end_time.time()}, status='Available')"
-                f"end_time__gte={end_time.time()}, status='Available')")
-            print(TutorAvailability.objects.filter(status='Available'))
-            print(TutorAvailability.objects.filter(tutor=tutor,
-                                                   day=date,
-                                                   start_time__lte=start_datetime.time(),
-                                                   end_time__gte=end_time.time(), status='Available'))
+
         except Exception as e:
-            print(f"{e}")
             return None
-        print("yftjgnh")
         return TutorAvailability.objects.filter(tutor=tutor,
                                                 day=date,
                                                 start_time__lte=start_datetime.time(),

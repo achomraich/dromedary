@@ -73,6 +73,7 @@ class StudentsTestCase(TestCase):
             self.assertContains(response, formatted_time)
             self.assertContains(response, formatted_date)
 
+
     
     def test_no_lessons_for_empty_calendar(self):
         self.client.login(username='@janedoe', password='Password123')
@@ -114,3 +115,4 @@ class StudentsTestCase(TestCase):
             formatted_time = status.time.strftime('%I %p').lstrip("0").replace("AM", "a.m.").replace("PM","p.m.") # Matching HTML
             self.assertContains(response, formatted_time)
             self.assertContains(response, formatted_date)
+

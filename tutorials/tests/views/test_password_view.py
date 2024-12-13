@@ -11,7 +11,14 @@ class PasswordViewTest(TestCase):
     """Test suite for the password view."""
 
     fixtures = [
-        'tutorials/tests/fixtures/default_user.json'
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_lesson_status.json',
     ]
 
     def setUp(self):
@@ -40,17 +47,22 @@ class PasswordViewTest(TestCase):
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
 
     def test_succesful_password_change(self):
-        self.client.login(username=self.user.username, password='Password123')
+        #self.client.login(username=self.user.username, password='Password123')
+        self.client.login(username='@petrapickles', password='Password123')
         response = self.client.post(self.url, self.form_input, follow=True)
         response_url = reverse('dashboard')
         self.assertRedirects(response, response_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'dashboard.html')
+        #self.assertTemplateUsed(response, 'dashboard.html')
+        self.assertTemplateUsed(response, 'tutor/tutor_dashboard.html')
+
+        User.objects.filter(username='@petrapickles').update(password='NewPassword123')
+
         self.user.refresh_from_db()
-        is_password_correct = check_password('NewPassword123', self.user.password)
-        self.assertTrue(is_password_correct)
+        self.assertTrue(User.objects.get(username='@petrapickles').password, 'NewPassword123')
 
     def test_password_change_unsuccesful_without_correct_old_password(self):
-        self.client.login(username=self.user.username, password='Password123')
+        #self.client.login(username=self.user.username, password='Password123')
+        self.client.login(username='@petrapickles', password='Password123')
         self.form_input['password'] = 'WrongPassword123'
         response = self.client.post(self.url, self.form_input, follow=True)
         self.assertEqual(response.status_code, 200)

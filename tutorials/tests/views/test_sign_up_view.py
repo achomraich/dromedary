@@ -9,19 +9,30 @@ from tutorials.tests.helpers import LogInTester
 class SignUpViewTestCase(TestCase, LogInTester):
     """Tests of the sign up view."""
 
-    fixtures = ['tutorials/tests/fixtures/default_user.json']
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_term.json',
+        'tutorials/tests/fixtures/default_lesson_status.json',
+    ]
 
     def setUp(self):
         self.url = reverse('sign_up')
         self.form_input = {
-            'first_name': 'Jane',
-            'last_name': 'Doe',
-            'username': '@janedoe',
-            'email': 'janedoe@example.org',
+            'first_name': 'TestName',
+            'last_name': 'TestSurname',
+            'username': '@testUser',
+            'email': 'testUser@example.org',
             'new_password': 'Password123',
-            'password_confirmation': 'Password123'
+            'password_confirmation': 'Password123',
+            'role': 'Student'
         }
         self.user = User.objects.get(username='@johndoe')
+        self.user1 = User.objects.get(username='@petrapickles')
 
     def test_sign_up_url(self):
         self.assertEqual(self.url,'/sign_up/')
@@ -35,11 +46,11 @@ class SignUpViewTestCase(TestCase, LogInTester):
         self.assertFalse(form.is_bound)
 
     def test_get_sign_up_redirects_when_logged_in(self):
-        self.client.login(username=self.user.username, password="Password123")
+        self.client.login(username=self.user1.username, password="Password123")
         response = self.client.get(self.url, follow=True)
         redirect_url = reverse('dashboard')
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'dashboard.html')
+        self.assertTemplateUsed(response, 'tutor/tutor_dashboard.html')
 
     def test_unsuccesful_sign_up(self):
         self.form_input['username'] = 'BAD_USERNAME'
@@ -61,7 +72,7 @@ class SignUpViewTestCase(TestCase, LogInTester):
         self.assertEqual(after_count, before_count+1)
         response_url = reverse('dashboard')
         self.assertRedirects(response, response_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'dashboard.html')
+        self.assertTemplateUsed(response, 'student/student_dashboard.html')
         user = User.objects.get(username='@janedoe')
         self.assertEqual(user.first_name, 'Jane')
         self.assertEqual(user.last_name, 'Doe')
@@ -71,11 +82,11 @@ class SignUpViewTestCase(TestCase, LogInTester):
         self.assertTrue(self._is_logged_in())
 
     def test_post_sign_up_redirects_when_logged_in(self):
-        self.client.login(username=self.user.username, password="Password123")
+        self.client.login(username=self.user1.username, password="Password123")
         before_count = User.objects.count()
         response = self.client.post(self.url, self.form_input, follow=True)
         after_count = User.objects.count()
         self.assertEqual(after_count, before_count)
         redirect_url = reverse('dashboard')
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
-        self.assertTemplateUsed(response, 'dashboard.html')
+        self.assertTemplateUsed(response, 'tutor/tutor_dashboard.html')

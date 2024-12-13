@@ -29,6 +29,9 @@ class RequestView(LoginRequiredMixin, View):
         elif hasattr(request.user, 'student_profile'):
             self.requests_list = LessonRequest.objects.filter(student=current_user.id).order_by('-created')
             self.status = 'student'
+        else:
+            messages.error(request, "Tutors may not request lessons.")
+            return redirect('dashboard')
         return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
 
     def post(self, request, *args, **kwargs):
@@ -61,12 +64,9 @@ class RequestView(LoginRequiredMixin, View):
     def assign_tutor(self, request, lrequest):
         ''' Allows admin to assign a tutor to the request by student'''
         form = AssignTutorForm(request.POST, existing_request=lrequest)
-
         if form.is_valid():
             self.create_lesson(request, lrequest, form)
-
             messages.success(request, "Request assigned successfully.")
-
             return redirect('requests')
         else:
             messages.error(request, "Failed to update details. Please correct the errors and try again.")
@@ -75,7 +75,6 @@ class RequestView(LoginRequiredMixin, View):
 
     def create_lesson(self, request, lrequest, form):
         tutor = form.cleaned_data['tutor']
-        start_date = form.cleaned_data['start_date']
         price_per_lesson = form.cleaned_data['price_per_lesson']
 
         # Create a new Lesson based on the form data and LessonRequest details
@@ -87,10 +86,9 @@ class RequestView(LoginRequiredMixin, View):
             frequency="W",  # Assuming "W" for weekly frequency, can be updated if needed
             duration=lrequest.duration,  # Duration from the LessonRequest
             set_start_time=lrequest.time,
-            start_date=start_date,
+            start_date=lrequest.start_date,
             price_per_lesson=price_per_lesson,
         )
-
         lrequest.lesson_assigned = lesson
         lrequest.status = Status.CONFIRMED
         lrequest.save()
@@ -130,10 +128,8 @@ class MakeRequestView(LoginRequiredMixin, View):
         if form.is_valid():
             # Create lesson request but don't save it yet
             lesson_request = form.save(commit=False)
-
             # Associate the logged-in student's profile with the lesson request
             lesson_request.student = request.user.student_profile
-
             # Save the lesson request to the database
             lesson_request.save()
             messages.success(request, "Request submitted successfully.")

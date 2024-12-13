@@ -43,9 +43,11 @@ class User(AbstractUser):
         return self.gravatar(size=60)
     
 class Admin(models.Model):
+    """Model for admin users."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='admin_profile')
 
 class Student(models.Model):
+    """Model for student users."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='student_profile')
     has_new_lesson_notification = models.BooleanField(default=False)
 
@@ -53,6 +55,7 @@ class Student(models.Model):
         return self.user.full_name()
 
 class Tutor(models.Model):
+    """Model for tutor users."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='tutor_profile')
     subjects = models.ManyToManyField('Subject', blank=True)
     experience = models.TextField(blank=True)
@@ -61,6 +64,7 @@ class Tutor(models.Model):
         return self.user.full_name()
 
 class TutorAvailability(models.Model):
+    """Model for the availability schedule of a tutor."""
     class Availability(models.TextChoices):
         AVAILABLE = 'Available', 'Available'
         BOOKED = 'Unavailable', 'Unavailable'
@@ -72,12 +76,14 @@ class TutorAvailability(models.Model):
     status = models.CharField(max_length=11, choices=Availability.choices)
 
     class Meta:
+        """Ensures unique availability entries for a tutor per day and time slot."""
         unique_together = ('tutor', 'day', 'start_time', 'end_time')
         
     def __str__(self):
         return f"{self.tutor.user.full_name()} - {self.get_day_display()} - {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')} ({self.get_status_display()})"
 
 class TutorReview(models.Model):
+    """Model for a review left by a student for a tutor."""
     class Rating(models.TextChoices):
         POOR = '1', 'Poor'
         FAIR = '2', 'Fair'

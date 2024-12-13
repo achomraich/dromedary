@@ -28,7 +28,7 @@
                             {% if user.is_authenticated and user.tutor_profile and lesson.status == "Completed" %}
                                 <a href="{% url 'update_feedback' lesson.id %}" class="btn btn-warning btn-sm">Update Feedback</a>
                             {% endif %}
-                            {% if user.is_authenticated and not user.admin_profile and lesson.status == "Booked" %}
+                            {% if user.is_authenticated and not user.admin_profile and lesson.status == "Scheduled" %}
                                 <a href="{% url 'cancel_lesson' lesson.id %}" class="btn btn-warning btn-sm">Cancel Lesson</a>
                             {% endif %}
                         </td>

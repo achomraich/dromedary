@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from tutorials.models import Lesson, LessonUpdateRequest, LessonStatus, Tutor, Student, Subject, Term, User, Admin, Status
 from datetime import date, time, timedelta
+from unittest.mock import patch
 
 class UpdateLessonRequestTests(TestCase):
     def setUp(self):
@@ -97,7 +98,6 @@ class UpdateLessonRequestTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(LessonUpdateRequest.objects.filter(lesson=self.lesson1).exists())
-        print(i.subject for i in LessonUpdateRequest.objects.filter(lesson=self.lesson1))
         request_instance = LessonUpdateRequest.objects.get(lesson=self.lesson1, is_handled='N')
         self.assertEqual(request_instance.update_option, '1')
         self.assertEqual(request_instance.details, 'Request to change tutor')
@@ -167,3 +167,60 @@ class UpdateLessonRequestTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('log_in'), response.url)
+
+
+    def test_post_redirects_to_lessons_list(self):
+        self.client.login(username='@admin', password='admin123')
+
+        # Trigger a POST request where the URL is valid but doesn't match `request_changes/`
+        response = self.client.post(reverse('update_requests'), data={})
+
+        # Verify redirect to lessons list
+        self.assertRedirects(response, reverse('lessons_list'))
+
+
+    def test_post_form_save_raises_exception(self):
+        self.client.login(username='@student', password='student123')
+
+        # Simulate an error when saving the form
+        with patch('tutorials.forms.UpdateLessonRequestForm.save', side_effect=Exception("Test error")):
+            response = self.client.post(
+                reverse('request_changes', args=[self.lesson1.pk]),
+                data={'update_option': '1', 'details': 'Error simulation'}
+            )
+            # Verify the form error is added
+            self.assertEqual(response.status_code, 200)
+            self.assertFormError(response, 'form', None, "An error occurred: Test error")
+
+    def test_post_request_changes_as_student_branch(self):
+        self.client.login(username='@student', password='student123')
+
+        # Submit a valid request to trigger the student branch
+        response = self.client.post(
+            reverse('request_changes', args=[self.lesson1.pk]),
+            data={'update_option': '1', 'details': 'Request to change tutor'}
+        )
+
+        # Verify the request is created and the branch for students is used
+        self.assertEqual(response.status_code, 302)
+        request_instance = LessonUpdateRequest.objects.get(lesson=self.lesson1, is_handled='N')
+        self.assertEqual(request_instance.made_by, 'Student')
+
+    def test_change_status_with_valid_instance(self):
+        self.client.login(username='@student', password='student123')
+
+        # Submit a valid request to create a LessonUpdateRequest instance
+        response = self.client.post(
+            reverse('request_changes', args=[self.lesson1.pk]),
+            data={'update_option': '3', 'details': 'Cancel the lesson'}
+        )
+
+        # Ensure the status is updated
+        self.lesson_status1.refresh_from_db()
+        self.assertEqual(self.lesson_status1.status, 'Pending')
+
+    def test_update_request_without_account_instance(self):
+        response = self.client.get(reverse('update_requests'))
+        expected_redirect_url = f"{reverse('log_in')}?next={reverse('update_requests')}"
+        self.assertRedirects(response, expected_redirect_url)
+

@@ -103,6 +103,7 @@ class UpdateLessonForm(forms.ModelForm):
 
         # If there is an instance, populate the form with existing values
         if lesson_update_instance:
+
             if day_of_week is not None:
                 day_of_week_display = dict(Days.choices).get(day_of_week, "Unknown Day")
 

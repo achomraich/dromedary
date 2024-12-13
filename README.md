@@ -9,10 +9,10 @@ The members of the team are:
 - *Muhammad (Ali) Naveed*
 
 ## Project structure
-The project is called `task_manager`.  It currently consists of a single app `tasks`.
+The project is called `code-tutors`.  It currently consists of a single app `tutorials`.
 
 ## Deployed version of the application
-The deployed version of the application can be found at [*enter url here*](*enter_url_here*).
+The deployed version of the application can be found at [*dromedary.pythonanywhere.com*](*dromedary.pythonanywhere.com*).
 
 ## Installation instructions
 To install the software and use it in your local development environment, you must first set up and activate a local development environment.  From the root of the project:
@@ -49,5 +49,3 @@ $ python3 manage.py test
 
 ## Sources
 The packages used by this application are specified in `requirements.txt`
-
-*Declare are other sources here, and remove this line*

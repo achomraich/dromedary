@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from datetime import datetime, timedelta, date
+from datetime import time, timedelta, date
 from random import choice
 from tutorials.models import User, Admin, Student, Tutor, Lesson, LessonStatus, Subject, Term
 
@@ -14,7 +14,6 @@ class StudentsTestCase(TestCase):
         'tutorials/tests/fixtures/default_lesson.json',
         'tutorials/tests/fixtures/default_subject.json',
         'tutorials/tests/fixtures/default_term.json',
-        'tutorials/tests/fixtures/default_lesson_status.json',
     ]
 
     def setUp(self):
@@ -43,7 +42,18 @@ class StudentsTestCase(TestCase):
             price_per_lesson=50.00,
             term=self.term
         )
-        self.lesson_status = LessonStatus.objects.filter(lesson_id=self.lesson)
+        self.lesson_statuses = []
+        current_date = self.lesson.start_date
+        while current_date <= self.term.end_date:
+            status = LessonStatus.objects.create(
+                lesson_id=self.lesson,
+                date=current_date,
+                time=time(hour=10, minute=0),
+                status=choice(["Scheduled", "Completed"])
+            )
+            self.lesson_statuses.append(status)
+            current_date += timedelta(weeks=1)
+
 
 
     def test_student_calendar_access(self):
@@ -51,14 +61,17 @@ class StudentsTestCase(TestCase):
         response = self.client.get(reverse('calendar', kwargs={'year': self.year, 'month': self.month}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shared/calendar.html')
-        self.assertContains(response, self.student.user.username)
-        self.assertContains(response, self.tutor.user.username)
-        self.assertContains(response, self.lesson.subject)
-        self.assertContains(response, 'Dec. 4, 2024')
-        self.assertContains(response, 'Dec. 11, 2024')
-        self.assertContains(response, 'Dec. 18, 2024')
-        self.assertContains(response, 'Dec. 25, 2024')
-        self.assertContains(response, self.lesson_status[0].status)
+
+        for status in self.lesson_statuses:
+            self.assertContains(response, self.student.user.username)
+            self.assertContains(response, self.tutor.user.username)
+            self.assertContains(response, self.lesson.subject.name)
+            self.assertContains(response, status.status)
+
+            formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
+            formatted_time = status.time.strftime('%I %p').lstrip("0").replace("AM", "a.m.").replace("PM","p.m.") # Matching HTML
+            self.assertContains(response, formatted_time)
+            self.assertContains(response, formatted_date)
 
     
     def test_no_lessons_for_empty_calendar(self):
@@ -91,11 +104,13 @@ class StudentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'shared/calendar.html')
         
-        self.assertContains(response, self.student.user.username)
-        self.assertContains(response, self.tutor.user.username)
-        self.assertContains(response, self.lesson.subject.name)
-        self.assertContains(response, 'Dec. 4, 2024')
-        self.assertContains(response, 'Dec. 11, 2024')
-        self.assertContains(response, 'Dec. 18, 2024')
-        self.assertContains(response, 'Dec. 25, 2024')
-        self.assertContains(response, self.lesson_status[0].status)
+        for status in self.lesson_statuses:
+            self.assertContains(response, self.student.user.username)
+            self.assertContains(response, self.tutor.user.username)
+            self.assertContains(response, self.lesson.subject.name)
+            self.assertContains(response, status.status)
+
+            formatted_date = status.date.strftime('%b. %-d, %Y')  # Matching HTML
+            formatted_time = status.time.strftime('%I %p').lstrip("0").replace("AM", "a.m.").replace("PM","p.m.") # Matching HTML
+            self.assertContains(response, formatted_time)
+            self.assertContains(response, formatted_date)

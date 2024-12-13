@@ -54,10 +54,10 @@ class Calendar(View):
         for lesson in lessons:
             current_date = lesson.start_date
             end_lesson = lesson.term.end_date
+            lesson_status = LessonStatus.objects.filter(lesson_id=lesson.id)
             while current_date <= end_lesson:
                 if start <= current_date <= end_lesson:
-                    lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
-                    time = lesson_status.time
+                    lesson_status = LessonStatus.objects.filter(date=current_date).first()
 
                     if lesson_status:
                         freq.append({
@@ -65,15 +65,15 @@ class Calendar(View):
                             'tutor': lesson.tutor,
                             'subject': lesson.subject,
                             'date': current_date,
-                            'time': time,
+                            'time': lesson_status.time,
                             'status': lesson_status.status,
                         })
 
                 # modify the date based on lesson frequency
-                if lesson.frequency == 'D':
-                    current_date += timedelta(days=1)
+                if lesson.frequency == 'F':
+                    current_date += timedelta(weeks=2)
                 elif lesson.frequency == 'M':
-                    current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=lesson.start_date.day)
+                    current_date += timedelta(weeks=4)
                 else:
                     current_date += timedelta(weeks=1)
         return freq

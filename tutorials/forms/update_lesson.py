@@ -4,6 +4,9 @@ from tutorials.models import LessonUpdateRequest, Tutor, Lesson, Days
 
 
 class UpdateLessonRequestForm(forms.ModelForm):
+    """Form to request an update for lessons."""
+
+    """Disabled fields for displaying, not editing."""
     tutor_name = forms.CharField(
         label='Lesson with',
         required=False,
@@ -24,6 +27,7 @@ class UpdateLessonRequestForm(forms.ModelForm):
     )
 
     class Meta:
+        """Form options."""
         model = LessonUpdateRequest
         fields = ['update_option', 'details']
         widgets = {
@@ -32,6 +36,7 @@ class UpdateLessonRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Set initial values for certain displayed fields."""
         lesson_update_instance = kwargs.get('instance')
         user = kwargs.pop('user_role', None)
         if lesson_update_instance and lesson_update_instance.lesson:
@@ -44,6 +49,8 @@ class UpdateLessonRequestForm(forms.ModelForm):
             kwargs['initial']['frequency'] = lesson_update_instance.lesson.get_frequency_display()
             kwargs['initial']['subject_name'] = lesson_update_instance.lesson.subject.name
 
+        # Populate update option choices if the attribute of the object has values 1 or 2
+        # 1: Change Tutor 2: Change Day/Time
         super().__init__(*args, **kwargs)
         if user:
             if hasattr(user, 'tutor_profile'):
@@ -52,7 +59,9 @@ class UpdateLessonRequestForm(forms.ModelForm):
                 ]
 
 class UpdateLessonForm(forms.ModelForm):
+    """Form to handle requests for lesson updating."""
 
+    """Disabled fields for displaying and field attribute setting."""
     frequency = forms.CharField(label='Lesson frequency', required=False, disabled=True)
     details = forms.CharField(
         label='Request details',
@@ -75,10 +84,14 @@ class UpdateLessonForm(forms.ModelForm):
     next_lesson=forms.DateField(label='Next lesson planned on', required=False, disabled=True)
 
     class Meta:
+        """Form options."""
         model = Lesson
         fields = ['tutor', 'student', 'new_tutor', 'new_day_of_week', 'new_lesson_time']
 
+
     def __init__(self, *args, **kwargs):
+        """Set initial values and query sets for certain fields."""
+
         lesson_update_instance = kwargs.get('instance', None)
         option = kwargs.pop('update_option', None)
         day_of_week = kwargs.pop('day_of_week', None)
@@ -88,6 +101,7 @@ class UpdateLessonForm(forms.ModelForm):
 
         kwargs.setdefault('initial', {})
 
+        # If there is an instance, populate the form with existing values
         if lesson_update_instance:
             if day_of_week is not None:
                 day_of_week_display = dict(Days.choices).get(day_of_week, "Unknown Day")
@@ -103,6 +117,7 @@ class UpdateLessonForm(forms.ModelForm):
                 'next_lesson': next_lesson_date
             })
 
+        # Set certain fields to disable.
         super().__init__(*args, **kwargs)
         if lesson_update_instance:
             self.fields['tutor'].disabled = True

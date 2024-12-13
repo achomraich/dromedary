@@ -4,7 +4,10 @@ from tutorials.models import LessonRequest, Lesson
 
 
 class LessonRequestForm(forms.ModelForm):
+    """Form to create lesson requests."""
+
     class Meta:
+        """Form options."""
         model = LessonRequest
         fields = ['subject','term','start_date','time','duration','frequency']
         widgets = {
@@ -15,6 +18,7 @@ class LessonRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Set values/labels for certain fields."""
         super().__init__(*args, **kwargs)
         self.fields['subject'].empty_label = "Select a subject"
         self.fields['frequency'].choices = [('', 'Select a frequency')] + [
@@ -24,6 +28,7 @@ class LessonRequestForm(forms.ModelForm):
 
 
 class AssignTutorForm(forms.ModelForm):
+    """Form to assign tutors to lesson requests."""
     class Meta:
         model = Lesson
         fields = ['student', 'tutor', 'subject','term','duration','frequency', 'start_date', 'price_per_lesson']
@@ -34,6 +39,7 @@ class AssignTutorForm(forms.ModelForm):
         }
 
     def __init__(self, *args, existing_request=None, **kwargs):
+        """Set initial values and labels for certain fields."""
         super().__init__(*args, **kwargs)
         if existing_request:
             self.fields['student'].initial = existing_request.student

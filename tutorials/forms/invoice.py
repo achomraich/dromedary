@@ -6,6 +6,7 @@ from tutorials.models import Invoice, Student, Subject
 
 
 class InvoiceForm(forms.ModelForm):
+    """Form to create invoices."""
     subject = forms.ModelChoiceField(
         queryset=Subject.objects.all(),
         empty_label="Select a lesson...",
@@ -13,6 +14,7 @@ class InvoiceForm(forms.ModelForm):
     )
 
     class Meta:
+        """Form options."""
         model = Invoice
         fields = ['student', 'amount', 'due_date', 'status']
         widgets = {
@@ -23,12 +25,14 @@ class InvoiceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Set values for certain fields."""
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = Student.objects.select_related('user').all()
         self.fields['student'].label_from_instance = lambda obj: f"{obj.user.username} ({obj.user.full_name()})"
         self.fields['subject'].queryset = Subject.objects.all()
         self.fields['subject'].label_from_instance = lambda obj: f"{obj.name}"
 
+    """Clean the amount and due date fields to validate input."""
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')
         if amount and amount <= 0:

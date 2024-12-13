@@ -76,8 +76,6 @@ urlpatterns = [
     path('invoices/', views.InvoiceListView.as_view(), name='invoice_list'),
     path('invoices/create/', views.CreateInvoiceView.as_view(), name='create_invoice'),
     path('invoices/<int:invoice_id>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
-    path('invoices/', views.invoice_management, name='invoice_management'),
-    path('invoices/create/', views.create_invoice, name='create_invoice'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

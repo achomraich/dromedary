@@ -104,7 +104,7 @@ class StudentsTestCase(TestCase):
         for status in self.lesson_statuses:
             self.assertContains(response, self.student.user.full_name())
             self.assertContains(response, self.lesson.subject.name)
-            self.assertContains(response, 'Scheduled')
+            self.assertContains(response, 'Completed')
 
             formatted_date = status.date.strftime('%b. %d, %Y').replace(' 0', ' ')  # Matching HTML
             self.assertContains(response, formatted_date)

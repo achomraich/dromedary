@@ -121,6 +121,7 @@ class UpdateLesson(LoginRequiredMixin, View):
 
     def update_lesson(self, request, lesson_id):
         ''' Updates lesssons '''
+        print(LessonUpdateRequest.objects.get(lesson=Lesson.objects.get(pk=lesson_id)).is_handled)
         option = LessonUpdateRequest.objects.get(lesson=Lesson.objects.get(pk=lesson_id), is_handled="N")
         lesson = get_object_or_404(Lesson, pk=lesson_id)
 
@@ -143,7 +144,18 @@ class UpdateLesson(LoginRequiredMixin, View):
         )
 
     def cancel_lesson(self, request, lesson_id):
+        print("1")
+        first_pending_lesson = LessonStatus.objects.filter(
+            lesson_id=lesson_id, status=Status.PENDING
+        ).order_by('date').first()
+
+        if not first_pending_lesson:
+            messages.error(request, 'No lessons to reschedule!')
+            LessonUpdateRequest.objects.filter(lesson=lesson_id, is_handled="N").update(is_handled="Y")
+            Lesson.objects.filter(lesson=lesson_id).update(notes='')
+            return
         self.availability_manager.cancel_lesson_availability(lesson_id)
+        print("10")
         messages.success(request, "Lesson cancelled successfully.")
         LessonUpdateRequest.objects.filter(lesson_id=lesson_id, is_handled="N").update(is_handled="Y")
         return redirect('lessons_list')
@@ -154,7 +166,7 @@ class UpdateLesson(LoginRequiredMixin, View):
         details = LessonUpdateRequest.objects.get(lesson_id=lesson_id, is_handled="N").details
         lesson_time = LessonStatus.objects.filter(lesson_id=lesson_update_instance, date__gt=now()).first()
         next_lesson_date = LessonStatus.objects.filter(lesson_id=lesson_update_instance, status=Status.PENDING)
-
+        print()
         if next_lesson_date:
             next_lesson_date = next_lesson_date[0]
 

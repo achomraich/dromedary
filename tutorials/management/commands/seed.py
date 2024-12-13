@@ -255,7 +255,9 @@ class Command(BaseCommand):
         students = Student.objects.all()[:5]
         subjects = Subject.objects.all()
         terms = Term.objects.all()
-        frequencies = ['W', 'F', 'M', 'O']  # Weekly, Fortnightly, Monthly, Once
+
+        frequencies = ['W', 'F', 'M', 'O']  # Weekly, Biweekly, Monthly, Once
+
         statuses = ['Pending', 'Booked', 'Cancelled', 'Completed', 'Confirmed', 'Rejected']
 
         for i in range(10):  # Create 10 lesson requests
@@ -294,12 +296,12 @@ class Command(BaseCommand):
         print("Starting update request seeding...")
         LessonUpdateRequest.objects.all().delete()
 
-        lessons = Lesson.objects.all()[:10]  # Get first 10 lessons
-        update_options = ['1', '2', '3', '4', '5']  # Update options from model choices
+        lessons = Lesson.objects.filter(lessonstatus__status=Status.SCHEDULED).distinct()[:10]  # Get first 10 lessons
+        update_options = ['1', '2', '3']  # Update options from model choices
         made_by_choices = ['Tutor', 'Student']
         handled_choices = ['N', 'Y']
 
-        for i, lesson in enumerate(lessons, 1):
+        for lesson in lessons:
             try:
                 update_option = choice(update_options)
                 made_by = choice(made_by_choices)
@@ -310,8 +312,6 @@ class Command(BaseCommand):
                     '1': 'Request to change tutor due to scheduling conflict',
                     '2': 'Need to change lesson time to accommodate other commitments',
                     '3': 'Cancelling future lessons due to course completion',
-                    '4': 'Request to change frequency to better suit learning pace',
-                    '5': 'Need longer/shorter lesson duration'
                 }
 
                 request = LessonUpdateRequest.objects.create(
@@ -322,9 +322,12 @@ class Command(BaseCommand):
                     is_handled=is_handled
                 )
 
-                print(f"Created update request {i} for lesson {lesson.pk}")  # Changed from lesson_id to pk
+                if is_handled == 'N':
+                    LessonStatus.objects.filter(lesson_id=lesson, status=Status.SCHEDULED).update(status=Status.PENDING)
+
+                print(f"Created update request for lesson {lesson.pk}")  # Changed from lesson_id to pk
             except Exception as e:
-                print(f"Error creating update request {i}: {str(e)}")
+                print(f"Error creating update request: {str(e)}")
                 continue
 
         print("Update request seeding complete.")

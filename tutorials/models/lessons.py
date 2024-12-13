@@ -91,14 +91,14 @@ class Lesson(BaseLesson):
                 
                 if current_date >= today:
                     # If the date is in the future, ensure feedback is empty and status is 'Scheduled'
-                    status = 'Scheduled'
+                    status = Status.SCHEDULED
                 else:
                     # For past or current dates, randomize status and feedback
-                    status = choices(['Completed', 'Cancelled'], weights=[0.8, 0.2], k=1)[0]
+                    status = choices([Status.COMPLETED, Status.CANCELLED], weights=[0.8, 0.2], k=1)[0]
 
-                if status == 'Completed':
+                if status == Status.COMPLETED:
                     feedback = choice(['Good progress', 'Needs improvement', 'Excellent'])
-                elif status == 'Cancelled':
+                elif status == Status.CANCELLED:
                     feedback = '-'
                 else:
                     feedback = ''

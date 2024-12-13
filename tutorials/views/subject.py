@@ -9,13 +9,14 @@ from tutorials.models import Subject
 
 
 """
-This file contains classes to handle 
-Subjects view
+This file contains a view class to handle 
+Subjects
 """
 
 class SubjectView(View):
-    """ Allowing Admins to view, edit and delete subjects """
+    """Allowing Admins to view, edit and delete subjects."""
     def get(self, request, subject_id=None):
+        """Get a list of all subjects."""
         if request.path.endswith('create'):
             return self.create_subject(request)
 
@@ -33,6 +34,7 @@ class SubjectView(View):
         return HttpResponseForbidden("You do not have permission to view this page.")
 
     def post(self, request, subject_id=None):
+        """Handle POST actions to create, edit or delete subjects."""
         if 'create' in request.path:
             return self.create_subject(request)
 
@@ -46,12 +48,12 @@ class SubjectView(View):
         #return redirect('subjects_list')
 
     def delete_subject(self, request, subject):
-        ''' deletes a subject '''
+        """Deletes a subject."""
         subject.delete()
         return redirect('subjects_list')
 
     def handle_subject_form(self, request, subject=None):
-        ''' subject form for adding or editing '''
+        """Process subject form for adding or editing."""
         form = SubjectForm(request.POST or None, instance=subject)
 
         if form.is_valid():
@@ -63,7 +65,7 @@ class SubjectView(View):
         return form
 
     def edit_subject(self, request, subject_id):
-        ''' handles edit subject '''
+        """Edits a subject."""
         subject = get_object_or_404(Subject, pk=subject_id)
         form = self.handle_subject_form(request, subject)
 
@@ -73,7 +75,7 @@ class SubjectView(View):
         return render(request, 'admin/manage_subjects/subject_edit.html', {'form': form, 'subject': subject})
 
     def create_subject(self, request):
-        ''' create new subject form '''
+        """Show form to create new subject."""
         form = self.handle_subject_form(request)
         if isinstance(form, HttpResponseRedirect):  # Redirect if the form is valid
             return form

@@ -11,9 +11,9 @@ from tutorials.views import LoginProhibitedMixin
 
 
 """
-This file contains classes to handle 
-1- login 
-2- signup
+This file contains view classes and functions to handle 
+1 - login 
+2 - sign up
 """
 
 class LogInView(LoginProhibitedMixin, View):
@@ -48,7 +48,7 @@ class LogInView(LoginProhibitedMixin, View):
 
 
 def log_out(request):
-    """Log out the current user"""
+    """Log out the current user."""
 
     logout(request)
     return redirect('home')

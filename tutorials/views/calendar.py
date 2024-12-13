@@ -8,12 +8,12 @@ from django.utils.timezone import now
 
 
 """
-This file contains classes to handle 
-Calendar View
+This file contains view classes to handle 
+Calendar
 """
 
 class Calendar(View):
-    ''' This class is to gather lessons information to present them as a calendar '''
+    """This class is to gather lessons information to present them as a calendar."""
     def get(self, request, year=None, month=None):
         user = request.user
         today = now().date()
@@ -25,6 +25,8 @@ class Calendar(View):
         month = int(request.GET.get('month', month))
 
         LessonStatus.objects.filter(date__lt=today, status='Pending').update(status='Completed')
+
+        # Filter lessons displayed by user type
         if hasattr(user, 'tutor_profile'):
             lessons = Lesson.objects.filter(tutor__user=user)
         elif hasattr(user, 'student_profile'):
@@ -49,15 +51,15 @@ class Calendar(View):
 
 
     def lessons_frequency(self, lessons, start):
-        ''' Counts the lesson frequency to present each lesson in a schedule for the user '''
+        """Counts the lesson frequency to present each lesson in a schedule for the user."""
         freq = []
         for lesson in lessons:
             current_date = lesson.start_date
             end_lesson = lesson.term.end_date
+            lesson_status = LessonStatus.objects.filter(lesson_id=lesson.id)
             while current_date <= end_lesson:
                 if start <= current_date <= end_lesson:
-                    lesson_status = LessonStatus.objects.filter(lesson_id=lesson).first()
-                    time = lesson_status.time
+                    lesson_status = LessonStatus.objects.filter(date=current_date).first()
 
                     if lesson_status:
                         freq.append({
@@ -65,20 +67,21 @@ class Calendar(View):
                             'tutor': lesson.tutor,
                             'subject': lesson.subject,
                             'date': current_date,
-                            'time': time,
+                            'time': lesson_status.time,
                             'status': lesson_status.status,
                         })
 
-                # modify the date based on lesson frequency
-                if lesson.frequency == 'D':
-                    current_date += timedelta(days=1)
+                # Modify the date based on lesson frequency
+                if lesson.frequency == 'F':
+                    current_date += timedelta(weeks=2)
                 elif lesson.frequency == 'M':
-                    current_date = (current_date.replace(day=1) + timedelta(days=32)).replace(day=lesson.start_date.day)
+                    current_date += timedelta(weeks=4)
                 else:
                     current_date += timedelta(weeks=1)
         return freq
 
     def weekly_schedule(self, frequency_lessons, start, end):
+        """Gets the weeks for the month."""
         weekly_lessons = {}
         current_date = start
         week_start = current_date - timedelta(days=current_date.weekday())

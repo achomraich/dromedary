@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from tutorials.models import Lesson, LessonStatus, LessonUpdateRequest, Status, User, Student, Tutor, Term, Subject, Admin
 from datetime import date, time, timedelta
+from tutorials.forms import LessonFeedbackForm
+from unittest.mock import patch
 
 class ViewLessonsTests(TestCase):
 
@@ -182,7 +184,6 @@ class ViewLessonsTests(TestCase):
 
         self.assertRedirects(response, reverse('lesson_detail', args=[self.lesson2.pk]))
 
-        # Verify status changed to CANCELLED
         self.lesson_status2.refresh_from_db()
         self.assertEqual(self.lesson_status2.status, Status.CANCELLED)
 
@@ -192,7 +193,6 @@ class ViewLessonsTests(TestCase):
 
         self.assertRedirects(response, reverse('lesson_detail', args=[self.lesson2.pk]))
 
-        # Verify status changed to CANCELLED
         self.lesson_status2.refresh_from_db()
         self.assertEqual(self.lesson_status2.status, Status.CANCELLED)
 
@@ -239,3 +239,56 @@ class ViewLessonsTests(TestCase):
         self.client.login(username='@student', password='student123')
         response = self.client.post(reverse('lessons_list'), data={'lesson_id': 3})
         self.assertEqual(response.status_code, 302)
+
+    def test_post_update_feedback_by_tutor(self):
+        self.client.login(username='@tutor', password='tutor123')
+        response = self.client.post(reverse('update_feedback', args=[self.lesson_status1.pk]),
+                                    data={'feedback': 'Updated feedback'})
+        self.assertEqual(response.status_code, 302)  # Expect redirect
+        self.lesson_status1.refresh_from_db()
+        self.assertEqual(self.lesson_status1.feedback, 'Updated feedback')
+
+    def test_post_cancel_lesson_by_student(self):
+        self.client.login(username='@student', password='student123')
+        response = self.client.post(reverse('cancel_lesson', args=[self.lesson_status3.pk]))
+        self.assertRedirects(response, reverse('lesson_detail', args=[self.lesson2.pk]))
+        self.lesson_status3.refresh_from_db()
+        self.assertEqual(self.lesson_status3.status, Status.CANCELLED)
+
+    def test_post_cancel_lesson_by_admin(self):
+        self.client.login(username='@admin', password='admin123')
+        response = self.client.post(reverse('cancel_lesson', args=[self.lesson_status3.pk]))
+        self.assertRedirects(response, reverse('lesson_detail', args=[self.lesson2.pk]))
+        self.lesson_status3.refresh_from_db()
+        self.assertEqual(self.lesson_status3.status, Status.CANCELLED)
+
+    def test_handle_lessons_form_save_exception(self):
+        self.client.login(username='@tutor', password='tutor123')
+        with patch('tutorials.forms.LessonFeedbackForm.save', side_effect=Exception("Save failed")):
+            response = self.client.post(reverse('update_feedback', args=[self.lesson_status1.pk]),
+                                        data={"feedback": "Some feedback"})
+            self.assertEqual(response.status_code, 200)  # Renders the form again
+            self.assertContains(response, "It was not possible to update this feedback")
+
+    def test_lesson_detail_update_feedback(self):
+        self.client.login(username='@tutor', password='tutor123')
+        response = self.client.get(reverse('update_feedback', args=[self.lesson_status1.pk]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, f"Edit Feedback: {self.lesson1.student.user.full_name()} ({self.lesson1.subject.name})")
+
+    def test_lesson_detail_cancel_lesson(self):
+        self.client.login(username='@student', password='student123')
+        response = self.client.get(reverse('cancel_lesson', args=[self.lesson_status1.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.lesson_status1.status, Status.COMPLETED)
+
+    def test_lesson_detail_access_by_admin(self):
+        self.client.login(username='@admin', password='admin123')
+        response = self.client.get(reverse('lesson_detail', args=[self.lesson1.pk]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, "Great session")
+
+
+

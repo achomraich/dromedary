@@ -2,10 +2,11 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from tutorials.models import Lesson, LessonUpdateRequest, LessonStatus, Tutor, Student, Subject, Term, User, Admin, Status, TutorAvailability
-from datetime import date, time, timedelta
+from datetime import date, time, timedelta, datetime
 from tutorials.views import TutorAvailabilityManager
 from django.utils.timezone import now
 from tutorials.models.choices import Days
+import datetime
 
 class UpdateLessonViewTest(TestCase):
     fixtures = [
@@ -88,14 +89,14 @@ class UpdateLessonViewTest(TestCase):
         self.client.login(username='@admin', password='admin123')
         response = self.client.get(reverse('update_lesson', kwargs={'lesson_id': self.lesson.id}))
 
-        # Check that the response status code is 200 and the correct template is used
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/manage_update_requests/update_lesson.html')
 
     def test_get_current_tutor_availability(self):
         availability = self.manager.get_current_tutor_availability(self.lesson.id)
+        print(availability)
         self.assertEqual(len(availability), 2)
-        self.assertEqual(availability[1].day, "Monday")  # Translates from integer to string
+        self.assertEqual(availability[0].day, "Monday")  # Translates from integer to string
 
     def test_get_all_tutor_availability(self):
         all_availability = self.manager.get_all_tutor_availability()

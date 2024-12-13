@@ -89,6 +89,7 @@ class UpdateLessonForm(forms.ModelForm):
         kwargs.setdefault('initial', {})
 
         if lesson_update_instance:
+
             if day_of_week is not None:
                 day_of_week_display = dict(Days.choices).get(day_of_week, "Unknown Day")
 

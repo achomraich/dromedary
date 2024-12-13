@@ -206,7 +206,6 @@ class Command(BaseCommand):
 
     def seed_invoices(self):
         """Seed the database with sample invoices."""
-        print("Starting invoice seeding...")
         Invoice.objects.all().delete()
         InvoiceLessonLink.objects.all().delete()
 
@@ -240,7 +239,7 @@ class Command(BaseCommand):
                     lesson.invoiced = True
                     lesson.save()
 
-                print(f"Created invoice {i + 1} for student {student.user.username}")
+                print(f"Seeding invoice {i+1}/5", end='\r')
             except Exception as e:
                 print(f"Error creating invoice {i + 1}: {str(e)}")
                 continue
@@ -249,7 +248,6 @@ class Command(BaseCommand):
 
     def seed_lesson_requests(self):
         """Seed the database with sample lesson requests."""
-        print("Starting lesson request seeding...")
         LessonRequest.objects.all().delete()
 
         students = Student.objects.all()[:5]
@@ -284,7 +282,7 @@ class Command(BaseCommand):
                     start_date=term.start_date + timedelta(days=randint(0, 30))
                 )
 
-                print(f"Created lesson request {i + 1} for student {student.user.username}")
+                print(f"Seeding lesson request {i+1}/10", end='\r')
             except Exception as e:
                 print(f"Error creating lesson request {i + 1}: {str(e)}")
                 continue
@@ -293,7 +291,6 @@ class Command(BaseCommand):
 
     def seed_update_requests(self):
         """Seed the database with sample lesson update requests."""
-        print("Starting update request seeding...")
         LessonUpdateRequest.objects.all().delete()
 
         lessons = Lesson.objects.filter(lessonstatus__status=Status.SCHEDULED).distinct()[:10]  # Get first 10 lessons
@@ -301,7 +298,7 @@ class Command(BaseCommand):
         made_by_choices = ['Tutor', 'Student']
         handled_choices = ['N', 'Y']
 
-        for lesson in lessons:
+        for index,lesson in enumerate(lessons):
             try:
                 update_option = choice(update_options)
                 made_by = choice(made_by_choices)
@@ -325,7 +322,8 @@ class Command(BaseCommand):
                 if is_handled == 'N':
                     LessonStatus.objects.filter(lesson_id=lesson, status=Status.SCHEDULED).update(status=Status.PENDING)
 
-                print(f"Created update request for lesson {lesson.pk}")  # Changed from lesson_id to pk
+                #print(f"Created update request for lesson {lesson.pk}")  # Changed from lesson_id to pk
+                print(f"Seeding update request {index+1}/{len(lessons)}", end='\r')
             except Exception as e:
                 print(f"Error creating update request: {str(e)}")
                 continue

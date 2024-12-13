@@ -2,8 +2,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
 
 """
-This file contains classes to handle 
-Mixin
+This file contains
+Mixins
 """
 
 class LoginProhibitedMixin:

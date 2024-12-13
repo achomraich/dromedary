@@ -13,13 +13,13 @@ from tutorials.models import LessonStatus, Status, LessonUpdateRequest, Lesson
 
 """
 This file contains classes to handle 
-Lessons View
+Lessons
 """
 
 class ViewLessons(LoginRequiredMixin, View):
-    """ Allows admin and users to view list of lessons """
+    """Allows admin and users to view list of lessons."""
     def get(self, request, lesson_id=None):
-        """ Handles the list of lessons """
+        """Handles the list of lessons."""
         current_user = request.user
         self.can_be_updated = []
 
@@ -59,7 +59,7 @@ class ViewLessons(LoginRequiredMixin, View):
                        'can_handle_request': self.can_be_updated, 'page_obj': page_obj})
 
     def post(self, request, lesson_id=None):
-
+        """Handle POST requests based on lesson actions."""
         if hasattr(request.user, 'admin_profile'):
             self.status = 'admin'
         elif hasattr(request.user, 'student_profile'):
@@ -73,9 +73,11 @@ class ViewLessons(LoginRequiredMixin, View):
             elif 'cancel_lesson' in request.path:
                 return self.cancel_lesson(request, lesson_id)
 
+        # If no lesson_id provided, redirect back to list of lessons
         return redirect('lessons_list')
 
     def handle_lessons_form(self, request, lesson=None):
+        """Processes the form to handle lesson feedback updating."""
         form = LessonFeedbackForm(request.POST or None, instance=lesson)
 
         if form.is_valid():
@@ -92,7 +94,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return form
 
     def update_feedback(self, request, status_id=None):
-        ''' Allows tutor to update the feedback '''
+        """Allows tutor to update the feedback."""
         lesson = get_object_or_404(LessonStatus, pk=status_id)
         form = self.handle_lessons_form(request, lesson)
 
@@ -102,7 +104,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return render(request, 'tutor/manage_lessons/update_feedback.html', {'form': form})
 
     def cancel_lesson(self, request, status_id=None):
-        ''' Allows cancelling a lesson '''
+        """Allows cancelling a lesson."""
         lesson = get_object_or_404(LessonStatus, pk=status_id)
         if lesson.status == Status.SCHEDULED:
             lesson.status = Status.CANCELLED
@@ -113,7 +115,7 @@ class ViewLessons(LoginRequiredMixin, View):
         return redirect('lesson_detail', lesson_id=LessonStatus.objects.get(pk=status_id).lesson_id.id)
 
     def lesson_detail(self, request, lessonStatus_id):
-        ''' Views the lesson details '''
+        """Views the lesson details/each lesson scheduled."""
         if hasattr(request.user, 'admin_profile'):
             self.status = 'admin'
         elif hasattr(request.user, 'student_profile'):

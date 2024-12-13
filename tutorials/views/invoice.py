@@ -10,14 +10,14 @@ from tutorials.models import Invoice, LessonStatus, Student
 
 
 """
-This file contains classes to handle 
-1- Invoices view
-2- Create Invoices
-3- Invoice details
+This file contains view classes and functions to handle 
+1 - Invoices view
+2 - Create Invoices
+3 - Invoice details
 """
 
 class InvoiceListView(LoginRequiredMixin, View):
-    ''' Handeles list of invoices '''
+    """Handles list of invoices."""
     def get(self, request):
         invoice_list = Invoice.objects.all().order_by('-created_at')
         paginator = Paginator(invoice_list, 10)  # Show 10 invoices per page
@@ -29,12 +29,14 @@ class InvoiceListView(LoginRequiredMixin, View):
 
 
 class CreateInvoiceView(LoginRequiredMixin, View):
-    """ Allowes admin to generate an invoice for students """
+    """Allows admin to generate an invoice for students."""
     def get(self, request):
+        """Display a form to create an invoice."""
         form = InvoiceForm()
         return render(request, 'invoices/create_invoice.html', {'form': form})
 
     def post(self, request):
+        """Process the form to create an invoice."""
         form = InvoiceForm(request.POST)
         if form.is_valid():
             invoice = form.save(commit=False)
@@ -58,14 +60,14 @@ class CreateInvoiceView(LoginRequiredMixin, View):
 
 
 class InvoiceDetailView(LoginRequiredMixin, View):
-    """ Views the invoice details """
+    """View the invoice details."""
     def get(self, request, invoice_id):
         invoice = get_object_or_404(Invoice, id=invoice_id)
 
         return render(request, 'invoices/invoice_detail.html', {'invoice': invoice})
 
     def post(self, request, invoice_id):
-        ''' Allows admin to edit the invoice or delete it '''
+        """Allows admin to edit the invoice or delete it."""
         invoice = get_object_or_404(Invoice, id=invoice_id)
         if 'delete' in request.POST:
             invoice.delete()
@@ -80,12 +82,13 @@ class InvoiceDetailView(LoginRequiredMixin, View):
 
 @login_required
 def invoice_management(request):
+    """Display all invoices in a list."""
     invoices = Invoice.objects.all().order_by('-created_at')
     return render(request, 'invoices/invoice_list.html', {'invoices': invoices})
 
 @login_required
 def create_invoice(request):
-
+    """Create an invoice for a student."""
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
         if form.is_valid():
@@ -93,7 +96,7 @@ def create_invoice(request):
             subject = form.cleaned_data['subject']
             invoice.save()
 
-            # Link lessons
+            # Link uninvoiced lessons
             lessons = LessonStatus.objects.filter(
                 lesson_id__student=invoice.student,
                 lesson_id__subject_id=subject,
@@ -115,6 +118,7 @@ def create_invoice(request):
 
 @login_required
 def invoice_list(request):
+    """Display invoices for a student."""
     # Make sure we're getting all related data in one query
     invoices = (Invoice.objects
                 .select_related('student__user')

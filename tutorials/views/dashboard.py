@@ -7,7 +7,7 @@ from tutorials.models import Term
 
 
 """
-This file contains classes to handle 
+This file contains a view function to handle 
 Dashboard
 """
 
@@ -23,6 +23,7 @@ def dashboard(request):
         end_date__gte=timezone.now().date()
     ).first()
 
+    # Current term is to be displayed
     context = {
         'user': current_user,
         'current_term': current_term
@@ -34,6 +35,7 @@ def dashboard(request):
         return render(request, 'tutor/tutor_dashboard.html', context)
     else:
         student = current_user.student_profile
+        # If student has notifications about lesson requests, a message shows on the dashboard
         if student.has_new_lesson_notification:
             messages.info(request, 'There has been an update to your lesson requests!')
             student.has_new_lesson_notification = False

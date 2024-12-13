@@ -16,13 +16,13 @@ from tutorials.views import Calendar
 
 
 """
-This file contains classes to handle 
-1- Students list
-2- Tutors list
+This file contains view classes to handle 
+1 - Students list
+2 - Tutors list
 """
 
 class EntityView(LoginRequiredMixin, View):
-    """ A parent class for an entity (students or tutors) list """
+    """A parent class to generalize an entity (students or tutors) list."""
     model = None
     list_admin = None
     list_user = None
@@ -31,7 +31,7 @@ class EntityView(LoginRequiredMixin, View):
     redirect_url = None
 
     def get(self, request, *args, **kwargs):
-        """ View the list of an entity """
+        """View the list of an entity or get specific pages based on url name."""
         entity_id = kwargs.get('tutor_id') or kwargs.get('student_id')
         if entity_id:
             if request.resolver_match.url_name == 'student_calendar' or request.resolver_match.url_name == 'tutor_calendar':
@@ -44,7 +44,7 @@ class EntityView(LoginRequiredMixin, View):
         return self.get_entities(request)
 
     def post(self, request, *args, **kwargs):
-        """ Allows authorized user to make changes """
+        """Allows admin to make changes to users of the system."""
         entity_id = request.POST.get('entity_id')
         if not entity_id:
             messages.error(request, "No entity ID provided for the operation.")
@@ -60,11 +60,13 @@ class EntityView(LoginRequiredMixin, View):
         return redirect(self.redirect_url)
 
     def get_entities(self, request):
-        """ loads the entities and apply filters """
+        """Loads the entities onto the list and applies any filters."""
         user = request.user
         search = request.GET.get('search', '')
         subjects = Subject.objects.all()
 
+        # For each user type, get a different list. Admins get all objects of students/tutors.
+        # Tutors only get the students they teach. Students only get the tutors who teach them.
         profile_map = {
             'admin_profile': lambda: self.model.objects.all().order_by('user__username'),
             'tutor_profile': lambda: self._get_entities_for_tutor(user),
@@ -101,15 +103,17 @@ class EntityView(LoginRequiredMixin, View):
         })
 
     def _get_entities_for_tutor(self, user):
+        """Retrieve students that a tutor teaches."""
         lessons = Lesson.objects.filter(tutor_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('student_id')).order_by('user__username').distinct()
 
     def _get_entities_for_student(self, user):
+        """Retrieve tutors that a student is taught by."""
         lessons = Lesson.objects.filter(student_id=user.id)
         return self.model.objects.filter(user_id__in=lessons.values('tutor_id')).order_by('user__username').distinct()
 
     def entity_details(self, request, entity_id):
-        """ View the details of an entity """
+        """View the details of an entity."""
         entity = get_object_or_404(self.model, user__id=entity_id)
 
         lessons = None
@@ -146,6 +150,7 @@ class EntityView(LoginRequiredMixin, View):
             return render(request, self.details, content)
 
     def edit_form(self, request, entity_id, form=None):
+        """Provides the form to display when a user decides to edit an entity."""
         entity = get_object_or_404(self.model, user__id=entity_id)
         entity.refresh_from_db()
         if not form:
@@ -153,7 +158,7 @@ class EntityView(LoginRequiredMixin, View):
         return render(request, self.edit, {'form': form, self.model.__name__.lower(): entity})
 
     def edit_entity(self, request, entity):
-        """ edit an entity """
+        """Processes the form when user edits an entity."""
         form = UserForm(request.POST, instance=entity.user)
 
         if form.is_valid():
@@ -166,13 +171,13 @@ class EntityView(LoginRequiredMixin, View):
         return self.edit_form(request, entity.user.id, form)
 
     def delete_entity(self, request, entity):
-        """ delete an entity """
+        """Delete an entity."""
         entity.user.delete()
         messages.success(request, "Deleted successfully.")
         return redirect(self.redirect_url)
 
     def get_calendar(self, request, entity_id):
-        """ Generates a calendar view for the given entity """
+        """Generates context for a calendar for the given entity."""
         entity = get_object_or_404(self.model, user__id=entity_id)
         today = now().date()
         year = int(request.GET.get('year', today.year))
@@ -204,9 +209,10 @@ class EntityView(LoginRequiredMixin, View):
 
 
 class StudentsView(EntityView, LoginRequiredMixin):
-    """ Inherits from EntityView for students list """
+    """Inherits from EntityView to display students list."""
     model = Student
 
+    # Default variables
     list_admin = 'admin/manage_students/students_list.html'
     list_user = 'tutor/my_students/students_list.html'
     details = 'admin/manage_students/student_details.html'
@@ -220,6 +226,7 @@ class StudentsView(EntityView, LoginRequiredMixin):
         return super().post(request, student_id=student_id, *args, **kwargs)
 
     def apply_filters(self, request, entity_list):
+        """Filter by subject."""
         subject_filter = request.GET.get('subject', '')
         if subject_filter:
             filtered_lessons = Lesson.objects.filter(subject__name=subject_filter)
@@ -228,9 +235,10 @@ class StudentsView(EntityView, LoginRequiredMixin):
 
 
 class TutorsView(EntityView, LoginRequiredMixin):
-    """ Inherits from EntityView for tutors list """
+    """Inherits from EntityView for tutors list."""
     model = Tutor
 
+    # Default variables
     list_admin = 'admin/manage_tutors/tutors_list.html'
     list_user = 'student/my_tutors/tutors_list.html'
     details = 'admin/manage_tutors/tutor_details.html'
@@ -244,6 +252,7 @@ class TutorsView(EntityView, LoginRequiredMixin):
         return super().post(request, tutor_id=tutor_id, *args, **kwargs)
 
     def apply_filters(self, request, entity_list):
+        """Filter by subject."""
         subject_filter = request.GET.get('subject', '')
         if subject_filter:
             filtered_lessons = Lesson.objects.filter(subject__name=subject_filter)

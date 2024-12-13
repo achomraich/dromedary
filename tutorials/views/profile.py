@@ -10,8 +10,8 @@ from tutorials.forms import PasswordForm, TutorForm, UserForm
 
 
 """
-This file contains classes to handle 
-Password and update it
+This file contains view classes to handle and update 
+Password
 """
 
 class PasswordView(LoginRequiredMixin, FormView):
@@ -48,6 +48,7 @@ class ProfileUpdateView(LoginRequiredMixin, TemplateView):
         """Add forms to the context."""
         context = super().get_context_data(**kwargs)
 
+        # Add tutor form with extra fields "experience" and "subjects"
         if hasattr(self.request.user, 'tutor_profile'):
             tutor_form = TutorForm(instance=self.request.user.tutor_profile)
         else:
@@ -58,6 +59,7 @@ class ProfileUpdateView(LoginRequiredMixin, TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        """Handles form submission."""
         user_form = UserForm(self.request.POST, instance=self.request.user)
         if hasattr(self.request.user, 'tutor_profile'):
             tutor_form = TutorForm(self.request.POST, instance=self.request.user.tutor_profile)

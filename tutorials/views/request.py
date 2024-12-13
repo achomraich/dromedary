@@ -8,12 +8,12 @@ from tutorials.models import LessonRequest, Lesson, Status
 
 
 """
-This file contains classes to handle 
+This file contains view classes to handle 
 Requests 
 """
 
 class RequestView(LoginRequiredMixin, View):
-    """ Handles request list views for admin and users"""
+    """Handles request list views for admin and users."""
     status = None
     requests_list = None
 
@@ -35,6 +35,7 @@ class RequestView(LoginRequiredMixin, View):
         return render(request, f'{self.status}/requests/requests.html', {"lesson_requests": self.requests_list})
 
     def post(self, request, *args, **kwargs):
+        """Handles POST actions for requests."""
         lrequest_id = request.POST.get('request_id')
         if not lrequest_id:
             messages.error(request, "No entity ID provided for the operation.")
@@ -62,7 +63,7 @@ class RequestView(LoginRequiredMixin, View):
         return render(request, 'admin/requests/assign_tutor.html', {'form' : form, 'request': lrequest})
 
     def assign_tutor(self, request, lrequest):
-        ''' Allows admin to assign a tutor to the request by student'''
+        """Allows admin to assign a tutor to the request by student."""
         form = AssignTutorForm(request.POST, existing_request=lrequest)
         if form.is_valid():
             self.create_lesson(request, lrequest, form)
@@ -74,6 +75,7 @@ class RequestView(LoginRequiredMixin, View):
             return self.request_assign(request, lrequest.id, form)
 
     def create_lesson(self, request, lrequest, form):
+        """Create a lesson when admins assign a lesson request."""
         tutor = form.cleaned_data['tutor']
         price_per_lesson = form.cleaned_data['price_per_lesson']
 
@@ -96,7 +98,7 @@ class RequestView(LoginRequiredMixin, View):
 
 
     def reject_request(self, request, lrequest):
-        ''' Allows admin to reject a request '''
+        """Allows admin to reject a request."""
         lrequest.status = Status.REJECTED
         lrequest.save()
         self.toggle_notification(request, lrequest)
@@ -105,11 +107,12 @@ class RequestView(LoginRequiredMixin, View):
         return redirect('requests')
 
     def toggle_notification(self, request, lrequest):
-        ''' Handles notification to inform a student the there is updates on their request '''
+        """Handles notification to inform a student that there is updates on their request."""
         lrequest.student.has_new_lesson_notification = True
         lrequest.student.save()
 
     def cancel_request(self, request, lrequest):
+        """Allows student to cancel a request."""
         lrequest.status = Status.CANCELLED
         lrequest.save()
         messages.success(request, "Request cancelled.")
@@ -119,11 +122,13 @@ class RequestView(LoginRequiredMixin, View):
 class MakeRequestView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
+        """Retrieve a form to create a request."""
         form = LessonRequestForm()
         return render(request, 'student/requests/lesson_request_form.html', {'form': form})
 
 
     def post(self, request, *args, **kwargs):
+        """Process a form to create a request."""
         form = LessonRequestForm(request.POST)
         if form.is_valid():
             # Create lesson request but don't save it yet

@@ -28,7 +28,6 @@ def dashboard(request):
         'user': current_user,
         'current_term': current_term
     }
-
     if hasattr(current_user, 'admin_profile'):
         return render(request, 'admin/admin_dashboard.html', context)
     if hasattr(current_user, 'tutor_profile'):

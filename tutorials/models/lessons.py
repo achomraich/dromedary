@@ -122,7 +122,7 @@ class Lesson(BaseLesson):
                     elif self.frequency == 'F':  # Biweekly
                         current_date += timedelta(weeks=2)
                 except Exception as e:
-                    print(f"Error creating LessonStatus: {e}")
+                    pass
 
             try:
                 TutorAvailability.objects.create(
@@ -133,7 +133,7 @@ class Lesson(BaseLesson):
                     status=TutorAvailability.Availability.BOOKED,
                 )
             except Exception as e:
-                print(f"Error creating TutorAvailability: {e}")
+                pass
 
 class LessonRequest(BaseLesson):
     """Model for a request for scheduling a lesson."""

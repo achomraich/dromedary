@@ -8,33 +8,28 @@ from datetime import date, timedelta
 from django.contrib.messages import get_messages
 
 
-
-
-
 class InvoiceViewsTest(TestCase):
+
+    fixtures = [
+        'tutorials/tests/fixtures/default_user.json',
+        'tutorials/tests/fixtures/other_users.json',
+        'tutorials/tests/fixtures/default_tutor.json',
+        'tutorials/tests/fixtures/default_student.json',
+        'tutorials/tests/fixtures/default_lesson.json',
+        'tutorials/tests/fixtures/default_subject.json',
+        'tutorials/tests/fixtures/default_term.json',
+    ]
+
     def setUp(self):
         # Create admin user
-        self.admin_user = User.objects.create_user(
-            username='@admin',
-            email='admin@example.com',
-            password='Password123',
-            first_name='Admin',
-            last_name='User'
-        )
+        self.admin_user = User.objects.get(username='@johndoe')
         self.admin = Admin.objects.create(user=self.admin_user)
 
         # Create student user
-        self.student_user = User.objects.create_user(
-            username='@student',
-            email='student@example.com',
-            password='Password123',
-            first_name='Student',
-            last_name='User'
-        )
-        self.student = Student.objects.create(user=self.student_user)
+        self.student = Student.objects.get(user__username='@janedoe')
 
         # Create subject.py
-        self.subject = Subject.objects.create(name='Test Subject')
+        self.subject = Subject.objects.get(name='Python')
 
         # Create invoice
         self.invoice = Invoice.objects.create(
@@ -45,8 +40,7 @@ class InvoiceViewsTest(TestCase):
         )
 
         # Setup client and login
-        self.client = Client()
-        self.client.login(username='@admin', password='Password123')
+        self.client.login(username='@johndoe', password='Password123')
 
         # Setup URLs
         self.list_url = reverse('invoice_list')
@@ -118,7 +112,44 @@ class InvoiceViewsTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Invoice.objects.filter(id=self.invoice.id).exists())
 
+    def test_post_null_invoice(self):
+        response = self.client.post(self.detail_url, {})
+        self.assertRedirects(response, self.detail_url)
+
     def test_unauthorized_access(self):
         self.client.logout()
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, 302)
+
+    def test_create_invoice_invalid_form(self):
+        # Simulate submitting a form with invalid data
+        invalid_invoice_data = {
+            'student': '',  # Missing student field
+            'amount': '',  # Missing amount field
+            'due_date': '',  # Missing due date field
+            'status': '',  # Missing status field
+        }
+
+        response = self.client.post(self.create_url, invalid_invoice_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'invoices/create_invoice.html')
+        self.assertContains(response, "This field is required.")  # Check for validation errors
+
+        self.assertEqual(Invoice.objects.count(), 1)
+
+    def test_create_invoice_no_uninvoiced_lessons(self):
+        new_invoice_data = {
+            'student': self.student.pk,
+            'subject': self.subject.pk,
+            'amount': 150.00,
+            'due_date': (date.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
+            'status': 'UNPAID'
+        }
+        response = self.client.post(self.create_url, new_invoice_data)
+        messages_list = list(response.context['messages'])
+        self.assertEqual(len(messages_list), 1)
+        self.assertEqual(str(messages_list[0]), "No uninvoiced lessons found for this student.")
+
+        self.assertTemplateUsed(response, 'invoices/create_invoice.html')
+        self.assertEqual(Invoice.objects.count(), 1)

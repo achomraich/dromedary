@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from tutorials.models import User, Admin, Student, Tutor, Lesson
 
-class TutorsTestCase(TestCase):
+class StudentsTestCase(TestCase):
 
     fixtures = [
         'tutorials/tests/fixtures/default_user.json',

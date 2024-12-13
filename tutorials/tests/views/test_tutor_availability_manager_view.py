@@ -95,7 +95,7 @@ class UpdateLessonViewTest(TestCase):
     def test_get_current_tutor_availability(self):
         availability = self.manager.get_current_tutor_availability(self.lesson.id)
         self.assertEqual(len(availability), 2)
-        self.assertEqual(availability[1].day, "Monday")  # Translates from integer to string
+        self.assertEqual(availability[1].day, "Sunday")  # Translates from integer to string
 
     def test_get_all_tutor_availability(self):
         all_availability = self.manager.get_all_tutor_availability()

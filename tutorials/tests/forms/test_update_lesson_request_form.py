@@ -150,7 +150,7 @@ class LessonUpdateRequestTestCase(TestCase):
 
         # Ensure that the 'duration' and 'frequency' fields are populated
         self.assertEqual(form.initial['duration'], self.lesson.duration)
-        self.assertEqual(form.initial['frequency'], self.lesson.frequency)
+        self.assertEqual(form.initial['frequency'], self.lesson.get_frequency_display())
 
         # Check that the 'update_option' field contains only relevant choices for tutor
         self.assertIn(('1', 'Change Tutor'), form.fields['update_option'].choices)

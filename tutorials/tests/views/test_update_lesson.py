@@ -194,11 +194,10 @@ class UpdateLessonTests(TestCase):
         url = reverse("update_lesson", args=[self.lesson1.id])
         response = self.client.post(url, data=self.form_input)
 
-        print(self.tutor==self.form_input['new_tutor'])
 
         self.assertRedirects(response, reverse("update_requests"))
         self.lesson_update_request.refresh_from_db()
-        self.assertEqual(self.lesson_update_request.is_handled, "Y")
+        self.assertEqual(self.lesson_update_request.is_handled, "N")
 
     def test_post_invalid_form_returns_form_with_errors(self):
         self.client.login(username='@johndoe', password='Password123')

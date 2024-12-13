@@ -10,5 +10,17 @@
       "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
       "is_active": true
     }
+  },
+  {
+    "model": "tutorials.user",
+    "pk": 10,
+    "fields": {
+      "first_name": "Charlie",
+      "last_name": "Doe",
+      "username": "@charlie",
+      "email": "charlie@example.org",
+      "password": "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc=",
+      "is_active": true
+    }
   }
 ]

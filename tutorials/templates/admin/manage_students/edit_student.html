@@ -2,10 +2,17 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Edit Student: {{ student.user.username }}</h1>
-
-    <div class="card p-4 shadow-sm">
+<div class="container">
+    <div class="col-12">
+        <a href="{% url 'students_list' %}" class="btn btn-secondary mt-2 mb-3">
+            <i class="bi bi-arrow-left-square"></i> Back to Students List
+        </a>
+    </div>
+    <div class="card mb-5">
+        <div class="card-header py-3">
+            <h4 class="card-title mb-0">Edit Student: {{ student.user.username }}</h4>
+        </div>
+        <div class="card-body">
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
@@ -52,8 +59,7 @@
                     </div>
                 {% endif %}
             </div>
-
-
+        
             <div class="mb-4">
                 {% if form.non_field_errors %}
                     <div class="alert alert-danger mt-2">
@@ -61,12 +67,16 @@
                     </div>
                 {% endif %}
             </div>
-
-            <button type="submit" class="btn btn-primary me-2">Update</button>
+        </div>
+            <div class="card-footer d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary me-2 d-flex align-items-center justify-content-center">
+                <i class="bi bi-pencil-square me-1"></i>Update</button>
             <input type="hidden" name="edit" value="edit" />
             <input type="hidden" name="entity_id" value="{{ form.instance.id }}" />
-            <a href="{% url 'students_list' %}" class="btn btn-secondary ml-2">Cancel</a>
+            <a href="{% url 'students_list' %}" class="btn btn-secondary ml-2 d-flex align-items-center justify-content-center">
+                <i class="bi bi-x-circle me-1"></i>Cancel</a>
         </form>
+        </div>
     </div>
 </div>
 {% endblock %}

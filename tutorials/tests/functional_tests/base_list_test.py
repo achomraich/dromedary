@@ -5,20 +5,14 @@ from selenium import webdriver
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from .base_selenium_test import BaseSeleniumTest
 
-
-class ListSeleniumTest(BaseSeleniumTest):
-    current_role = None  # Tracks the currently logged-in role for test functions
+class ListSeleniumTest(StaticLiveServerTestCase):
+    current_role = None
     roles = ["Admin", "Tutor", "Student"]
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.driver = webdriver.Chrome()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.driver.quit()
-        super().tearDownClass()
 
     def login_as_user(self, username, password):
         self.driver.get(f"{self.live_server_url}/log_in/")
@@ -27,25 +21,70 @@ class ListSeleniumTest(BaseSeleniumTest):
         self.driver.find_element(By.NAME, "password").send_keys(password)
         self.driver.find_element(By.CSS_SELECTOR, "input.btn.btn-primary").click()
 
-    def login(self):
-        if not self.current_role:
-            raise RuntimeError("`current_role` must be set before running tests.")
-        username = self.get_username(self.current_role)
-        self.login_as_user(username=username, password="Qa1")
-        self.driver.get(f"{self.live_server_url}/dashboard/lessons/")
+    def logout(self):
+        self.driver.find_element(By.ID, "user-account-dropdown").click()
+        self.driver.find_element(By.XPATH, '//*[@id="navbarSupportedContent"]/ul/li/ul/li[4]/a').click()
+        self.driver.get(f"{self.live_server_url}/log_in/")
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.driver:
+            cls.driver.quit()
+        super().tearDownClass()
+
+
+class BaseListTests(ListSeleniumTest, BaseSeleniumTest):
+    test_accounts = []
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def login_with_account(self, account, url):
+        self.login_as_user(username=account["username"], password=account["password"])
+        self.driver.get(f"{self.live_server_url}{url}")
+
+        '''WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "table"))
+        )
+        self.table = self.driver.find_element(By.CLASS_NAME, "table")'''
+
+    def verify_table_headers(self, expected_headers):
+
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.CLASS_NAME, "table"))
         )
         self.table = self.driver.find_element(By.CLASS_NAME, "table")
 
-    def get_username(self, role):
-        role_to_username = {
-            "Admin": "@johndoe",
-            "Tutor": "@janedoe",
-            "Student": "@charlie",
-        }
-        return role_to_username[role]
+        headers=self.table.find_elements(By.TAG_NAME, "th")
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "th"))
+        )
+        headers = [header.text for header in headers]
+        self.assertEqual(headers, expected_headers)
+
+    def verify_table_row_count(self, models_len):
+
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, "table"))
+        )
+        self.table = self.driver.find_element(By.CLASS_NAME, "table")
+
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_all_elements_located((By.TAG_NAME, "tr"))
+        )
+        rows = self.table.find_elements(By.TAG_NAME, "tr")[1:]
+        self.assertEqual(len(rows), models_len)
+
+    def verify_row_content(self, row_data_list=None):
+        rows = self.table.find_elements(By.TAG_NAME, "tr")[1:]
+
+        if not rows or not row_data_list:
+            self.assertEqual(None, row_data_list)
+        else:
+            for idx, expected_data in enumerate(row_data_list):
+                actual_data = [cell.text for cell in rows[idx].find_elements(By.TAG_NAME, "td")]
+                self.assertEqual(actual_data, expected_data, f"Row {idx + 1} data does not match expected data.")
 
     def logout(self):
-        self.driver.find_element(By.ID, "user-account-dropdown").click()
-        self.driver.find_element(By.XPATH, '//*[@id="navbarSupportedContent"]/ul/li/ul/li[4]/a').click()
+        super().logout()

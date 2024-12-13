@@ -39,7 +39,7 @@ class AdminModelTest(TestCase):
     def test_delete_user_deletes_admin(self):
         self.user.delete()
         with self.assertRaises(Admin.DoesNotExist):
-            Admin.objects.get(user=self.user)
+            Admin.objects.get(user__username="@admin1")
 
     def test_admin_without_user(self):
         with self.assertRaises(IntegrityError):

@@ -1,9 +1,10 @@
 {% extends 'base_content.html' %}
 {% block content %}
     <div class="container">
-    <a href="{% url 'lessons_list' %}" class="btn btn-secondary mb-3">Back</a>
-
-        <h1>Lessons list:</h1>
+    <a href="{% url 'lessons_list' %}" class="btn btn-secondary mt-2 mb-3">
+        <i class="bi bi-arrow-left-square"></i> Back to Lesson List
+    </a>
+        <h1>All sessions:</h1>
 
         <table class="table table-striped">
             <thead>
@@ -25,10 +26,10 @@
 
                         <td>
                             {% if user.is_authenticated and user.tutor_profile and lesson.status == "Completed" %}
-                                <a href="{% url 'update_feedback' lesson.status_id %}" class="btn btn-warning btn-sm">Update Feedback</a>
+                                <a href="{% url 'update_feedback' lesson.id %}" class="btn btn-warning btn-sm">Update Feedback</a>
                             {% endif %}
-                            {% if user.is_authenticated and not user.admin_profile and lesson.status == "Booked" %}
-                                <a href="{% url 'cancel_lesson' lesson.status_id %}" class="btn btn-warning btn-sm">Cancel Lesson</a>
+                            {% if user.is_authenticated and not user.admin_profile and lesson.status == "Scheduled" %}
+                                <a href="{% url 'cancel_lesson' lesson.id %}" class="btn btn-warning btn-sm">Cancel Lesson</a>
                             {% endif %}
                         </td>
                     </tr>

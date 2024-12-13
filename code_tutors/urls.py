@@ -40,6 +40,8 @@ urlpatterns = [
     path('dashboard/tutors/<int:tutor_id>/', views.TutorsView.as_view(), name='tutor_details'),
     path('dashboard/tutors/<int:tutor_id>/edit/', views.TutorsView.as_view(), name='tutor_edit'),
     path('dashboard/tutors/<int:tutor_id>/delete/', views.TutorsView.as_view(), name='tutor_delete'),
+    path('dashboard/tutors/<int:tutor_id>/calendar/<int:year>/<int:month>/', views.TutorsView.as_view(), name='tutor_calendar'),
+    path('dashboard/tutors/<int:tutor_id>/calendar/', views.TutorsView.as_view(), name='tutor_calendar'),
 
     path('dashboard/lessons/', views.ViewLessons.as_view(), name='lessons_list'),
     path('dashboard/lessons/<int:lesson_id>/', views.ViewLessons.as_view(), name='lesson_detail'),
@@ -51,6 +53,7 @@ urlpatterns = [
     path('dashboard/subjects/<int:subject_id>/edit/', views.SubjectView.as_view(), name='subject_edit'),
     path('dashboard/subjects/<int:subject_id>/delete/', views.SubjectView.as_view(), name='subject_delete'),
     path('dashboard/subjects/create', views.SubjectView.as_view(), name='new_subject'),
+
     path('dashboard/update_requests/', views.UpdateLessonRequest.as_view(), name='update_requests'),
     path('dashboard/update_requests/<int:lesson_id>/', views.UpdateLesson.as_view(), name='update_lesson'),
 
@@ -70,7 +73,6 @@ urlpatterns = [
     path('invoices/<int:invoice_id>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/', views.invoice_management, name='invoice_management'),
     path('invoices/create/', views.create_invoice, name='create_invoice'),
-
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

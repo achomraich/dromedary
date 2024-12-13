@@ -1,7 +1,10 @@
 from django.test import TestCase
-from tutorials.models import LessonRequest, Student, User
+from tutorials.models import LessonRequest, Student, User, Subject, Term, Status
+from datetime import date, timedelta
+from django.core.exceptions import ValidationError
 
 class LessonRequestModelTest(TestCase):
+
     def setUp(self):
         # Create a user and student for testing
         self.user = User.objects.create_user(
@@ -14,21 +17,38 @@ class LessonRequestModelTest(TestCase):
         self.student = Student.objects.create(user=self.user)
 
         # Create a lesson request
+        self.subject = Subject.objects.create(name="Python", description="Python Subject")
+        self.term = Term.objects.create(start_date=date(2024, 9, 1), end_date=date(2025, 1, 31))
+
         self.lesson_request = LessonRequest.objects.create(
-            student=self.student,
-            language='python',
-            lesson_time='14:00',
-            lesson_day='mon',
-            lesson_length=60,
-            lesson_frequency='1',
-            status='pending'
+            subject=self.subject,
+            time='14:00',
+            status=Status.PENDING,
+            frequency='W',
+            term=self.term,
+            start_date=date(2025, 2, 15),
+            student=self.student
         )
 
     def test_lesson_request_creation(self):
-        self.assertEqual(self.lesson_request.student, self.student)
-        self.assertEqual(self.lesson_request.language, 'python')
-        self.assertEqual(self.lesson_request.lesson_time.strftime('%H:%M'), '14:00')
-        self.assertEqual(self.lesson_request.lesson_day, 'mon')
-        self.assertEqual(self.lesson_request.lesson_length, 60)
-        self.assertEqual(self.lesson_request.lesson_frequency, '1')
-        self.assertEqual(self.lesson_request.status, 'pending')
+        self.assertEqual(self.lesson_request.subject.name, 'Python')
+        self.assertEqual(self.lesson_request.time, '14:00')
+        self.assertEqual(self.lesson_request.term.start_date, date(2024, 9, 1))
+        self.assertEqual(self.lesson_request.frequency, 'W')
+        self.assertEqual(self.lesson_request.start_date, date(2025, 2, 15))
+        self.assertEqual(self.lesson_request.status, Status.PENDING)
+
+    def test_lesson_request_invalid_start_date(self):
+
+        self.subject1 = Subject.objects.create(name="C++", description="Python Subject")
+        with self.assertRaises(ValidationError):
+            lesson_request = LessonRequest.objects.create(
+            subject=self.subject1,
+            time='14:00',
+            status=Status.PENDING,
+            frequency='W',
+            term=self.term,
+            start_date="",
+            student=self.student
+            )
+            lesson_request.clean()

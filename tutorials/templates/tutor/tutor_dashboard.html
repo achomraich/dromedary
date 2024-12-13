@@ -1,18 +1,70 @@
 {% extends 'base_content.html' %}
 {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-12">
-      <h1>Welcome to your tutor dashboard {{ user.username }}</h1>
-      <p class="mt-3">
-            <a href="{% url 'students_list' %}" class="btn btn-primary">My Students</a>
-            <a href="{% url 'lessons_list' %}" class="btn btn-primary">My Lessons</a>
-            <a href="{% url 'availability' %}" class="btn btn-primary">My Availability</a>
-            <a href="{% url 'calendar' %}" class="btn btn-primary">My Calendar</a>
-            <!--<a href="" class="btn btn-primary">Lesson requests</a>-->
-            <!--<a href="" class="btn btn-primary">Manage Invoices</a>-->
-      </p>
+
+<div class="container py-4" style="max-width: 600px;">
+    <div class="row">
+        <div class="col-12">
+        <div class="d-flex flex-column align-items-center justify-content-center" style="height: 10vh;">
+            <h2 class="mb-4">Hello, {{ user.username }}</h2>
+        </div>
+            <!-- Current Term Card -->
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <h5 class="card-title mb-2">
+                        <i class="fas fa-calendar-alt me-2"></i>Current Term
+                    </h5>
+                    {% if current_term %}
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2">Active</span>
+                            <p class="card-text mb-0">
+                                {{ current_term.start_date|date:"M d, Y" }} - {{ current_term.end_date|date:"M d, Y" }}
+                            </p>
+                        </div>
+                    {% else %}
+                        <p class="card-text text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>No active term
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <!-- Teaching Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header py-2 bg-primary text-white">
+                            <h5 class="mb-0">Teaching</h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <a href="{% url 'students_list' %}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-users me-2"></i>My Students
+                            </a>
+                            <a href="{% url 'lessons_list' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-book me-2"></i>My Lessons
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Section -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header py-2 bg-success text-white">
+                            <h5 class="mb-0">Schedule</h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <a href="{% url 'availability' %}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="fas fa-clock me-2"></i>My Availability
+                            </a>
+                            <a href="{% url 'calendar' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-calendar me-2"></i>My Calendar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+
 {% endblock %}

@@ -3,19 +3,25 @@
 
 {% block content %}
 <div class="container">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-3">Back</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2 mb-2">
+        <i class="bi bi-arrow-left-square"></i> Back to Dashboard
+    </a>
+    <h1 class="mt-2 mb-3">Lesson Requests</h1>
+    {% if user.is_authenticated and user.student_profile %}
+        <a href="{% url 'lesson_request' %}" class="btn btn-success mb-3">
+            <i class="bi bi-plus-circle"></i> Request a new lesson
+        </a>
+    {% endif %}
 
-    <h1 class="mt-3 mb-4">Lesson Requests</h1>
-
-    <table class="table table-bordered table-hover">
-        <thead class="thead-dark">
+    <table class="table table-hover">
+        <thead>
             <tr>
                 <th scope="col">Username</th>
                 <th scope="col">Subject</th>
                 <th scope="col">Term</th>
                 <th scope="col">Time</th>
                 <th scope="col">Duration</th>
-                <th scope="col">Day</th>
+                <th scope="col">Start Date</th>
                 <th scope="col">Frequency</th>
                 <th scope="col">Date Requested</th>
                 <th scope="col">Status</th>
@@ -30,35 +36,47 @@
                 <td class="align-middle">{{ request.term }}</td>
                 <td class="align-middle">{{ request.time }}</td>
                 <td class="align-middle">{{ request.duration|format_duration }}</td>
-                <td class="align-middle">{{ request.day }}</td>
-                <td class="align-middle">{{ request.frequency }}</td>
+                <td class="align-middle">{{ request.start_date }}</td>
+                <td class="align-middle">{{ request.get_frequency_display }}</td>
                 <td class="align-middle">{{ request.created }}</td>
                 <td class="align-middle">{{ request.status }}</td>
                 <td class="align-middle">
-                    {% if user.is_authenticated and user.admin_profile and request.not_cancelled %}
-                        {% if request.not_confirmed %}
-                            <a href="{% url 'request_assign' request.request_id %}" class="btn btn-warning btn-sm">Assign</a>
-                            <form action="" method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="reject" value="reject">
-                                <input type="hidden" name="request_id" value="{{ request.request_id }}">
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
-                            </form>
+                    {% if user.is_authenticated and user.admin_profile %}
+                        {% if request.decided %}
+                            {% if not request.cancelled and request.lesson_assigned and request.lesson_assigned.pk %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.pk %}" class="btn btn-warning btn-sm">View</a>
+                            {% endif %}
+                        {% else %}
+                            {% if request.pk %}
+                                <a href="{% url 'request_assign' request.pk %}" class="btn btn-warning btn-sm">Assign</a>
+                                <form action="" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="reject" value="reject">
+                                    <input type="hidden" name="request_id" value="{{ request.pk }}">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this request?');">Reject</button>
+                                </form>
+                            {% endif %}
                         {% endif %}
                     {% endif %}
-                    {% if user.is_authenticated and user.student_profile and request.not_cancelled %}
-                        <form action="" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="cancel" value="cancel">
-                            <input type="hidden" name="request_id" value="{{ request.request_id }}">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">Cancel</button>
-                        </form>
+                    {% if user.is_authenticated and user.student_profile %}
+                        {% if request.decided %}
+                            {% if not request.cancelled and request.lesson_assigned and request.lesson_assigned.pk %}
+                                <a href="{% url 'lesson_detail' request.lesson_assigned.pk %}" class="btn btn-warning btn-sm">View</a>
+                            {% endif %}
+                        {% else %}
+                            <form action="" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="cancel" value="cancel">
+                                <input type="hidden" name="request_id" value="{{ request.pk }}">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">Cancel</button>
+                            </form>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>
             {% empty %}   
                 <tr>
-                    <td colspan="9">No lesson requests found.</td>
+                    <td colspan="10" class="text-center">No lesson requests found.</td>
                 </tr>
             {% endfor %}
         </tbody>

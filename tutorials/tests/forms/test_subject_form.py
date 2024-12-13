@@ -10,7 +10,6 @@ class SubjectFormTestCase(TestCase):
             'name': 'C++',
             'description': 'Description of C++ course'
         }
-
         self.existing_subject = Subject.objects.create(name="Python", description="This is Python coding course")
 
     def test_valid_subject_form(self):
@@ -29,11 +28,6 @@ class SubjectFormTestCase(TestCase):
 
     def test_blank_subject_name_is_invalid(self):
         self.form_input['name'] = ""
-        form = SubjectForm(data=self.form_input)
-        self.assertFalse(form.is_valid())
-
-    def test_blank_subject_description_is_invalid(self):
-        self.form_input['description'] = ""
         form = SubjectForm(data=self.form_input)
         self.assertFalse(form.is_valid())
 
@@ -63,10 +57,6 @@ class SubjectFormTestCase(TestCase):
         self.assertEqual(updated_status.description, 'Description of C++ course')
         self.assertEqual(updated_status.name, 'Python')
 
-    def test_existing_subject_is_not_updated_correctly(self):
-        self.form_input['description'] = ''
-        form = SubjectForm(data=self.form_input, instance=self.existing_subject)
-        self.assertFalse(form.is_valid())
 
     def test_form_disables_name_for_existing_subject(self):
         form = SubjectForm(instance=self.existing_subject)

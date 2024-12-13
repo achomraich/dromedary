@@ -10,8 +10,19 @@ class TermModelTestCase(TestCase):
     def setUp(self):
         self.term = Term.objects.create(
             start_date=date(2023, 9, 1),
-            end_date=date(2024, 1, 31)
+            end_date=date(2024, 1, 31),
+            term_name=1
         )
+
+    def test_term_str_with_term_name(self):
+        self.assertEqual(str(self.term), "Sept-Jan")
+
+    def test_term_str_without_term_name(self):
+        term_without_name = Term.objects.create(
+            start_date=date(2024, 5, 1),
+            end_date=date(2025, 3, 31),
+        )
+        self.assertEqual(str(term_without_name), "Undefined Term")
 
     def test_valid_tutor_is_valid(self):
         try:

@@ -24,7 +24,7 @@ def login_prohibited(view_function):
 class TutorAvailabilityManager:
     def get_current_tutor_availability(self, lesson_id):
         current_tutor = Lesson.objects.get(pk=lesson_id).tutor
-        current_tutor_availability = TutorAvailability.objects.filter(tutor=current_tutor)
+        current_tutor_availability = TutorAvailability.objects.filter(tutor=current_tutor).order_by('day', 'start_time')
         for slot in current_tutor_availability:
             slot.day = dict(Days.choices).get(int(slot.day))
         return current_tutor_availability
